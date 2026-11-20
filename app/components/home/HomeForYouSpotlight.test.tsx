@@ -9,21 +9,30 @@ vi.mock('@/app/lib/useYouTubePlayer',()=>({default:(_id:string,_time:unknown,_st
 vi.mock('@/app/explore/ForYouMeterContext',()=>({useForYouMeter:()=>undefined}))
 vi.mock('./SpotlightPlayerFrame',()=>({default:({children}:{children:React.ReactNode})=><div>{children}</div>}))
 import HomeForYouSpotlight from './HomeForYouSpotlight'
+import SpotlightContent from './SpotlightContent'
 import type {ForYouClip} from '@/app/lib/forYou'
 const clip:ForYouClip={video:{id:'99999999-9999-4999-8999-999999999990',youtube_id:'abcdefghij0',title:'Source',channel:null},clip_start_ms:0,clip_end_ms:45000,segments:[]}
 let host:HTMLDivElement,root:Root
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.clearAllMocks();mocks.error=null;mocks.options=null;host=document.createElement('div');document.body.append(host);root=createRoot(host)})
 afterEach(async()=>{await act(async()=>root.unmount());host.remove()})
 it('uses initial server data without selecting again or autoplaying on hydration',async()=>{
- await act(async()=>root.render(<HomeForYouSpotlight initialClip={clip}/>));expect(mocks.select).not.toHaveBeenCalled();expect(mocks.options?.autoplay).toBe(false);expect(mocks.playWithSound).not.toHaveBeenCalled()
+ await act(async()=>root.render(<SpotlightContent guest={false} initialClip={clip} onSound={()=>{}}/>));expect(mocks.select).not.toHaveBeenCalled();expect(mocks.options?.autoplay).toBe(false);expect(mocks.playWithSound).not.toHaveBeenCalled()
 })
 it('replaces an unembeddable source only once, excluding the rejected source',async()=>{
  let resolve!:(value:ForYouClip)=>void
  mocks.select.mockImplementation(()=>new Promise(done=>{resolve=done}));mocks.error=150
- await act(async()=>root.render(<HomeForYouSpotlight initialClip={clip}/>))
+ await act(async()=>root.render(<SpotlightContent guest={false} initialClip={clip} onSound={()=>{}}/>))
  expect(mocks.select).toHaveBeenCalledExactlyOnceWith(clip.video.id)
  await act(async()=>resolve({...clip,video:{...clip.video,id:'99999999-9999-4999-8999-999999999991'}}))
  expect(mocks.select).toHaveBeenCalledOnce();expect(host.querySelector('[role=alert]')).not.toBeNull()
+})
+it('selects one preview on demand and retains the no-autoplay behavior',async()=>{
+ mocks.select.mockResolvedValue(clip)
+ await act(async()=>root.render(<SpotlightContent guest={false} initialClip={null} discover onSound={()=>{}}/>))
+ expect(mocks.select).toHaveBeenCalledOnce()
+ expect(mocks.options?.autoplay).toBe(false)
+ await act(async()=>root.render(<SpotlightContent guest={false} initialClip={null} discover onSound={()=>{}}/>))
+ expect(mocks.select).toHaveBeenCalledOnce()
 })
 it('mounts the player only when the section approaches the viewport',async()=>{
  let intersect!:()=>void
@@ -35,6 +44,8 @@ it('mounts the player only when the section approaches the viewport',async()=>{
  expect(host.querySelector('[data-spotlight-deferred]')).not.toBeNull()
  expect(host.querySelector('[data-spotlight-ready]')).toBeNull()
  await act(async()=>intersect())
+ // next/dynamic resolves on a later turn; assert after loading the player module.
+ await act(async()=>{await import('./SpotlightContent');await new Promise(resolve=>setTimeout(resolve,20))})
  expect(host.querySelector('[data-spotlight-deferred]')).toBeNull()
  expect(host.querySelector('[data-spotlight-ready]')).not.toBeNull()
  vi.unstubAllGlobals()

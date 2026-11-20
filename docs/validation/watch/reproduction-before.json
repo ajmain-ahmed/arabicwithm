@@ -1,0 +1,725 @@
+{
+  "rows": [
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "navbar-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 css-smjobw\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 1500,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "floating-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<button class=\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-grntrj\" tabindex=\"0\" type=\"button\"><span class=\"MuiButton-icon MuiButton-startIcon css-15g30mo\"><svg class=\"MuiSvgIcon-root MuiSvgIcon-fon"
+      },
+      "result": "OPENED",
+      "elapsed": 1420,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/hero-fixture-0",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1ot941l\" tabindex=\"0\" href=\"/cartoons/hero-fixture-0\"><span class=\"MuiButton-icon MuiButton-startIcon css-15g30mo\"><svg class=\"MuiSvgIcon-"
+      },
+      "result": "OPENED",
+      "elapsed": 609,
+      "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 1438,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "entry": "navbar-desktop",
+      "target": {
+        "href": "/cartoons",
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 nav-link css-g5lcxj\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 795,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/hero-fixture-0",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1ot941l\" tabindex=\"0\" href=\"/cartoons/hero-fixture-0\"><span class=\"MuiButton-icon MuiButton-startIcon css-15g30mo\"><svg class=\"MuiSvgIcon-"
+      },
+      "result": "OPENED",
+      "elapsed": 822,
+      "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 1360,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=5CB68i4pnAekjehf",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=ixjbS-w7W8mxyt74",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=5CB68i4pnAekjehf",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=ixjbS-w7W8mxyt74",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "navbar-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 css-smjobw\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 1845,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "floating-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<button class=\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-9wbxl5\" tabindex=\"0\" type=\"button\"><span class=\"MuiButton-icon M"
+      },
+      "result": "OPENED",
+      "elapsed": 1341,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/nar/nar-3",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a href=\"/cartoons/nar/nar-3\" class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1igefol\" tabindex=\"0\"><span clas"
+      },
+      "result": "OPENED",
+      "elapsed": 832,
+      "url": "https://www.arabicwithm.com/cartoons/nar/nar-3",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 783,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "runtimeErrors": [],
+      "failed": [
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/D5I9nMpA.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/XL1CVidy.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/BLb8U1NI.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/CflzeRQn.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/Db6vSzZb.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/BOxKiQmd.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/DcLd8kfE.js",
+          "failure": "Load request cancelled"
+        },
+        {
+          "url": "https://www.arabicwithm.com/_next/static/chunks/zaxg5JHS.js",
+          "failure": "Load request cancelled"
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons/nar/nar-3?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "entry": "navbar-desktop",
+      "target": {
+        "href": "/cartoons",
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 nav-link css-g5lcxj\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 1861,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/nar/nar-3",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a href=\"/cartoons/nar/nar-3\" class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1igefol\" tabindex=\"0\"><span clas"
+      },
+      "result": "OPENED",
+      "elapsed": 526,
+      "url": "https://www.arabicwithm.com/cartoons/nar/nar-3",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 841,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "webkit",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=A1UxDB_gz147RTX8",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=A1UxDB_gz147RTX8",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons/nar/nar-3?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "navbar-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 css-smjobw\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 945,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "floating-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<button class=\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-grntrj\" tabindex=\"0\" type=\"button\"><span class=\"MuiButton-icon MuiButton-startIcon css-15g30mo\"><svg class=\"MuiSvgIcon-root MuiSvgIcon-fon"
+      },
+      "result": "OPENED",
+      "elapsed": 890,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/hero-fixture-0",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1ot941l\" tabindex=\"0\" href=\"/cartoons/hero-fixture-0\"><span class=\"MuiButton-icon MuiButton-startIcon css-15g30mo\"><svg class=\"MuiSvgIcon-"
+      },
+      "result": "OPENED",
+      "elapsed": 148,
+      "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 134,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 390,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "entry": "navbar-desktop",
+      "target": {
+        "href": "/cartoons",
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 nav-link css-g5lcxj\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 314,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/hero-fixture-0",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1ot941l\" tabindex=\"0\" href=\"/cartoons/hero-fixture-0\"><span class=\"MuiButton-icon MuiButton-startIcon css-15g30mo\"><svg class=\"MuiSvgIcon-"
+      },
+      "result": "OPENED",
+      "elapsed": 154,
+      "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 165,
+      "url": "http://127.0.0.1:3077/cartoons",
+      "cards": 4,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "http://127.0.0.1:3077",
+      "width": 1440,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=5CB68i4pnAekjehf",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=ixjbS-w7W8mxyt74",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=PfzDlNeJkZqHMd35",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=5CB68i4pnAekjehf",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons?_rsc=ixjbS-w7W8mxyt74",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons/hero-fixture-0?_rsc=AuIN5InvkbCy_sLU",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3077/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "navbar-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 css-smjobw\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 1361,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "floating-mobile",
+      "target": {
+        "href": null,
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<button class=\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-9wbxl5\" tabindex=\"0\" type=\"button\"><span class=\"MuiButton-icon M"
+      },
+      "result": "OPENED",
+      "elapsed": 425,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/nar/nar-3",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a href=\"/cartoons/nar/nar-3\" class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1igefol\" tabindex=\"0\"><span clas"
+      },
+      "result": "OPENED",
+      "elapsed": 342,
+      "url": "https://www.arabicwithm.com/cartoons/nar/nar-3",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 467,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 390,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons/nar/nar-3?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "entry": "navbar-desktop",
+      "target": {
+        "href": "/cartoons",
+        "text": "Watch",
+        "hit": true,
+        "interceptor": "<p class=\"MuiTypography-root MuiTypography-body2 nav-link css-g5lcxj\">Watch</p>"
+      },
+      "result": "OPENED",
+      "elapsed": 1073,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "entry": "featured-play",
+      "target": {
+        "href": "/cartoons/nar/nar-3",
+        "text": "Play",
+        "hit": true,
+        "interceptor": "<a href=\"/cartoons/nar/nar-3\" class=\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-1igefol\" tabindex=\"0\"><span clas"
+      },
+      "result": "OPENED",
+      "elapsed": 283,
+      "url": "https://www.arabicwithm.com/cartoons/nar/nar-3",
+      "cards": 0,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "entry": "direct-watch",
+      "result": "OPENED",
+      "elapsed": 378,
+      "url": "https://www.arabicwithm.com/cartoons",
+      "cards": 24,
+      "visibleError": 0,
+      "empty": 0
+    },
+    {
+      "engine": "chrome",
+      "origin": "https://www.arabicwithm.com",
+      "width": 1440,
+      "runtimeErrors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=A1UxDB_gz147RTX8",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons?_rsc=A1UxDB_gz147RTX8",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons/nar/nar-3?_rsc=0LSbBcPp_R2xbw4E",
+          "status": 200
+        },
+        {
+          "url": "https://www.arabicwithm.com/cartoons",
+          "status": 200
+        }
+      ]
+    }
+  ]
+}

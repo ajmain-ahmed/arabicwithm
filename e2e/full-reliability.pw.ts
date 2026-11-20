@@ -22,15 +22,6 @@ async function hit(control: Locator) {
   await expect.poll(()=>control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return top===el||el.contains(top)}),{timeout:2000,message:'The control must receive pointer events after transitions settle'}).toBe(true)
   await control.click()
 }
-async function history(page: Page, first: string, second: string, third: string) {
-  await page.goto(first); await healthy(page)
-  await page.locator(`a[href="${second}"]`).first().click(); await expect(page).toHaveURL(second); await healthy(page)
-  await page.locator(`a[href="${third}"]`).first().click(); await expect(page).toHaveURL(third); await healthy(page)
-  await page.goBack(); await expect(page).toHaveURL(second); await healthy(page)
-  await page.goBack(); await expect(page).toHaveURL(first); await healthy(page)
-  await page.goForward(); await expect(page).toHaveURL(second); await healthy(page)
-  await page.reload(); await healthy(page)
-}
 async function finishChapter(page: Page) {
   const pager=page.getByRole('navigation',{name:'Chapter pages'})
   await expect(pager).toBeVisible()
@@ -69,21 +60,16 @@ for(const width of [320,375,390,414,430,768,1024,1440]) test(`connected learner 
   test.setTimeout(150000)
   await account(context);await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'reduce'})
   const runtime=await observeRuntime(page,test.info().project.name)
-  await history(page,'/learn','/grammar','/grammar/context')
-  await page.getByRole('link',{name:'Grammar in Context',exact:true}).click()
-  await page.getByRole('link',{name:'A1',exact:true}).click();await healthy(page)
-  await page.locator(`a[href="${note}"]`).click();await expect(page.getByRole('article')).toContainText('Real examples')
-  await page.reload();await expect(page.getByRole('article')).toContainText('First Chapter')
-  await page.getByRole('link',{name:'Back to Grammar Notes',exact:true}).click();await expect(page).toHaveURL('/grammar/context/A1')
-  for(const level of ['A2','B1','B2','C1','C2']){await page.goto(`/grammar/context/${level}`);await expect(page.getByRole('status')).toContainText('No approved Grammar Notes')}
+  await page.goto('/learn');await page.locator('main a[href="/grammar"]').first().click();await expect(page).toHaveURL('/grammar')
+  await expect(page.getByRole('link',{name:'Grammar in Context',exact:true})).toHaveCount(0)
+  for(const retired of ['/grammar/context', '/grammar/context/A1', note]) { await page.goto(retired);await expect(page).toHaveURL('/grammar');await healthy(page) }
   await page.goto('/grammar');await hit(page.getByRole('button',{name:'Revise Naḥw Rules',exact:true}));await expect(page).toHaveURL(/activity=rules/)
   await page.reload();await expect(page.getByRole('heading',{name:'A1',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/grammar');await expect(page.getByRole('button',{name:'Revise Naḥw Rules',exact:true})).toBeVisible()
   await page.goForward();await expect(page).toHaveURL(/activity=rules/);await page.getByRole('link',{name:'Back to Grammar',exact:true}).click()
   await hit(page.getByRole('button',{name:'Word Type',exact:true}));await expect(page.locator('[data-grammar-question]')).toBeVisible();await page.getByRole('link',{name:'Back to Grammar',exact:true}).click()
   await hit(page.getByRole('button',{name:'Revise the Ten Forms',exact:true}));await hit(page.getByRole('button',{name:'Start',exact:true}));await hit(page.getByRole('button',{name:'Reveal answer',exact:true}));await expect(page.getByRole('button',{name:'Next Form',exact:true})).toBeVisible()
   await page.goto('/cartoons?view=shows');await page.locator('main a[href="/cartoons/test-show"]').first().click();await expect(page).toHaveURL('/cartoons/test-show');await page.locator(`main a[href="${episode}"]`).first().click();await healthy(page)
-  await hit(page.getByRole(width<900?'tab':'button',{name:'Grammar Notes',exact:true}).filter({visible:true}));await expect(page.getByRole('dialog')).toContainText('Adjective')
-  await page.getByRole('dialog').getByRole('button',{name:/Adjective/}).click();await expect(page.getByRole('dialog')).toContainText('Test Show');await page.getByRole('button',{name:'Back to Grammar Notes',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click()
+  await expect(page.getByRole('tab',{name:'Grammar Notes',exact:true})).toHaveCount(0)
   await hit(page.getByRole(width<900?'tab':'button',{name:'Settings',exact:true}).filter({visible:true}));await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0)
   await hit(page.getByRole(width<900?'tab':'button',{name:'Memory',exact:true}).filter({visible:true}));await expect(page).toHaveURL(/\/memory\?episode=/);await healthy(page)
   await page.goBack();await expect(page).toHaveURL(episode);await healthy(page);await page.goBack();await expect(page).toHaveURL('/cartoons/test-show');await page.goForward();await expect(page).toHaveURL(episode)
@@ -98,7 +84,7 @@ for(const width of [320,375,390,414,430,768,1024,1440]) test(`connected learner 
   await page.locator('main a[href="/books/test-book/grammar-structured"]').first().click();await expect(page.locator('#reader-content:visible')).toHaveAttribute('data-reader-mode','structured')
   await page.goBack();await expect(page).toHaveURL('/books/test-book');await page.goForward();await expect(page).toHaveURL(/grammar-structured/);await page.reload();await healthy(page)
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
-  await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})
+  await page.screenshot({path:`${process.env.AWM_RELIABILITY_ARTIFACT_DIR ?? 'docs/validation/full-reliability'}/${test.info().project.name}-${width}.png`})
   await runtime.assert(test.info())
 })
 
@@ -123,11 +109,11 @@ test('URL tabs, profile settings and membership are restored by Back and Forward
   }
 })
 
-test('failed grammar reads show recovery; real empty levels and missing notes remain distinct',async({page,request})=>{
+test('retired grammar context URLs redirect even when historical notes are unavailable',async({page,request})=>{
   await request.post(`${backend}/fixture/reliability`,{data:{reset:true,rules:[{path:'/rest/v1/grammar_notes',remaining:-1,status:503}]}})
-  await page.goto('/grammar/context/A1');await expect(page.locator('[data-awm-page-error]')).toBeVisible();await expect(page.locator('body')).not.toContainText('No approved Grammar Notes')
-  await request.post(`${backend}/fixture/reliability`,{data:{reset:true}});await page.getByRole('button',{name:'Reload',exact:true}).click();await expect(page.locator(`a[href="${note}"]`)).toBeVisible()
-  await page.goto('/grammar/notes/00000000-0000-4000-8000-000000000000');await expect(page.getByRole('heading',{name:'Page not found',exact:true})).toBeVisible()
+  await page.goto('/grammar/context/A1');await expect(page).toHaveURL('/grammar');await healthy(page)
+  await request.post(`${backend}/fixture/reliability`,{data:{reset:true}})
+  await page.goto('/grammar/notes/00000000-0000-4000-8000-000000000000');await expect(page).toHaveURL('/grammar');await healthy(page)
 })
 
 test('all protected route entries preserve denial and Admin read access',async({page,context})=>{

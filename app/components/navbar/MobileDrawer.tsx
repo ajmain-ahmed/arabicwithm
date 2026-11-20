@@ -153,7 +153,8 @@ export default function MobileDrawer({
                     <ListItem disablePadding>
                         <ListItemButton
                             className="mobile-list-btn"
-                            onClick={item.onClick}
+                            onClick={item.label === 'Watch' ? onClose : item.onClick}
+                            {...(item.label === 'Watch' ? { component: 'a' as const, href: NAV_ROUTES.Watch } : {})}
                             sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
                         >
                             <ListItemIcon sx={{ color: 'var(--awm-gold)' }}>{item.icon}</ListItemIcon>

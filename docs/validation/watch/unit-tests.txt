@@ -1,0 +1,23 @@
+
+> arabic-with-m@0.1.0 test
+> vitest --run
+
+node.exe : (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to 
+become the default in a future major version of Vite:
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((!) Your Vite c...ersion of Vite::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  - `__dirname` (vitest.config.ts:14:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.12 C:/Users/Muttaqi Ahmed/Desktop/arabicwithm
+
+
+ Test Files  233 passed | 4 skipped (237)
+      Tests  1572 passed | 6 skipped (1578)
+   Start at  22:44:58
+   Duration  130.05s (transform 11.61s, setup 4.82s, import 328.81s, tests 359.94s, environment 610.51s)
+

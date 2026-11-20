@@ -1,0 +1,1536 @@
+{
+  "date": "2026-11-20T23:11:52.905275+00:00",
+  "scope": "Final local source. Synthetic production-build browser QA; public production inspected read only. NOT DEPLOYED.",
+  "watch": {
+    "canonicalRoute": "/cartoons",
+    "trace": "navigation link -> /cartoons -> Catalogue -> public show/episode reads -> filter/pagination normalization -> CartoonsPage -> show and episode cards",
+    "reproducedBefore": [
+      "Actual live/local server frame on all five phone widths: Home logo intercepted the desktop Watch target before hydration; click on Home remained at /.",
+      "Injected stalled RSC transitions: desktop and mobile menu Watch remained on /learn with no Watch view or error."
+    ],
+    "evidence": [
+      "hit-target-before.json",
+      "pre-hydration-production.png",
+      "stalled-transition-before.json",
+      "reproduction-before.json"
+    ],
+    "fix": "CSS-selected responsive header before hydration; native /cartoons links in all main Watch navigation controls; normal browser history retained.",
+    "catalogue": "Explicit All Categories sentinel normalized to no filter. Shows, covers, titles and episodes verified. Admin editor deferred and still opens.",
+    "entryPoints": {
+      "Homepage/navbar": "PASS in the interactive local build",
+      "Mobile drawer": "PASS in the interactive local build",
+      "Floating mobile menu": "PASS in the interactive local build",
+      "First-session mobile shortcut": "PASS in the interactive local build",
+      "Footer after streamed layout settles": "PASS in the interactive local build",
+      "Explore": "PASS in the interactive local build",
+      "For You": "PASS in the interactive local build",
+      "Library": "PASS in the interactive local build",
+      "Profile": "PASS in the interactive local build",
+      "Learn": "PASS in the interactive local build",
+      "Featured Play": "PASS in the interactive local build",
+      "Featured Episodes": "PASS in the interactive local build",
+      "Show cards": "PASS in the interactive local build",
+      "Episode cards": "PASS in the interactive local build",
+      "Back/Forward": "PASS in the interactive local build",
+      "Refresh": "PASS in the interactive local build"
+    },
+    "homepageQuickActions": "No separately labelled Watch control exists in Learning shortcuts.",
+    "documentNavigationTradeoff": "Native Watch navigation recreates transient JavaScript state, including the in-memory floating player.",
+    "earlyFooterLimitation": "A pointer held across an early streamed/lazy footer layout shift can release over moved content. Tests explicitly settle that layout before footer interaction.",
+    "userDevice": "Not supplied; actual physical-device session not matched.",
+    "obsoleteWatchRouteRedirectsRequired": false
+  },
+  "featured": {
+    "canonical": "app/page.tsx -> HomeSections.FeaturedSection -> FeaturedCarousel -> FeaturedHero",
+    "legacyPathFound": "The inline HomeDashboard static hero rendered whenever featuredItems was empty. HomeHero.tsx is dormant; the shared static asset is retained for the unrelated Support page.",
+    "cause": "Empty curated data, including the original 1.2-second artwork deadline, could exhaust the DBZ-only fallback and enter the old hero branch.",
+    "fix": "Legacy branch removed. Current show cover or the same Featured frame handles failures. Exactly one Featured area; stable keys reset the carousel when rotation/admin edits change its pool.",
+    "artworkCropAndDestinations": "Preserved",
+    "threeDayLondonRotation": "Preserved",
+    "learnLinkedCapabilityPreserved": true,
+    "learnLinkedNote": "This checkout supported Shows only; no existing Learn-targeted routing was removed.",
+    "cache": "Tagged catalogue/artwork caches and per-build Cloudflare KV prefix retained. Homepage HTML private/no-store. Manifest and recovery script revalidate. Live production HTML already used no-store; stale Cloudflare HTML was not established as the cause.",
+    "normalHomepageCanRenderLegacyHero": false
+  },
+  "learn": {
+    "grammarInContext": "Removed, including Episode Note controls",
+    "sections": [
+      "Naḥw",
+      "Ṣarf"
+    ],
+    "oldRoutes": [
+      "/grammar/context/:path*",
+      "/grammar/notes/:path*"
+    ],
+    "redirect": "/grammar",
+    "history": "Tables and admin note tools retained"
+  },
+  "performance": {
+    "measurements": {
+      "before": {
+        "webkit": {
+          "ttfbMs": 23,
+          "fcpMs": 111,
+          "lcpMs": 188,
+          "contentVisibleMs": 179,
+          "usableMs": 1564,
+          "hydratedMs": null,
+          "firstReactCommitMs": 573,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 325600,
+          "legacyHeroSeen": true
+        },
+        "chrome": {
+          "ttfbMs": 16.5,
+          "fcpMs": 140,
+          "lcpMs": 140,
+          "contentVisibleMs": 145.89999997615814,
+          "usableMs": 665.5,
+          "hydratedMs": null,
+          "firstReactCommitMs": 199.5,
+          "scriptExecutionMs": 182.85399999999998,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 326799,
+          "legacyHeroSeen": true
+        }
+      },
+      "after": {
+        "webkit": {
+          "ttfbMs": 31,
+          "fcpMs": 121,
+          "lcpMs": 203,
+          "contentVisibleMs": 206,
+          "usableMs": 1542,
+          "hydratedMs": 663,
+          "firstReactCommitMs": 662,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 94186,
+          "legacyHeroSeen": false
+        },
+        "chrome": {
+          "ttfbMs": 26.100000023841858,
+          "fcpMs": 164,
+          "lcpMs": 164,
+          "contentVisibleMs": 260.39999997615814,
+          "usableMs": 708.6999999284744,
+          "hydratedMs": 218.29999995231628,
+          "firstReactCommitMs": 217.69999992847443,
+          "scriptExecutionMs": 168.242,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 95385,
+          "legacyHeroSeen": false
+        }
+      },
+      "before-slow-spotlight": {
+        "webkit": {
+          "ttfbMs": 23,
+          "fcpMs": 115,
+          "lcpMs": 2691,
+          "contentVisibleMs": 2647,
+          "usableMs": 3643,
+          "hydratedMs": null,
+          "firstReactCommitMs": 2972,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 325600,
+          "legacyHeroSeen": true
+        },
+        "chrome": {
+          "ttfbMs": 21.90000009536743,
+          "fcpMs": 108,
+          "lcpMs": 2628,
+          "contentVisibleMs": 2643.100000023842,
+          "usableMs": 3043,
+          "hydratedMs": null,
+          "firstReactCommitMs": 163.29999995231628,
+          "scriptExecutionMs": 187.45800000000003,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 326799,
+          "legacyHeroSeen": true
+        }
+      },
+      "after-slow-spotlight": {
+        "webkit": {
+          "ttfbMs": 31,
+          "fcpMs": 120,
+          "lcpMs": 200,
+          "contentVisibleMs": 204,
+          "usableMs": 1603,
+          "hydratedMs": 616,
+          "firstReactCommitMs": 616,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 94186,
+          "legacyHeroSeen": false
+        },
+        "chrome": {
+          "ttfbMs": 25.700000047683716,
+          "fcpMs": 152,
+          "lcpMs": 152,
+          "contentVisibleMs": 273.39999997615814,
+          "usableMs": 689.3000000715256,
+          "hydratedMs": 207.30000007152557,
+          "firstReactCommitMs": 206.70000004768372,
+          "scriptExecutionMs": 158.691,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 95385,
+          "legacyHeroSeen": false
+        }
+      },
+      "production-before": {
+        "webkit": {
+          "ttfbMs": 148,
+          "fcpMs": 323,
+          "lcpMs": 618,
+          "contentVisibleMs": 651,
+          "usableMs": 1757,
+          "hydratedMs": null,
+          "firstReactCommitMs": 873,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 584695,
+          "imageTransferBytes": 94186,
+          "legacyHeroSeen": false
+        },
+        "chrome": {
+          "ttfbMs": 717.8999999761581,
+          "fcpMs": 964,
+          "lcpMs": 980,
+          "contentVisibleMs": 940,
+          "usableMs": 1665.5999999046326,
+          "hydratedMs": null,
+          "firstReactCommitMs": 1065.7999999523163,
+          "scriptExecutionMs": 208.535,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 473745,
+          "imageTransferBytes": 96597,
+          "legacyHeroSeen": false
+        }
+      },
+      "after-watch": {
+        "webkit": {
+          "ttfbMs": 16,
+          "fcpMs": 118,
+          "lcpMs": 199,
+          "contentVisibleMs": 189,
+          "usableMs": 931,
+          "hydratedMs": 465,
+          "scriptExecutionMs": null,
+          "jsThroughFirstInteractionBytes": 394101
+        },
+        "chrome": {
+          "ttfbMs": 20.2,
+          "fcpMs": 152,
+          "lcpMs": 152,
+          "contentVisibleMs": 233.9,
+          "usableMs": 685.1,
+          "hydratedMs": 204.7,
+          "scriptExecutionMs": 163.59,
+          "jsThroughFirstInteractionBytes": 394101
+        }
+      },
+      "after-watch-slow-spotlight": {
+        "webkit": {
+          "ttfbMs": 17,
+          "fcpMs": 108,
+          "lcpMs": 196,
+          "contentVisibleMs": 170,
+          "usableMs": 882,
+          "hydratedMs": 430,
+          "scriptExecutionMs": null,
+          "jsThroughFirstInteractionBytes": 394101
+        },
+        "chrome": {
+          "ttfbMs": 19.6,
+          "fcpMs": 140,
+          "lcpMs": 140,
+          "contentVisibleMs": 246.4,
+          "usableMs": 699.2,
+          "hydratedMs": 208.1,
+          "scriptExecutionMs": 170.33,
+          "jsThroughFirstInteractionBytes": 394101
+        }
+      }
+    },
+    "units": "ms and bytes; medians of three fresh browser contexts per engine",
+    "conditions": "Next production build; synthetic backend; 390x844; analytics and YouTube blocked. Slow case injects 2500ms into Spotlight. Baseline read Featured after DOMContentLoaded; final polling starts at response commit to capture streaming.",
+    "waterfallBefore": "parallel catalogue/Spotlight/phrase -> wait for all -> home episodes -> Featured artwork -> render",
+    "waterfallAfter": "Independent reads start together; Featured streams independently; Spotlight discovery/player/transcript/metering start once near its viewport.",
+    "auth": "Homepage independent of role/session resolution. Pending Admin hidden. Server guards unchanged.",
+    "fonts": {
+      "preloads": {
+        "http://127.0.0.1:3077": {
+          "count": 3,
+          "bytes": 190112
+        },
+        "https://www.arabicwithm.com": {
+          "count": 8,
+          "bytes": 1261292
+        }
+      },
+      "note": "vinext 1.4.5 ignores localFont preload:false. Reading faces now use CSS @font-face/swap with original bytes. Only three UI faces register through next/font."
+    },
+    "images": "Current production 828px curated AVIF verified at 46409 bytes. Responsive artwork/crop unchanged; browser tests verify one mounted slide image. Synthetic fallback artwork bytes are not representative production images.",
+    "limits": [
+      "WebKit isolated JS CPU time and hydration duration unavailable; React commit/hydration completion timestamps recorded instead.",
+      "Usable interaction measures menu opening after Featured appears, not a standardized TTI score.",
+      "No production after-deployment samples; nothing deployed."
+    ],
+    "watch": {
+      "before": {
+        "webkit": {
+          "usable": 1151,
+          "ttfb": 24,
+          "fcp": 169,
+          "jsTransfer": 335821,
+          "jsDecoded": 1029234
+        },
+        "chrome": {
+          "usable": 316.8,
+          "ttfb": 19.8,
+          "fcp": 96,
+          "jsTransfer": 335821,
+          "jsDecoded": 1029234
+        }
+      },
+      "after": {
+        "webkit": {
+          "usable": 911,
+          "ttfb": 16,
+          "fcp": 90,
+          "jsTransfer": 322263,
+          "jsDecoded": 988090
+        },
+        "chrome": {
+          "usable": 327.6,
+          "ttfb": 18.7,
+          "fcp": 96,
+          "jsTransfer": 322263,
+          "jsDecoded": 988090
+        }
+      },
+      "units": "ms and bytes; three fresh contexts per browser; same synthetic Next production server"
+    },
+    "normalTimingConclusion": "Normal paint/Chrome interaction timings are roughly flat or slightly slower. Slow Spotlight no longer blocks Featured. WebKit interaction time improved. No production after-deployment measurement."
+  },
+  "installedApp": {
+    "manifest": "public/site.webmanifest unchanged",
+    "startUrl": "/",
+    "scope": "/",
+    "display": "standalone",
+    "icons": "All manifest/Apple icons returned 200",
+    "metadata": "Added Apple capable/title/status-bar metadata and theme color",
+    "serviceWorker": "None in current source or fresh browser profiles; no worker introduced",
+    "caching": "No cached offline HTML shell or mixed-build navigation fallback. Existing physical installations uninspected.",
+    "offline": "Reconnect/reload notice on an existing page. First offline navigation uses the browser network-error experience; no full offline support.",
+    "chunkFailure": "Independent recovery script offers manual reload, with no automatic loop",
+    "auth": "Signed-out, signed-in, expired-token refresh, reload/history and simulated resume pass",
+    "standaloneLaunch": "PASS in standalone API emulation",
+    "physicalIphone": "BLOCKED: no physical iPhone or Safari device. Actual Home Screen install and OS process restart not tested."
+  },
+  "qa": {
+    "totalPassed": 196,
+    "byBrowser": {
+      "webkit": 49,
+      "chrome": 49,
+      "firefox": 49,
+      "edge": 49
+    },
+    "suites": [
+      {
+        "name": "Watch",
+        "file": "docs/validation/watch/browser-results.json",
+        "stats": {
+          "startTime": "2026-11-20T22:50:18.048Z",
+          "duration": 199670.098,
+          "expected": 76,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "byBrowser": {
+          "webkit": 19,
+          "chrome": 19,
+          "firefox": 19,
+          "edge": 19
+        },
+        "cases": [
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 320",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 375",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 414",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 430",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 768",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch, Show, Episode, controls and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "first-session animated Watch shortcut at 320",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "first-session animated Watch shortcut at 375",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "first-session animated Watch shortcut at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "first-session animated Watch shortcut at 414",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "first-session animated Watch shortcut at 430",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "server-rendered phone header has no overlaid desktop Watch target",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "desktop Watch performs document navigation with JavaScript disabled",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "All Categories bookmarks retain existing shows and episodes",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "the deferred Admin Show editor still opens",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 320",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 375",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 414",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 430",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 768",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch, Show, Episode, controls and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "first-session animated Watch shortcut at 320",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "first-session animated Watch shortcut at 375",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "first-session animated Watch shortcut at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "first-session animated Watch shortcut at 414",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "first-session animated Watch shortcut at 430",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "server-rendered phone header has no overlaid desktop Watch target",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "desktop Watch performs document navigation with JavaScript disabled",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "All Categories bookmarks retain existing shows and episodes",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "the deferred Admin Show editor still opens",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 320",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 375",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 414",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 430",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 768",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch, Show, Episode, controls and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "first-session animated Watch shortcut at 320",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "first-session animated Watch shortcut at 375",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "first-session animated Watch shortcut at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "first-session animated Watch shortcut at 414",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "first-session animated Watch shortcut at 430",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "server-rendered phone header has no overlaid desktop Watch target",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "desktop Watch performs document navigation with JavaScript disabled",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "All Categories bookmarks retain existing shows and episodes",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "the deferred Admin Show editor still opens",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 320",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 375",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 414",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 430",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 768",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch, Show, Episode, controls and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "first-session animated Watch shortcut at 320",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "first-session animated Watch shortcut at 375",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "first-session animated Watch shortcut at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "first-session animated Watch shortcut at 414",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "first-session animated Watch shortcut at 430",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "server-rendered phone header has no overlaid desktop Watch target",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "desktop Watch performs document navigation with JavaScript disabled",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "All Categories bookmarks retain existing shows and episodes",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "the deferred Admin Show editor still opens",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "name": "Homepage/startup",
+        "file": "docs/validation/home-startup/browser-results.json",
+        "stats": {
+          "startTime": "2026-11-20T23:07:04.137Z",
+          "duration": 162041.001,
+          "expected": 52,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "byBrowser": {
+          "webkit": 13,
+          "chrome": 13,
+          "firefox": 13,
+          "edge": 13
+        },
+        "cases": [
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 320",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 375",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 414",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 430",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 768",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Featured, Learn and navigation at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "public routes, retired links, reader, profile and Admin guards",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "expired session refresh and background resume keep Featured public",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "slow Spotlight cannot hold Featured or menu hydration",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "a pending Admin role check does not block public Featured or show Admin",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 320",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 375",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 414",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 430",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 768",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Featured, Learn and navigation at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "public routes, retired links, reader, profile and Admin guards",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "expired session refresh and background resume keep Featured public",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "slow Spotlight cannot hold Featured or menu hydration",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "a pending Admin role check does not block public Featured or show Admin",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 320",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 375",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 414",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 430",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 768",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Featured, Learn and navigation at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "public routes, retired links, reader, profile and Admin guards",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "expired session refresh and background resume keep Featured public",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "slow Spotlight cannot hold Featured or menu hydration",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "a pending Admin role check does not block public Featured or show Admin",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 320",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 375",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 414",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 430",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 768",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Featured, Learn and navigation at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "public routes, retired links, reader, profile and Admin guards",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "expired session refresh and background resume keep Featured public",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "slow Spotlight cannot hold Featured or menu hydration",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "a pending Admin role check does not block public Featured or show Admin",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "name": "Full site reliability",
+        "file": "docs/validation/watch/reliability-browser-results.json",
+        "stats": {
+          "startTime": "2026-11-20T22:57:20.341Z",
+          "duration": 569583.1120000001,
+          "expected": 60,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "byBrowser": {
+          "webkit": 15,
+          "chrome": 15,
+          "firefox": 15,
+          "edge": 15
+        },
+        "cases": [
+          {
+            "project": "webkit",
+            "title": "every public route direct and refreshed, signed out at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "every public route direct and refreshed, signed out at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 320",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 375",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 414",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 430",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 768",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "connected learner flows and hit testing at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "retired grammar context URLs redirect even when historical notes are unavailable",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "all protected route entries preserve denial and Admin read access",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Explore and For You playback, languages, filters, settings and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "every public route direct and refreshed, signed out at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "every public route direct and refreshed, signed out at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 320",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 375",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 414",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 430",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 768",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "connected learner flows and hit testing at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "retired grammar context URLs redirect even when historical notes are unavailable",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "all protected route entries preserve denial and Admin read access",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Explore and For You playback, languages, filters, settings and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "every public route direct and refreshed, signed out at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "every public route direct and refreshed, signed out at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 320",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 375",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 414",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 430",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 768",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "connected learner flows and hit testing at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "retired grammar context URLs redirect even when historical notes are unavailable",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "all protected route entries preserve denial and Admin read access",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Explore and For You playback, languages, filters, settings and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "every public route direct and refreshed, signed out at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "every public route direct and refreshed, signed out at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 320",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 375",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 414",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 430",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 768",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 1024",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "connected learner flows and hit testing at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "retired grammar context URLs redirect even when historical notes are unavailable",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "all protected route entries preserve denial and Admin read access",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Explore and For You playback, languages, filters, settings and history at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "name": "Curated Featured",
+        "file": "docs/validation/home-startup/curated-results.json",
+        "stats": {
+          "startTime": "2026-11-20T23:10:30.265Z",
+          "duration": 25185.059,
+          "expected": 8,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "byBrowser": {
+          "webkit": 2,
+          "chrome": 2,
+          "firefox": 2,
+          "edge": 2
+        },
+        "cases": [
+          {
+            "project": "webkit",
+            "title": "curated artwork, crop and hidden slides at 390",
+            "status": "passed"
+          },
+          {
+            "project": "webkit",
+            "title": "curated artwork, crop and hidden slides at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "curated artwork, crop and hidden slides at 390",
+            "status": "passed"
+          },
+          {
+            "project": "chrome",
+            "title": "curated artwork, crop and hidden slides at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "curated artwork, crop and hidden slides at 390",
+            "status": "passed"
+          },
+          {
+            "project": "firefox",
+            "title": "curated artwork, crop and hidden slides at 1440",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "curated artwork, crop and hidden slides at 390",
+            "status": "passed"
+          },
+          {
+            "project": "edge",
+            "title": "curated artwork, crop and hidden slides at 1440",
+            "status": "passed"
+          }
+        ]
+      }
+    ],
+    "viewports": [
+      320,
+      375,
+      390,
+      414,
+      430,
+      768,
+      1024,
+      1440
+    ],
+    "reliability": {
+      "Homepage": "FIXED",
+      "Featured": "FIXED",
+      "Watch": "FIXED",
+      "Show": "PASS",
+      "Episode": "PASS",
+      "Explore": "PASS",
+      "For You": "PASS",
+      "Read": "PASS",
+      "Book": "PASS",
+      "Reader": "PASS",
+      "Learn": "FIXED",
+      "Nahw": "PASS",
+      "Sarf": "PASS",
+      "Memory": "PASS",
+      "Profile": "PASS",
+      "Library": "PASS",
+      "Settings": "PASS",
+      "Admin Books": "PASS",
+      "Admin Phrases": "PASS"
+    },
+    "physicalSafari": "BLOCKED: no physical iPhone/Safari device available",
+    "media": "Deterministic local YouTube API fixture; production catalogue inspected read only.",
+    "offlineAllowance": "Only WebKit Fetch API access-control errors from the injected offline/reload window are permitted; unrelated runtime errors still fail."
+  },
+  "engineering": {
+    "sourceFiles": [
+      "app/actions/cartoons.ts",
+      "app/cartoons/CartoonsPage.tsx",
+      "app/cartoons/[show]/[episode]/EpisodePage.tsx",
+      "app/cartoons/page.test.tsx",
+      "app/cartoons/page.tsx",
+      "app/components/MobileBottomNav.test.tsx",
+      "app/components/MobileBottomNav.tsx",
+      "app/components/PageLoading.tsx",
+      "app/components/ScrollReset.test.tsx",
+      "app/components/ScrollReset.tsx",
+      "app/components/VitalsReporter.tsx",
+      "app/components/footer.tsx",
+      "app/components/home/FeaturedCarousel.tsx",
+      "app/components/home/FeaturedHero.tsx",
+      "app/components/home/HomeDashboard.test.tsx",
+      "app/components/home/HomeDashboard.tsx",
+      "app/components/home/HomeForYouSpotlight.test.tsx",
+      "app/components/home/HomeForYouSpotlight.tsx",
+      "app/components/home/HomeQuickActions.test.tsx",
+      "app/components/home/HomeSections.tsx",
+      "app/components/home/SpotlightContent.tsx",
+      "app/components/navbar/MobileDrawer.tsx",
+      "app/components/navbar/NavigationAccess.test.tsx",
+      "app/components/navbar/index.tsx",
+      "app/fonts/reading.css",
+      "app/globals.css",
+      "app/grammar/GrammarPage.tsx",
+      "app/grammar/context/[level]/page.tsx",
+      "app/grammar/context/page.tsx",
+      "app/grammar/notes/[id]/page.tsx",
+      "app/layout.tsx",
+      "app/lib/fonts.ts",
+      "app/lib/homeCatalogue.ts",
+      "app/lib/homeFeatured.ts",
+      "app/lib/navigation.ts",
+      "app/page.test.tsx",
+      "app/page.tsx",
+      "e2e/fixture-server.mjs",
+      "e2e/full-reliability.pw.ts",
+      "e2e/home-featured-curated.pw.ts",
+      "e2e/home-startup.pw.ts",
+      "e2e/mobile-nav-intro.pw.ts",
+      "e2e/watch-navigation.pw.ts",
+      "next.config.ts",
+      "playwright.home-startup.config.ts",
+      "playwright.site-reliability.config.ts",
+      "playwright.watch.config.ts",
+      "public/startup-recovery.js",
+      "scripts/audit-home-install.mjs",
+      "scripts/measure-home-startup.mjs",
+      "scripts/measure-watch-startup.mjs",
+      "scripts/reproduce-watch-hit-target.mjs",
+      "scripts/reproduce-watch-transition.mjs",
+      "scripts/reproduce-watch.mjs"
+    ],
+    "sourceSnapshot": "source-snapshot.json",
+    "checks": {
+      "unit": {
+        "passed": 1572,
+        "skipped": 6,
+        "passedFiles": 233,
+        "skippedFiles": 4
+      },
+      "nextProductionBuild": "PASS",
+      "cloudflareVinextProductionBuild": "PASS; existing sourcemap/static-classification warnings",
+      "typescript": "PASS",
+      "changedFileLint": "PASS, zero warnings",
+      "gitDiffCheck": "PASS"
+    },
+    "migrationsRequired": false,
+    "deployed": false,
+    "serviceWorkerChanges": "None",
+    "manifestChanges": "None",
+    "routingChanges": "Canonical native Watch links and retired Context/Note redirects",
+    "cacheChanges": "Homepage no-store; manifest/recovery revalidate; tagged/per-build data caches retained"
+  },
+  "dataSafety": {
+    "productionDelete": false,
+    "truncate": false,
+    "drop": false,
+    "booksDeleted": false,
+    "chaptersDeleted": false,
+    "showsDeleted": false,
+    "episodesDeleted": false,
+    "transcriptsDeleted": false,
+    "phrasesDeleted": false,
+    "existingProductionContentReplaced": false
+  }
+}

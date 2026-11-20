@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Box,
@@ -28,7 +29,6 @@ import {
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import { WATCH_LEVELS } from '@/app/lib/cartoons'
 import { CatalogueLayout, ContentCard, FilterSidebar } from '@/app/components/content-grid'
-import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { errorMessage } from '@/app/lib/errors'
@@ -36,6 +36,7 @@ import { errorMessage } from '@/app/lib/errors'
 const BARK = 'var(--awm-bark)'
 const GOLD = 'var(--awm-gold)'
 const MUTED = 'var(--awm-muted)'
+const ShowEditDialog = dynamic(() => import('./components/ShowEditDialog'), { ssr: false })
 
 export interface WatchEpisode extends EpisodeMeta {
   showId: string
@@ -296,7 +297,7 @@ export default function CartoonsPage({
       filtersPanel={filtersPanel}
       countLabel={`${totalItems} ${view === 'episodes' ? 'episodes' : 'shows'}`}
     >
-      <ShowEditDialog open={dialogOpen} show={editingShow} onClose={() => setDialogOpen(false)} onSaved={() => { setDialogOpen(false); router.refresh() }} />
+      {dialogOpen && <ShowEditDialog open show={editingShow} onClose={() => setDialogOpen(false)} onSaved={() => { setDialogOpen(false); router.refresh() }} />}
 
       {visibleItems.length === 0 ? (
         <Box sx={{ py: 10, textAlign: 'center' }}>

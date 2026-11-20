@@ -2,11 +2,7 @@ import type { Metadata } from "next"
 import Script from 'next/script'
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter"
 import {
-  bookAmiriFont,
-  bookNaskhFont,
-  bookSansFont,
   brandFont,
-  ebGaramond,
   headingFont,
   jost,
 } from "@/app/lib/fonts"
@@ -25,6 +21,8 @@ const socialImage = {
 }
 
 export const metadata: Metadata = {
+  applicationName: 'ArabicWithM',
+  appleWebApp: { capable: true, title: 'ArabicWithM', statusBarStyle: 'default' },
   metadataBase: new URL('https://www.arabicwithm.com'),
   icons: {
     icon: [
@@ -54,6 +52,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
+  themeColor: '#046154',
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -69,6 +68,11 @@ export default function RootLayout({
       <head>
         {/* Keep these global links present even when page metadata streams. */}
         <link rel="manifest" href="/site.webmanifest" />
+        {/* Next 16 emits the standard mobile-web-app-capable tag; iOS also
+            needs the Apple form when opening a saved Home Screen bookmark. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/* Independent of the app bundle so a failed deployment chunk has a recovery UI. */}
+        <script src="/startup-recovery.js" defer />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#046154" />
         <Script id="awm-gtm-init" strategy="lazyOnload">{`
           window.dataLayer = window.dataLayer || [];
@@ -79,7 +83,7 @@ export default function RootLayout({
         <Script id="awm-gtm-container" strategy="lazyOnload" src="https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2" />
       </head>
       <body
-        className={`${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable} ${bookNaskhFont.variable} ${bookSansFont.variable} ${bookAmiriFont.variable}`}
+        className={`${jost.variable} ${brandFont.variable} ${headingFont.variable}`}
       >
         <AppRouterCacheProvider options={{ key: 'css', enableCssLayer: true }}>
           <AuthProvider>

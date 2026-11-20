@@ -28,8 +28,9 @@ it('keeps the public homepage visible during session recovery', () => {
   try {
     const html = renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]}/>)
     expect(html).toContain('Learn Arabic through cartoons and books')
-    expect(html).toContain('Start Watching')
-    expect(html).toContain('Start Reading')
+    expect(html).toContain('data-featured-hero')
+    expect(html).toContain('Browse Shows')
+    expect(html).not.toContain('data-home-hero')
   } finally {
     home.user = previousUser
     home.loading = false

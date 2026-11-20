@@ -3,10 +3,10 @@
 import {useEffect, useRef, useState, type PointerEvent} from 'react'
 import {Box, IconButton} from '@mui/material'
 import {ChevronLeft, ChevronRight} from '@mui/icons-material'
-import FeaturedHero, {type FeaturedShow} from './FeaturedHero'
+import FeaturedHero, {FeaturedShell, type FeaturedShow} from './FeaturedHero'
 
 /** One artwork viewport; navigation is entirely user controlled. */
-export default function FeaturedCarousel({items}: {items: FeaturedShow[]}) {
+export default function FeaturedCarousel({items, loading = false}: {items: FeaturedShow[]; loading?: boolean}) {
  const slides=items.slice(0,3)
  const viewport=useRef<HTMLDivElement>(null)
  const [index,setIndex]=useState(0), [dragging,setDragging]=useState(false)
@@ -58,7 +58,7 @@ export default function FeaturedCarousel({items}: {items: FeaturedShow[]}) {
    <IconButton aria-label="Next Featured Show" disabled={index===slides.length-1} onClick={()=>navigate(index+1)} size="small" sx={{display:{xs:'none',md:'inline-flex'},width:28,height:28,color:'#fff','&.Mui-disabled':{color:'rgba(255,255,255,.35)'}}}><ChevronRight fontSize="small"/></IconButton>
    <Box aria-live="polite" sx={{position:'absolute',width:1,height:1,overflow:'hidden',clipPath:'inset(50%)'}}>Featured Show {index+1} of {slides.length}: {slides[index]?.show.title}</Box>
   </Box>:null
- if(!slides.length)return null
+ if(!slides.length)return <FeaturedShell loading={loading}/>
  return <Box role="region" aria-roledescription="carousel" aria-label="Featured Shows" data-featured-carousel sx={{position:'relative'}}>
   <Box ref={viewport} tabIndex={slides.length>1?0:undefined} aria-label="Swipe Featured Shows"
    onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={end}

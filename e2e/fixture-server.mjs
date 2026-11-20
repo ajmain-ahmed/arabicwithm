@@ -17,7 +17,7 @@ const webUrl = `http://127.0.0.1:${webPort}`
 const backendUrl = `https://localhost:${backendPort}`
 const fixtureBuild = path.resolve('.next-browser')
 if (!fixtureBuild.startsWith(`${process.cwd()}${path.sep}`)) throw new Error('Fixture cache must stay in the workspace.')
-rmSync(fixtureBuild, { recursive: true, force: true })
+if (process.env.AWM_TEST_REUSE_BUILD !== '1') rmSync(fixtureBuild, { recursive: true, force: true })
 mkdirSync(fixtureBuild, { recursive: true })
 // Production builds clean distDir, so keep fixture TLS outside that directory.
 const certificateDir = path.resolve('supabase/.temp', `fixture-tls-${backendPort}`)
@@ -148,12 +148,14 @@ function configureFeaturedCarousel(){
       const id=`77777777-7777-4777-8777-77777777777${i}`,slug=`hero-fixture-${i}`
       tables.shows.push({id,slug,title:`Hero Fixture ${i}`,level:'A1',tags:[]})
       featuredObjects.set(`featured/${slug}.webp`,{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
+      for(const width of [828,1600])featuredObjects.set(`variants/featured/${slug}-${width}.avif`,{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
       tables.featured_show_config.push({show_id:id,storage_path:`featured/${slug}.webp`,position_x:20+i*10,position_y:30+i*10,updated_at:'2026-01-01T00:00:00Z'})
     }
     profiles.set(ids.free,{is_public:true,share_reading:false})
 }
 if(process.env.AWM_FEATURED_CAROUSEL_FIXTURE==='1')configureFeaturedCarousel()
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
+ try {
   res.setHeader('Access-Control-Allow-Origin', webUrl)
   res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, content-profile, accept-profile, range, prefer, accept, x-supabase-api-version, x-upsert')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
@@ -392,6 +394,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return userId ? json(res, account(userId)) : json(res, { message: 'Auth session missing!' }, 401)
   }
   if (url.pathname === '/auth/v1/token' && req.method === 'POST') {
+    if(url.searchParams.get('grant_type')==='refresh_token'){
+      const id=String(body.refresh_token??'').replace(/^fixture-refresh:/,'')
+      return Object.values(ids).includes(id)?json(res,authSession(id)):json(res,{message:'Invalid refresh token'},400)
+    }
     const id = [...Object.values(ids),...registrations.keys()].find(id => account(id).email === body.email)
     if (!id) return json(res,{message:'Invalid credentials'},400)
     const registration=registrations.get(id)
@@ -857,6 +863,13 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   if (url.pathname.startsWith('/storage/v1/object/')) { res.writeHead(200, { 'Content-Type': 'image/webp' }); res.end(cover); return }
   console.error('Unhandled fixture endpoint:', req.method, url.pathname)
   json(res, { message: 'Unknown fixture endpoint' }, 404)
+ } catch (error) {
+   // Deadline and navigation tests intentionally close in-flight requests.
+   if (req.aborted || error?.code === 'ECONNRESET') return
+   console.error('Fixture request failed:', error)
+   if (!res.headersSent) json(res, { message: 'Fixture request failed' }, 500)
+   else res.end()
+ }
 })
 function configureMobileMore(){
   const template=tables.episodes[0]
@@ -904,7 +917,7 @@ backend.listen(backendPort, '127.0.0.1', () => {
     next=spawn(process.execPath,['node_modules/next/dist/bin/next',...args,'--hostname','127.0.0.1','--port',String(webPort)],{stdio:'inherit',env})
     next.on('exit',finish)
   }
-  if(process.env.AWM_TEST_PRODUCTION==='1'){
+  if(process.env.AWM_TEST_PRODUCTION==='1' && process.env.AWM_TEST_REUSE_BUILD!=='1'){
     // vinext and Next write different generated declarations under .next/types.
     // Restore Next's declarations before checking the isolated production build.
     const types=spawnSync(process.execPath,['node_modules/next/dist/bin/next','typegen'],{stdio:'inherit',env:{...env,AWM_BROWSER_TEST:'0'}})

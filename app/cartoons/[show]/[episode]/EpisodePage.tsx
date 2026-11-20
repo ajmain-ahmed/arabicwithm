@@ -53,7 +53,6 @@ import {
 } from '@/app/lib/watchPreferences'
 
 const EpisodeEditDialog = dynamic(() => import('@/app/(admin)/admin/components/EpisodeEditDialog'), { ssr: false })
-const EpisodeGrammarNotes = dynamic(() => import('@/app/components/grammar/EpisodeGrammarNotes'), { ssr: false })
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
 const NAVBAR_HEIGHT = 64 // px
@@ -892,7 +891,6 @@ export default function EpisodePage({
   const closePip = usePlayerStore((state) => state.closePip)
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const [tab, setTab] = useState(0)
-  const [grammarOpen, setGrammarOpen] = useState(false)
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.3)
   const [textFont, setTextFont] = useState<'naskh' | 'garamond' | 'amiri'>('naskh')
@@ -1119,7 +1117,6 @@ export default function EpisodePage({
   return (
     <>
       <ClientStyles id="awm-episode-styles" css={PAGE_CSS} />
-      {grammarOpen && <EpisodeGrammarNotes episodeId={episode.id} onClose={() => setGrammarOpen(false)} />}
 
       <SettingsDialog
         open={settingsOpen}
@@ -1303,7 +1300,6 @@ export default function EpisodePage({
                 >
                   Memory
                 </Button>
-                <Button onClick={() => setGrammarOpen(true)} size="small" sx={{ color: 'rgba(245,237,224,0.65)', textTransform: 'none', minHeight: 34 }}>Grammar Notes</Button>
                 <Button
                   onClick={openSettings}
                   size="small"
@@ -1332,7 +1328,6 @@ export default function EpisodePage({
                 onChange={(_, v) => {
                   if (v === 2) { openSettings(); return }
                   if (v === 3) { router.push(`/memory?episode=${encodeURIComponent(episode.id)}`); return }
-                  if (v === 4) { setGrammarOpen(true); return }
                   setTab(v)
                 }}
                 variant={isMobile ? 'fullWidth' : 'standard'}
@@ -1347,7 +1342,6 @@ export default function EpisodePage({
                 <Tab label="More" />
                 {isMobile && <Tab label="Settings" />}
                 {isMobile && <Tab label="Memory" />}
-                {isMobile && <Tab label="Grammar Notes" />}
               </Tabs>
 
             </Box>

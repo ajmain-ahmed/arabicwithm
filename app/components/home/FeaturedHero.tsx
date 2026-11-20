@@ -16,6 +16,17 @@ export interface FeaturedShow {
   episodeCount: number
 }
 
+/** The same Featured frame remains visible during loading or a catalogue outage. */
+export function FeaturedShell({ loading = false }: { loading?: boolean }) {
+  return <Box data-featured-hero data-featured-shell sx={{ pt: '32px', pb: { xs: 1.5, md: 2.5 }, px: { xs: 2, md: 4 } }}>
+    <Box sx={{ position: 'relative', height: { xs: FEATURED_MOBILE_HEIGHT, md: 'auto' }, aspectRatio: { md: FEATURED_DESKTOP_RATIO }, borderRadius: { xs: '14px', md: '18px' }, bgcolor: '#0a0f0d', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-start', p: { xs: 3, md: 6 } }}>
+      <Typography sx={{ color: 'var(--awm-gold-light)', letterSpacing: '.18em', textTransform: 'uppercase' }}>Featured</Typography>
+      <Typography role="status" sx={{ color: '#fff', my: 2, fontFamily: 'var(--font-heading)', fontSize: { xs: 28, md: 42 } }}>{loading ? 'Loading Featured…' : 'Discover your next Arabic story'}</Typography>
+      {!loading && <Button component={Link} prefetch={false} href="/cartoons" variant="contained">Browse Shows</Button>}
+    </Box>
+  </Box>
+}
+
 /* Netflix-style featured banner for every homepage visitor, signed in or
    not: artwork in a card, content bottom-left inside it. Desktop runs
    full-bleed; mobile is a tall card so the whole height of the artwork is
@@ -49,7 +60,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
       >
         {loadImage&&<Box
           component="img"
-          src={featuredImage ?? "/homepage/dbz-feature.avif"}
+          src={featuredImage ?? (show.slug.toLowerCase() === 'dbz' ? '/homepage/dbz-feature.avif' : show.cover)}
           srcSet={featuredImage ? featuredImageSrcSet(featuredImage) : undefined}
           sizes="(max-width: 899px) calc(100vw - 32px), 100vw"
           alt={show.title}

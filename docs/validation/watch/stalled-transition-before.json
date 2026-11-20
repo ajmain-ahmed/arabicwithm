@@ -1,0 +1,21 @@
+[
+  {
+    "width": 390,
+    "url": "http://127.0.0.1:3077/learn",
+    "blocked": [
+      "http://127.0.0.1:3077/cartoons?_rsc=udqwrjSpjIpABtrk"
+    ],
+    "watchVisible": 0,
+    "pageError": 0
+  },
+  {
+    "width": 1440,
+    "url": "http://127.0.0.1:3077/learn",
+    "blocked": [
+      "http://127.0.0.1:3077/cartoons?_rsc=0wQV2KH2nyNo4g11",
+      "http://127.0.0.1:3077/cartoons?_rsc=udqwrjSpjIpABtrk"
+    ],
+    "watchVisible": 0,
+    "pageError": 0
+  }
+]

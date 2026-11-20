@@ -1,0 +1,651 @@
+{
+  "date": "2026-11-20",
+  "scope": "Tested local source. Public production inspected read only. NOT DEPLOYED.",
+  "featured": {
+    "canonical": "app/page.tsx -> HomeSections.FeaturedSection -> FeaturedCarousel -> FeaturedHero",
+    "legacyPathFound": "The inline HomeDashboard static hero rendered whenever featuredItems was empty. HomeHero.tsx is dormant; the shared static asset is retained for the unrelated Support page.",
+    "cause": "Empty curated data, including the original 1.2-second artwork deadline, could exhaust the DBZ-only fallback and enter the old hero branch.",
+    "fix": "Legacy branch removed. Current show cover or the same Featured frame handles failures. Exactly one Featured area; stable keys reset the carousel when rotation/admin edits change its pool.",
+    "artworkCropAndDestinations": "Preserved",
+    "threeDayLondonRotation": "Preserved",
+    "learnLinkedCapabilityPreserved": true,
+    "learnLinkedNote": "This checkout supported Shows only; no existing Learn-targeted routing was removed.",
+    "cache": "Tagged catalogue/artwork caches and per-build Cloudflare KV prefix retained. Homepage HTML private/no-store. Manifest and recovery script revalidate. Live production HTML already used no-store; stale Cloudflare HTML was not established as the cause.",
+    "normalHomepageCanRenderLegacyHero": false
+  },
+  "learn": {
+    "grammarInContext": "Removed, including Episode Note controls",
+    "sections": [
+      "Naḥw",
+      "Ṣarf"
+    ],
+    "oldRoutes": [
+      "/grammar/context/:path*",
+      "/grammar/notes/:path*"
+    ],
+    "redirect": "/grammar",
+    "history": "Tables and admin note tools retained"
+  },
+  "performance": {
+    "measurements": {
+      "before": {
+        "webkit": {
+          "ttfbMs": 23,
+          "fcpMs": 111,
+          "lcpMs": 188,
+          "contentVisibleMs": 179,
+          "usableMs": 1564,
+          "hydratedMs": null,
+          "firstReactCommitMs": 573,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 325600,
+          "legacyHeroSeen": true
+        },
+        "chrome": {
+          "ttfbMs": 16.5,
+          "fcpMs": 140,
+          "lcpMs": 140,
+          "contentVisibleMs": 145.89999997615814,
+          "usableMs": 665.5,
+          "hydratedMs": null,
+          "firstReactCommitMs": 199.5,
+          "scriptExecutionMs": 182.85399999999998,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 326799,
+          "legacyHeroSeen": true
+        }
+      },
+      "after": {
+        "webkit": {
+          "ttfbMs": 31,
+          "fcpMs": 121,
+          "lcpMs": 203,
+          "contentVisibleMs": 206,
+          "usableMs": 1542,
+          "hydratedMs": 663,
+          "firstReactCommitMs": 662,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 94186,
+          "legacyHeroSeen": false
+        },
+        "chrome": {
+          "ttfbMs": 26.100000023841858,
+          "fcpMs": 164,
+          "lcpMs": 164,
+          "contentVisibleMs": 260.39999997615814,
+          "usableMs": 708.6999999284744,
+          "hydratedMs": 218.29999995231628,
+          "firstReactCommitMs": 217.69999992847443,
+          "scriptExecutionMs": 168.242,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 95385,
+          "legacyHeroSeen": false
+        }
+      },
+      "before-slow-spotlight": {
+        "webkit": {
+          "ttfbMs": 23,
+          "fcpMs": 115,
+          "lcpMs": 2691,
+          "contentVisibleMs": 2647,
+          "usableMs": 3643,
+          "hydratedMs": null,
+          "firstReactCommitMs": 2972,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 325600,
+          "legacyHeroSeen": true
+        },
+        "chrome": {
+          "ttfbMs": 21.90000009536743,
+          "fcpMs": 108,
+          "lcpMs": 2628,
+          "contentVisibleMs": 2643.100000023842,
+          "usableMs": 3043,
+          "hydratedMs": null,
+          "firstReactCommitMs": 163.29999995231628,
+          "scriptExecutionMs": 187.45800000000003,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 401625,
+          "imageTransferBytes": 326799,
+          "legacyHeroSeen": true
+        }
+      },
+      "after-slow-spotlight": {
+        "webkit": {
+          "ttfbMs": 31,
+          "fcpMs": 120,
+          "lcpMs": 200,
+          "contentVisibleMs": 204,
+          "usableMs": 1603,
+          "hydratedMs": 616,
+          "firstReactCommitMs": 616,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 94186,
+          "legacyHeroSeen": false
+        },
+        "chrome": {
+          "ttfbMs": 25.700000047683716,
+          "fcpMs": 152,
+          "lcpMs": 152,
+          "contentVisibleMs": 273.39999997615814,
+          "usableMs": 689.3000000715256,
+          "hydratedMs": 207.30000007152557,
+          "firstReactCommitMs": 206.70000004768372,
+          "scriptExecutionMs": 158.691,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 394035,
+          "imageTransferBytes": 95385,
+          "legacyHeroSeen": false
+        }
+      },
+      "production-before": {
+        "webkit": {
+          "ttfbMs": 148,
+          "fcpMs": 323,
+          "lcpMs": 618,
+          "contentVisibleMs": 651,
+          "usableMs": 1757,
+          "hydratedMs": null,
+          "firstReactCommitMs": 873,
+          "scriptExecutionMs": null,
+          "blockingRequests": null,
+          "jsThroughFirstInteractionBytes": 584695,
+          "imageTransferBytes": 94186,
+          "legacyHeroSeen": false
+        },
+        "chrome": {
+          "ttfbMs": 717.8999999761581,
+          "fcpMs": 964,
+          "lcpMs": 980,
+          "contentVisibleMs": 940,
+          "usableMs": 1665.5999999046326,
+          "hydratedMs": null,
+          "firstReactCommitMs": 1065.7999999523163,
+          "scriptExecutionMs": 208.535,
+          "blockingRequests": 2,
+          "jsThroughFirstInteractionBytes": 473745,
+          "imageTransferBytes": 96597,
+          "legacyHeroSeen": false
+        }
+      }
+    },
+    "units": "ms and bytes; medians of three fresh browser contexts per engine",
+    "conditions": "Next production build; synthetic backend; 390x844; analytics and YouTube blocked. Slow case injects 2500ms into Spotlight. Baseline read Featured after DOMContentLoaded; final polling starts at response commit to capture streaming.",
+    "waterfallBefore": "parallel catalogue/Spotlight/phrase -> wait for all -> home episodes -> Featured artwork -> render",
+    "waterfallAfter": "Independent reads start together; Featured streams independently; Spotlight discovery/player/transcript/metering start once near its viewport.",
+    "auth": "Homepage independent of role/session resolution. Pending Admin hidden. Server guards unchanged.",
+    "fonts": {
+      "preloads": {
+        "http://127.0.0.1:3077": {
+          "count": 3,
+          "bytes": 190112
+        },
+        "https://www.arabicwithm.com": {
+          "count": 8,
+          "bytes": 1261292
+        }
+      },
+      "note": "vinext 1.4.5 ignores localFont preload:false. Reading faces now use CSS @font-face/swap with original bytes. Only three UI faces register through next/font."
+    },
+    "images": "Current production 828px curated AVIF verified at 46409 bytes. Responsive artwork/crop unchanged; browser tests verify one mounted slide image. Synthetic fallback artwork bytes are not representative production images.",
+    "limits": [
+      "WebKit isolated JS CPU time and hydration duration unavailable; React commit/hydration completion timestamps recorded instead.",
+      "Usable interaction measures menu opening after Featured appears, not a standardized TTI score.",
+      "No production after-deployment samples; nothing deployed."
+    ]
+  },
+  "installedApp": {
+    "manifest": "public/site.webmanifest unchanged",
+    "startUrl": "/",
+    "scope": "/",
+    "display": "standalone",
+    "icons": "All manifest/Apple icons returned 200",
+    "metadata": "Added Apple capable/title/status-bar metadata and theme color",
+    "serviceWorker": "None in current source or fresh browser profiles; no worker introduced",
+    "caching": "No cached offline HTML shell or mixed-build navigation fallback. Existing physical installations uninspected.",
+    "offline": "Reconnect/reload notice on an existing page. First offline navigation uses the browser network-error experience; no full offline support.",
+    "chunkFailure": "Independent recovery script offers manual reload, with no automatic loop",
+    "auth": "Signed-out, signed-in, expired-token refresh, reload/history and simulated resume pass",
+    "standaloneLaunch": "PASS in standalone API emulation",
+    "physicalIphone": "BLOCKED: no physical iPhone or Safari device. Actual Home Screen install and OS process restart not tested."
+  },
+  "qa": {
+    "browserCases": [
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 320",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 375",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 390",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 414",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 430",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 768",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 1024",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "Featured, Learn and navigation at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "public routes, retired links, reader, profile and Admin guards",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "expired session refresh and background resume keep Featured public",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "slow Spotlight cannot hold Featured or menu hydration",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "a pending Admin role check does not block public Featured or show Admin",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 320",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 375",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 390",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 414",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 430",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 768",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 1024",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "Featured, Learn and navigation at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "public routes, retired links, reader, profile and Admin guards",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "expired session refresh and background resume keep Featured public",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "slow Spotlight cannot hold Featured or menu hydration",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "a pending Admin role check does not block public Featured or show Admin",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 320",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 375",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 390",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 414",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 430",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 768",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 1024",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "Featured, Learn and navigation at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "public routes, retired links, reader, profile and Admin guards",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "expired session refresh and background resume keep Featured public",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "slow Spotlight cannot hold Featured or menu hydration",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "a pending Admin role check does not block public Featured or show Admin",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 320",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 375",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 390",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 414",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 430",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 768",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 1024",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "Featured, Learn and navigation at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "public routes, retired links, reader, profile and Admin guards",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "standalone-style launch, storage denial, resume, offline and chunk recovery",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "expired session refresh and background resume keep Featured public",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "slow Spotlight cannot hold Featured or menu hydration",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "a pending Admin role check does not block public Featured or show Admin",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "curated artwork, crop and hidden slides at 390",
+        "status": "passed"
+      },
+      {
+        "project": "webkit",
+        "title": "curated artwork, crop and hidden slides at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "curated artwork, crop and hidden slides at 390",
+        "status": "passed"
+      },
+      {
+        "project": "chrome",
+        "title": "curated artwork, crop and hidden slides at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "curated artwork, crop and hidden slides at 390",
+        "status": "passed"
+      },
+      {
+        "project": "firefox",
+        "title": "curated artwork, crop and hidden slides at 1440",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "curated artwork, crop and hidden slides at 390",
+        "status": "passed"
+      },
+      {
+        "project": "edge",
+        "title": "curated artwork, crop and hidden slides at 1440",
+        "status": "passed"
+      }
+    ],
+    "browserStats": {
+      "main": {
+        "startTime": "2026-11-20T22:10:03.011Z",
+        "duration": 168398.416,
+        "expected": 52,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "curated": {
+        "startTime": "2026-11-20T22:15:33.361Z",
+        "duration": 26627.998,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "totalPassed": 60
+    },
+    "widths": [
+      320,
+      375,
+      390,
+      414,
+      430,
+      768,
+      1024,
+      1440
+    ],
+    "browsers": [
+      "Playwright WebKit",
+      "Installed Chrome",
+      "Playwright Firefox",
+      "Installed Edge"
+    ],
+    "physicalSafari": "NOT TESTED",
+    "reliability": {
+      "Homepage": "PASS in isolated fixture QA",
+      "Featured": "PASS in isolated fixture QA",
+      "Explore": "PASS in isolated fixture QA",
+      "Watch": "PASS in isolated fixture QA",
+      "Episode": "PASS in isolated fixture QA",
+      "Read": "PASS in isolated fixture QA",
+      "Reader": "PASS in isolated fixture QA",
+      "Learn": "PASS in isolated fixture QA",
+      "Nahw": "PASS in isolated fixture QA",
+      "Sarf": "PASS in isolated fixture QA",
+      "Profile": "PASS in isolated fixture QA",
+      "Library": "PASS in isolated fixture QA",
+      "Admin Books": "PASS in isolated fixture QA",
+      "Admin Phrases": "PASS in isolated fixture QA"
+    }
+  },
+  "engineering": {
+    "sourceFiles": [
+      "app/actions/cartoons.ts",
+      "app/cartoons/[show]/[episode]/EpisodePage.tsx",
+      "app/components/home/FeaturedCarousel.tsx",
+      "app/components/home/FeaturedHero.tsx",
+      "app/components/home/HomeDashboard.test.tsx",
+      "app/components/home/HomeDashboard.tsx",
+      "app/components/home/HomeForYouSpotlight.test.tsx",
+      "app/components/home/HomeForYouSpotlight.tsx",
+      "app/components/home/HomeQuickActions.test.tsx",
+      "app/components/home/HomeSections.tsx",
+      "app/components/home/SpotlightContent.tsx",
+      "app/components/PageLoading.tsx",
+      "app/components/VitalsReporter.tsx",
+      "app/fonts/reading.css",
+      "app/globals.css",
+      "app/grammar/context/[level]/page.tsx",
+      "app/grammar/context/page.tsx",
+      "app/grammar/GrammarPage.tsx",
+      "app/grammar/notes/[id]/page.tsx",
+      "app/layout.tsx",
+      "app/lib/fonts.ts",
+      "app/lib/homeCatalogue.ts",
+      "app/lib/homeFeatured.ts",
+      "app/page.test.tsx",
+      "app/page.tsx",
+      "e2e/fixture-server.mjs",
+      "e2e/full-reliability.pw.ts",
+      "e2e/home-featured-curated.pw.ts",
+      "e2e/home-startup.pw.ts",
+      "next.config.ts",
+      "playwright.home-startup.config.ts",
+      "public/startup-recovery.js",
+      "scripts/audit-home-install.mjs",
+      "scripts/measure-home-startup.mjs"
+    ],
+    "serviceWorkerChanges": "None",
+    "manifestChanges": "None; valid launch settings retained",
+    "cacheChanges": "HTML no-store; manifest/recovery revalidation; existing tagged/per-build caches retained",
+    "routingChanges": "Retired Context/Note routes redirect to /grammar",
+    "checks": {
+      "unit": {
+        "passed": 1570,
+        "skipped": 6,
+        "passedFiles": 232,
+        "skippedFiles": 4
+      },
+      "nextProductionBuild": "PASS",
+      "cloudflareVinextProductionBuild": "PASS; existing sourcemap/static classification warnings",
+      "targetedLint": "PASS",
+      "gitDiffCheck": "PASS"
+    },
+    "migrationsRequired": false,
+    "deployed": false
+  },
+  "dataSafety": {
+    "productionDelete": false,
+    "truncate": false,
+    "drop": false,
+    "booksDeleted": false,
+    "chaptersDeleted": false,
+    "showsDeleted": false,
+    "episodesDeleted": false,
+    "transcriptsDeleted": false,
+    "phrasesDeleted": false,
+    "existingProductionContentReplaced": false
+  },
+  "followup": {
+    "report": "../watch/REPORT.md",
+    "verification": "../watch/verification.json",
+    "note": "Final Watch/startup changes and 196-browser-case gate are reported there; this file preserves the initial homepage comparison."
+  }
+}

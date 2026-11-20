@@ -8,6 +8,7 @@ import ClientStyles from '@/app/components/ClientStyles'
 import { useAuth } from '@/app/AuthContext'
 import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
 import MemberBrandPlus from '@/app/components/MemberBrandPlus'
+import { WATCH_ROUTE } from '@/app/lib/navigation'
 
 /* ─────────────────────────────────────────────
    Types & data
@@ -18,7 +19,7 @@ const FOOTER_SECTIONS = () => [
     links: [
       { label: 'Home',     href: '/',         onClick: undefined },
       { label: 'Explore',  href: '/explore',  onClick: undefined },
-      { label: 'Watch',    href: '/cartoons', onClick: undefined },
+      { label: 'Watch',    href: WATCH_ROUTE, onClick: undefined },
       { label: 'Read',     href: '/books',    onClick: undefined },
     ],
   },
@@ -226,7 +227,9 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
                 {section.title}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.4 }}>
-                {section.links.map(link => (
+                {section.links.map(link => link.href === WATCH_ROUTE ? (
+                  <a key={link.label} className="awm-footer-link" href={WATCH_ROUTE} style={{ textDecoration: 'none' }}>{link.label}</a>
+                ) : (
                   <button
                     key={link.label}
                     className="awm-footer-link"

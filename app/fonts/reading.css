@@ -1,0 +1,38 @@
+/* CSS faces are fetched only when used. vinext 1.4.5's next/font/local shim
+   preloads every registered face even with preload:false. Keep the original
+   WOFF2 files and typography without preloading unused reader fonts on Home. */
+@font-face {
+  font-family: 'EB Garamond';
+  src: url('./ebgaramond/EBGaramond-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'AWM Naskh';
+  src: url('./notonaskharabic/NotoNaskhArabic-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'AWM Arabic Sans';
+  src: url('./notosansarabic/NotoSansArabic-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'AWM Amiri';
+  src: url('./amiri/Amiri-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'AWM Amiri';
+  src: url('./amiri/Amiri-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

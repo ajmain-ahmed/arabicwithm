@@ -1,0 +1,152 @@
+[
+  {
+    "origin": "http://127.0.0.1:3077",
+    "width": 320,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "http://127.0.0.1:3077/"
+  },
+  {
+    "origin": "http://127.0.0.1:3077",
+    "width": 375,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "http://127.0.0.1:3077/"
+  },
+  {
+    "origin": "http://127.0.0.1:3077",
+    "width": 390,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "http://127.0.0.1:3077/"
+  },
+  {
+    "origin": "http://127.0.0.1:3077",
+    "width": 414,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "http://127.0.0.1:3077/"
+  },
+  {
+    "origin": "http://127.0.0.1:3077",
+    "width": 430,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "http://127.0.0.1:3077/"
+  },
+  {
+    "origin": "https://www.arabicwithm.com",
+    "width": 320,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "https://www.arabicwithm.com/"
+  },
+  {
+    "origin": "https://www.arabicwithm.com",
+    "width": 375,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "https://www.arabicwithm.com/"
+  },
+  {
+    "origin": "https://www.arabicwithm.com",
+    "width": 390,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "https://www.arabicwithm.com/"
+  },
+  {
+    "origin": "https://www.arabicwithm.com",
+    "width": 414,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "https://www.arabicwithm.com/"
+  },
+  {
+    "origin": "https://www.arabicwithm.com",
+    "width": 430,
+    "box": {
+      "x": 116.765625,
+      "y": 4,
+      "width": 45.921875,
+      "height": 56.296875
+    },
+    "hit": {
+      "receivesTap": false,
+      "interceptor": "ArabicWithM home"
+    },
+    "url": "https://www.arabicwithm.com/"
+  }
+]

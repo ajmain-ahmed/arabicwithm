@@ -1,0 +1,293 @@
+[
+  {
+    "url": "http://127.0.0.1:3077",
+    "status": 200,
+    "cache": "private, no-store",
+    "manifest": {
+      "id": "/",
+      "name": "ArabicWithM",
+      "short_name": "ArabicWithM",
+      "start_url": "/",
+      "scope": "/",
+      "display": "standalone",
+      "background_color": "#f7f7f4",
+      "theme_color": "#046154",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/android-chrome-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/android-chrome-maskable-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ]
+    },
+    "appleCapable": "yes",
+    "themeColor": "#046154",
+    "appleIcon": "http://127.0.0.1:3077/apple-touch-icon.png",
+    "fonts": [
+      {
+        "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      }
+    ],
+    "image": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+    "serviceWorkers": [],
+    "profile": "fresh browser context",
+    "manifestCache": "public, max-age=0, must-revalidate",
+    "assets": [
+      {
+        "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 40864
+      },
+      {
+        "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 50692
+      },
+      {
+        "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 98556
+      },
+      {
+        "url": "http://127.0.0.1:3077/apple-touch-icon.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0",
+        "bytes": 6389
+      },
+      {
+        "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "status": 200,
+        "type": "image/webp",
+        "bytes": 42
+      },
+      {
+        "url": "http://127.0.0.1:3077/android-chrome-192x192.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0",
+        "bytes": 6778
+      },
+      {
+        "url": "http://127.0.0.1:3077/android-chrome-512x512.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0",
+        "bytes": 20452
+      },
+      {
+        "url": "http://127.0.0.1:3077/android-chrome-maskable-512x512.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0",
+        "bytes": 21916
+      }
+    ]
+  },
+  {
+    "url": "https://www.arabicwithm.com",
+    "status": 200,
+    "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+    "manifest": {
+      "id": "/",
+      "name": "ArabicWithM",
+      "short_name": "ArabicWithM",
+      "start_url": "/",
+      "scope": "/",
+      "display": "standalone",
+      "background_color": "#f7f7f4",
+      "theme_color": "#046154",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/android-chrome-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/android-chrome-maskable-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ]
+    },
+    "appleIcon": "https://www.arabicwithm.com/apple-touch-icon.png",
+    "fonts": [
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/EBGaramond-Variable.AP3_U6NE.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/Jost-Variable.CvM2jvhu.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/BalooBhaijaan2-Variable-latin.DiY4RXbb.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/NunitoSans-Variable-latin.CpFvVibi.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/NotoNaskhArabic-Variable.6GYD_0Ja.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/NotoSansArabic-Variable.Dm9kHlsK.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/Amiri-Regular.Bg6Izewa.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/Amiri-Bold.BBekSWQd.woff2",
+        "type": "font/woff2",
+        "crossOrigin": "anonymous"
+      }
+    ],
+    "image": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/variants/featured/nar-828.avif?v=2026-11-03T18%3A59%3A23.494%2B00%3A00",
+    "serviceWorkers": [],
+    "profile": "fresh browser context",
+    "manifestCache": "public, max-age=0, must-revalidate",
+    "assets": [
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/EBGaramond-Variable.AP3_U6NE.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 296692
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/Jost-Variable.CvM2jvhu.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 50692
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/BalooBhaijaan2-Variable-latin.DiY4RXbb.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 40864
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/NunitoSans-Variable-latin.CpFvVibi.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 98556
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/NotoNaskhArabic-Variable.6GYD_0Ja.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 123736
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/NotoSansArabic-Variable.Dm9kHlsK.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 361544
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/Amiri-Regular.Bg6Izewa.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 149072
+      },
+      {
+        "url": "https://www.arabicwithm.com/_next/static/media/Amiri-Bold.BBekSWQd.woff2",
+        "status": 200,
+        "type": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "bytes": 140136
+      },
+      {
+        "url": "https://www.arabicwithm.com/apple-touch-icon.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0, must-revalidate",
+        "bytes": 6389
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/variants/featured/nar-828.avif?v=2026-11-03T18%3A59%3A23.494%2B00%3A00",
+        "status": 200,
+        "type": "image/avif",
+        "cache": "public, max-age=86400",
+        "bytes": 46409
+      },
+      {
+        "url": "https://www.arabicwithm.com/android-chrome-192x192.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0, must-revalidate",
+        "bytes": 6778
+      },
+      {
+        "url": "https://www.arabicwithm.com/android-chrome-512x512.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0, must-revalidate",
+        "bytes": 20452
+      },
+      {
+        "url": "https://www.arabicwithm.com/android-chrome-maskable-512x512.png",
+        "status": 200,
+        "type": "image/png",
+        "cache": "public, max-age=0, must-revalidate",
+        "bytes": 21916
+      }
+    ]
+  }
+]

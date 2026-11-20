@@ -1,7 +1,8 @@
 export const NAV_ITEMS = ['Home', 'Explore', 'Watch', 'Read', 'Learn'] as const
+export const WATCH_ROUTE = '/cartoons'
 
 export const NAV_ROUTES: Record<(typeof NAV_ITEMS)[number], string> = {
-  Home: '/', Explore: '/explore', Watch: '/cartoons', Read: '/books', Learn: '/learn',
+  Home: '/', Explore: '/explore', Watch: WATCH_ROUTE, Read: '/books', Learn: '/learn',
 }
 
 /* Destinations inside the Learn dropdown. */

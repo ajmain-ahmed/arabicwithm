@@ -53,22 +53,20 @@ export const fetchShowsForPublic = unstable_cache(
       return []
     }
 
-    const { data: shows, error } = await serviceClient
+    // The catalogue and public episode counts do not depend on one another.
+    const [{ data: shows, error }, { data: episodes, error: epError }] = await Promise.all([serviceClient
       .from("shows")
       .select("*")
-      .order("title", { ascending: true })
+      .order("title", { ascending: true }), serviceClient
+      .from("episodes")
+      .select("show_id, tags")
+      .not("transcript", "is", null)
+      .not("transcript", "eq", "[]")])
 
     if (error) {
       console.error("[fetchShowsForPublic] error:", error.message)
       throw new Error(error.message)
     }
-
-    // Count episodes per show in one query.
-    const { data: episodes, error: epError } = await serviceClient
-      .from("episodes")
-      .select("show_id, tags")
-      .not("transcript", "is", null)
-      .not("transcript", "eq", "[]")
 
     if (epError) {
       console.error("[fetchShowsForPublic] episodes error:", epError.message)

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./fonts/reading.css";
 
 :root {
   --awm-mobile-bottom-clearance: calc(104px + env(safe-area-inset-bottom));
@@ -39,6 +40,9 @@
   --font-decorative: 'Baloo Bhaijaan 2', 'Jost', system-ui, sans-serif;
   --font-heading: 'Nunito Sans', 'Jost', system-ui, sans-serif;
   --font-serif: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-book-naskh: 'AWM Naskh', serif;
+  --font-book-sans: 'AWM Arabic Sans', sans-serif;
+  --font-book-amiri: 'AWM Amiri', serif;
   --font-sans: 'Jost', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Legacy aliases (kept for backward compatibility during migration) */

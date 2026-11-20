@@ -37,10 +37,10 @@ function HomeRowSkeleton() {
   )
 }
 
-export function HomePageLoading() {
+export function HomePageLoading({ rowsOnly = false }: { rowsOnly?: boolean }) {
   return (
     <Box component="div" data-loading-page="true" sx={{ minHeight: '100dvh', bgcolor: 'var(--awm-cream-light)' }}>
-      <Box sx={{ pt: '32px', pb: { xs: 1.5, md: 2.5 }, px: { xs: 2, md: 4 } }}>
+      {!rowsOnly && <Box sx={{ pt: '32px', pb: { xs: 1.5, md: 2.5 }, px: { xs: 2, md: 4 } }}>
         <Box sx={{ position: 'relative', height: { xs: FEATURED_MOBILE_HEIGHT, md: 'auto' }, aspectRatio: { md: FEATURED_DESKTOP_RATIO }, mx: 'auto', borderRadius: { xs: '14px', md: '18px' }, overflow: 'hidden', bgcolor: '#0a0f0d' }}>
           <Box sx={{ position: 'absolute', left: { xs: 20, md: 48 }, right: 20, bottom: { xs: 20, md: 30 }, maxWidth: 420 }}>
             <Skeleton variant="text" width="70%" height={60} sx={darkSkeleton} />
@@ -50,7 +50,7 @@ export function HomePageLoading() {
             </Box>
           </Box>
         </Box>
-      </Box>
+      </Box>}
       <Box className="awm-pattern-section" sx={{ px: { xs: 2, md: 4 }, pt: { xs: 3.5, md: 4.5 }, pb: 4 }}>
         <HomeRowSkeleton />
         <HomeRowSkeleton />

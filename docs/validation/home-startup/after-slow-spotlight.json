@@ -1,0 +1,2639 @@
+{
+  "baseURL": "http://127.0.0.1:3077",
+  "label": "after-slow-spotlight",
+  "results": [
+    {
+      "name": "webkit",
+      "run": 0,
+      "shellVisible": 215,
+      "contentVisible": 231,
+      "usable": 1627,
+      "cpu": null,
+      "ttfb": 34,
+      "fcp": 136,
+      "commits": [
+        660,
+        676,
+        676,
+        714,
+        746,
+        788,
+        795,
+        807,
+        863,
+        893,
+        1173,
+        1217,
+        1249,
+        1272,
+        1282,
+        1295,
+        1299,
+        1511,
+        1602,
+        1622,
+        1623,
+        1727,
+        1883,
+        1913,
+        1944
+      ],
+      "lcp": 205,
+      "longTasks": [],
+      "domContentLoaded": 109,
+      "hydrated": 661,
+      "jsBytes": 391095,
+      "jsDecodedBytes": 1242074,
+      "imageBytes": 75880,
+      "blockingRequests": null,
+      "totalJsTransferBytes": 394035,
+      "totalImageTransferBytes": 94186,
+      "featuredImage": {
+        "src": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "complete": true,
+        "width": 1
+      },
+      "fontPreloads": [
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        }
+      ],
+      "resources": [
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+          "type": "link",
+          "start": 44,
+          "duration": 453,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "link",
+          "start": 62,
+          "duration": 7,
+          "bytes": 50992,
+          "decodedBytes": 50692
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "link",
+          "start": 62,
+          "duration": 8,
+          "bytes": 41164,
+          "decodedBytes": 40864
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "link",
+          "start": 63,
+          "duration": 7,
+          "bytes": 98856,
+          "decodedBytes": 98556
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1st9fjntpr8ls.css",
+          "type": "link",
+          "start": 63,
+          "duration": 9,
+          "bytes": 1265,
+          "decodedBytes": 2309
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0i6e6myb-28o0.css",
+          "type": "link",
+          "start": 63,
+          "duration": 10,
+          "bytes": 5624,
+          "decodedBytes": 24268
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3plfv7-n_vhp8.js",
+          "type": "link",
+          "start": 63,
+          "duration": 10,
+          "bytes": 2940,
+          "decodedBytes": 9971
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/17fms_jsrb1ne.js",
+          "type": "script",
+          "start": 68,
+          "duration": 6,
+          "bytes": 8486,
+          "decodedBytes": 30433
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3516nv78vffqj.js",
+          "type": "script",
+          "start": 68,
+          "duration": 9,
+          "bytes": 9057,
+          "decodedBytes": 27935
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2wdjtr_7x-h4k.js",
+          "type": "script",
+          "start": 68,
+          "duration": 10,
+          "bytes": 36110,
+          "decodedBytes": 132106
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/222ajm33tqo0k.js",
+          "type": "script",
+          "start": 68,
+          "duration": 10,
+          "bytes": 4169,
+          "decodedBytes": 15095
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/turbopack-2u1d16houkiyo.js",
+          "type": "script",
+          "start": 68,
+          "duration": 10,
+          "bytes": 4205,
+          "decodedBytes": 9974
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0vjsg16ul9e52.js",
+          "type": "script",
+          "start": 68,
+          "duration": 11,
+          "bytes": 10160,
+          "decodedBytes": 26315
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2lyj757j0vb17.js",
+          "type": "script",
+          "start": 68,
+          "duration": 14,
+          "bytes": 8529,
+          "decodedBytes": 25125
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3moj6qbiyrsw7.js",
+          "type": "script",
+          "start": 68,
+          "duration": 14,
+          "bytes": 73397,
+          "decodedBytes": 233463
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/32lw9l0p4hoj4.js",
+          "type": "script",
+          "start": 68,
+          "duration": 14,
+          "bytes": 8581,
+          "decodedBytes": 23738
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2vttv1cygrh-p.js",
+          "type": "script",
+          "start": 68,
+          "duration": 14,
+          "bytes": 9310,
+          "decodedBytes": 27685
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/13380-5t4kfhq.js",
+          "type": "script",
+          "start": 68,
+          "duration": 15,
+          "bytes": 11965,
+          "decodedBytes": 33203
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3jpfo1q5qrffe.js",
+          "type": "script",
+          "start": 68,
+          "duration": 16,
+          "bytes": 19589,
+          "decodedBytes": 56429
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3ovv7qzitfy-b.js",
+          "type": "script",
+          "start": 68,
+          "duration": 17,
+          "bytes": 652,
+          "decodedBytes": 352
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/36dierqqh9v7-.js",
+          "type": "script",
+          "start": 68,
+          "duration": 19,
+          "bytes": 11478,
+          "decodedBytes": 30747
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3smubf8sg1x1i.js",
+          "type": "script",
+          "start": 68,
+          "duration": 19,
+          "bytes": 10894,
+          "decodedBytes": 34539
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/33od67-bbti0j.js",
+          "type": "script",
+          "start": 68,
+          "duration": 20,
+          "bytes": 22404,
+          "decodedBytes": 61952
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1z135pb77m5ee.js",
+          "type": "script",
+          "start": 68,
+          "duration": 20,
+          "bytes": 29256,
+          "decodedBytes": 82924
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0hl-z3_qxonq5.js",
+          "type": "script",
+          "start": 68,
+          "duration": 20,
+          "bytes": 10143,
+          "decodedBytes": 32805
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2mfr5k2oqvfrq.js",
+          "type": "script",
+          "start": 68,
+          "duration": 21,
+          "bytes": 542,
+          "decodedBytes": 242
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1hc13nued-fiy.js",
+          "type": "script",
+          "start": 68,
+          "duration": 22,
+          "bytes": 675,
+          "decodedBytes": 375
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/12_8z4pwez7t3.js",
+          "type": "script",
+          "start": 68,
+          "duration": 24,
+          "bytes": 19206,
+          "decodedBytes": 59920
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0visl-3z9f8av.js",
+          "type": "script",
+          "start": 68,
+          "duration": 24,
+          "bytes": 1038,
+          "decodedBytes": 1486
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1lmqau1139z0h.js",
+          "type": "script",
+          "start": 68,
+          "duration": 24,
+          "bytes": 4976,
+          "decodedBytes": 18226
+        },
+        {
+          "url": "http://127.0.0.1:3077/startup-recovery.js",
+          "type": "script",
+          "start": 68,
+          "duration": 24,
+          "bytes": 1352,
+          "decodedBytes": 2817
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1c5so0i8qmqzn.js",
+          "type": "script",
+          "start": 68,
+          "duration": 28,
+          "bytes": 64262,
+          "decodedBytes": 244077
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/awm-logo.png",
+          "type": "link",
+          "start": 92,
+          "duration": 1,
+          "bytes": 18306,
+          "decodedBytes": 18006
+        },
+        {
+          "url": "http://127.0.0.1:3077/site.webmanifest",
+          "type": "other",
+          "start": 93,
+          "duration": 2,
+          "bytes": 954,
+          "decodedBytes": 654
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NotoNaskhArabic-Variable.0c2ejb7elfb45.woff2",
+          "type": "css",
+          "start": 207,
+          "duration": 2,
+          "bytes": 124036,
+          "decodedBytes": 123736
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/vegeta.avif",
+          "type": "img",
+          "start": 808,
+          "duration": 2,
+          "bytes": 75880,
+          "decodedBytes": 75580
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/079y_2g7ykg7w.js",
+          "type": "script",
+          "start": 865,
+          "duration": 2,
+          "bytes": 451,
+          "decodedBytes": 151
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-0.webp",
+          "type": "img",
+          "start": 1247,
+          "duration": 225,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-1.webp",
+          "type": "img",
+          "start": 1248,
+          "duration": 443,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-2.webp",
+          "type": "img",
+          "start": 1249,
+          "duration": 651,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3txruc8gic68g.js",
+          "type": "script",
+          "start": 1262,
+          "duration": 4,
+          "bytes": 9758,
+          "decodedBytes": 29810
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3x1hxo4su04p0.js",
+          "type": "script",
+          "start": 1299,
+          "duration": 2,
+          "bytes": 450,
+          "decodedBytes": 150
+        }
+      ],
+      "legacy": false
+    },
+    {
+      "name": "webkit",
+      "run": 1,
+      "shellVisible": 186,
+      "contentVisible": 204,
+      "usable": 1603,
+      "cpu": null,
+      "ttfb": 22,
+      "fcp": 118,
+      "commits": [
+        616,
+        631,
+        632,
+        680,
+        710,
+        750,
+        757,
+        772,
+        833,
+        863,
+        1143,
+        1188,
+        1220,
+        1234,
+        1248,
+        1268,
+        1272,
+        1484,
+        1578,
+        1598,
+        1599,
+        1704,
+        1858,
+        1889,
+        1921
+      ],
+      "lcp": 200,
+      "longTasks": [],
+      "domContentLoaded": 92,
+      "hydrated": 616,
+      "jsBytes": 391095,
+      "jsDecodedBytes": 1242074,
+      "imageBytes": 75880,
+      "blockingRequests": null,
+      "totalJsTransferBytes": 394035,
+      "totalImageTransferBytes": 94186,
+      "featuredImage": {
+        "src": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "complete": true,
+        "width": 1
+      },
+      "fontPreloads": [
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        }
+      ],
+      "resources": [
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+          "type": "link",
+          "start": 34,
+          "duration": 238,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "link",
+          "start": 48,
+          "duration": 4,
+          "bytes": 41164,
+          "decodedBytes": 40864
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "link",
+          "start": 48,
+          "duration": 4,
+          "bytes": 50992,
+          "decodedBytes": 50692
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "link",
+          "start": 48,
+          "duration": 4,
+          "bytes": 98856,
+          "decodedBytes": 98556
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1st9fjntpr8ls.css",
+          "type": "link",
+          "start": 48,
+          "duration": 4,
+          "bytes": 1265,
+          "decodedBytes": 2309
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0i6e6myb-28o0.css",
+          "type": "link",
+          "start": 48,
+          "duration": 5,
+          "bytes": 5624,
+          "decodedBytes": 24268
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3plfv7-n_vhp8.js",
+          "type": "link",
+          "start": 49,
+          "duration": 4,
+          "bytes": 2940,
+          "decodedBytes": 9971
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/17fms_jsrb1ne.js",
+          "type": "script",
+          "start": 49,
+          "duration": 6,
+          "bytes": 8486,
+          "decodedBytes": 30433
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3516nv78vffqj.js",
+          "type": "script",
+          "start": 49,
+          "duration": 7,
+          "bytes": 9057,
+          "decodedBytes": 27935
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/turbopack-2u1d16houkiyo.js",
+          "type": "script",
+          "start": 49,
+          "duration": 7,
+          "bytes": 4205,
+          "decodedBytes": 9974
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/222ajm33tqo0k.js",
+          "type": "script",
+          "start": 49,
+          "duration": 8,
+          "bytes": 4169,
+          "decodedBytes": 15095
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2wdjtr_7x-h4k.js",
+          "type": "script",
+          "start": 49,
+          "duration": 9,
+          "bytes": 36110,
+          "decodedBytes": 132106
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0vjsg16ul9e52.js",
+          "type": "script",
+          "start": 49,
+          "duration": 10,
+          "bytes": 10160,
+          "decodedBytes": 26315
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2lyj757j0vb17.js",
+          "type": "script",
+          "start": 49,
+          "duration": 10,
+          "bytes": 8529,
+          "decodedBytes": 25125
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/32lw9l0p4hoj4.js",
+          "type": "script",
+          "start": 49,
+          "duration": 11,
+          "bytes": 8581,
+          "decodedBytes": 23738
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2vttv1cygrh-p.js",
+          "type": "script",
+          "start": 49,
+          "duration": 11,
+          "bytes": 9310,
+          "decodedBytes": 27685
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/13380-5t4kfhq.js",
+          "type": "script",
+          "start": 49,
+          "duration": 13,
+          "bytes": 11965,
+          "decodedBytes": 33203
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3moj6qbiyrsw7.js",
+          "type": "script",
+          "start": 49,
+          "duration": 13,
+          "bytes": 73397,
+          "decodedBytes": 233463
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3jpfo1q5qrffe.js",
+          "type": "script",
+          "start": 49,
+          "duration": 15,
+          "bytes": 19589,
+          "decodedBytes": 56429
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/36dierqqh9v7-.js",
+          "type": "script",
+          "start": 50,
+          "duration": 14,
+          "bytes": 11478,
+          "decodedBytes": 30747
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/33od67-bbti0j.js",
+          "type": "script",
+          "start": 50,
+          "duration": 15,
+          "bytes": 22404,
+          "decodedBytes": 61952
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3ovv7qzitfy-b.js",
+          "type": "script",
+          "start": 50,
+          "duration": 15,
+          "bytes": 652,
+          "decodedBytes": 352
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1z135pb77m5ee.js",
+          "type": "script",
+          "start": 50,
+          "duration": 15,
+          "bytes": 29256,
+          "decodedBytes": 82924
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3smubf8sg1x1i.js",
+          "type": "script",
+          "start": 50,
+          "duration": 16,
+          "bytes": 10894,
+          "decodedBytes": 34539
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0hl-z3_qxonq5.js",
+          "type": "script",
+          "start": 50,
+          "duration": 17,
+          "bytes": 10143,
+          "decodedBytes": 32805
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/12_8z4pwez7t3.js",
+          "type": "script",
+          "start": 50,
+          "duration": 18,
+          "bytes": 19206,
+          "decodedBytes": 59920
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1c5so0i8qmqzn.js",
+          "type": "script",
+          "start": 50,
+          "duration": 24,
+          "bytes": 64262,
+          "decodedBytes": 244077
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2mfr5k2oqvfrq.js",
+          "type": "script",
+          "start": 51,
+          "duration": 16,
+          "bytes": 542,
+          "decodedBytes": 242
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1hc13nued-fiy.js",
+          "type": "script",
+          "start": 51,
+          "duration": 17,
+          "bytes": 675,
+          "decodedBytes": 375
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0visl-3z9f8av.js",
+          "type": "script",
+          "start": 51,
+          "duration": 17,
+          "bytes": 1038,
+          "decodedBytes": 1486
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1lmqau1139z0h.js",
+          "type": "script",
+          "start": 51,
+          "duration": 19,
+          "bytes": 4976,
+          "decodedBytes": 18226
+        },
+        {
+          "url": "http://127.0.0.1:3077/startup-recovery.js",
+          "type": "script",
+          "start": 51,
+          "duration": 19,
+          "bytes": 1352,
+          "decodedBytes": 2817
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/awm-logo.png",
+          "type": "link",
+          "start": 70,
+          "duration": 1,
+          "bytes": 18306,
+          "decodedBytes": 18006
+        },
+        {
+          "url": "http://127.0.0.1:3077/site.webmanifest",
+          "type": "other",
+          "start": 71,
+          "duration": 2,
+          "bytes": 954,
+          "decodedBytes": 654
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NotoNaskhArabic-Variable.0c2ejb7elfb45.woff2",
+          "type": "css",
+          "start": 184,
+          "duration": 1,
+          "bytes": 124036,
+          "decodedBytes": 123736
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/vegeta.avif",
+          "type": "img",
+          "start": 773,
+          "duration": 2,
+          "bytes": 75880,
+          "decodedBytes": 75580
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/079y_2g7ykg7w.js",
+          "type": "script",
+          "start": 836,
+          "duration": 2,
+          "bytes": 451,
+          "decodedBytes": 151
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-0.webp",
+          "type": "img",
+          "start": 1218,
+          "duration": 225,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-1.webp",
+          "type": "img",
+          "start": 1219,
+          "duration": 449,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-2.webp",
+          "type": "img",
+          "start": 1219,
+          "duration": 657,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3txruc8gic68g.js",
+          "type": "script",
+          "start": 1231,
+          "duration": 3,
+          "bytes": 9758,
+          "decodedBytes": 29810
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3x1hxo4su04p0.js",
+          "type": "script",
+          "start": 1273,
+          "duration": 2,
+          "bytes": 450,
+          "decodedBytes": 150
+        }
+      ],
+      "legacy": false
+    },
+    {
+      "name": "webkit",
+      "run": 2,
+      "shellVisible": 184,
+      "contentVisible": 200,
+      "usable": 1166,
+      "cpu": null,
+      "ttfb": 31,
+      "fcp": 120,
+      "commits": [
+        559,
+        575,
+        576,
+        612,
+        641,
+        683,
+        691,
+        704,
+        736,
+        764,
+        792,
+        804,
+        821,
+        827,
+        1137,
+        1162,
+        1163,
+        1201,
+        1229,
+        1415,
+        1447,
+        1680,
+        1882
+      ],
+      "lcp": 197,
+      "longTasks": [],
+      "domContentLoaded": 93,
+      "hydrated": 560,
+      "jsBytes": 391095,
+      "jsDecodedBytes": 1242074,
+      "imageBytes": 75880,
+      "blockingRequests": null,
+      "totalJsTransferBytes": 394035,
+      "totalImageTransferBytes": 94186,
+      "featuredImage": {
+        "src": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "complete": true,
+        "width": 1
+      },
+      "fontPreloads": [
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        }
+      ],
+      "resources": [
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+          "type": "link",
+          "start": 41,
+          "duration": 239,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "link",
+          "start": 52,
+          "duration": 7,
+          "bytes": 41164,
+          "decodedBytes": 40864
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "link",
+          "start": 53,
+          "duration": 6,
+          "bytes": 50992,
+          "decodedBytes": 50692
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "link",
+          "start": 53,
+          "duration": 6,
+          "bytes": 98856,
+          "decodedBytes": 98556
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1st9fjntpr8ls.css",
+          "type": "link",
+          "start": 53,
+          "duration": 6,
+          "bytes": 1265,
+          "decodedBytes": 2309
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0i6e6myb-28o0.css",
+          "type": "link",
+          "start": 53,
+          "duration": 7,
+          "bytes": 5624,
+          "decodedBytes": 24268
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3plfv7-n_vhp8.js",
+          "type": "link",
+          "start": 53,
+          "duration": 7,
+          "bytes": 2940,
+          "decodedBytes": 9971
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/17fms_jsrb1ne.js",
+          "type": "script",
+          "start": 55,
+          "duration": 7,
+          "bytes": 8486,
+          "decodedBytes": 30433
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/turbopack-2u1d16houkiyo.js",
+          "type": "script",
+          "start": 55,
+          "duration": 8,
+          "bytes": 4205,
+          "decodedBytes": 9974
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/222ajm33tqo0k.js",
+          "type": "script",
+          "start": 55,
+          "duration": 8,
+          "bytes": 4169,
+          "decodedBytes": 15095
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3516nv78vffqj.js",
+          "type": "script",
+          "start": 55,
+          "duration": 9,
+          "bytes": 9057,
+          "decodedBytes": 27935
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2wdjtr_7x-h4k.js",
+          "type": "script",
+          "start": 55,
+          "duration": 10,
+          "bytes": 36110,
+          "decodedBytes": 132106
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0vjsg16ul9e52.js",
+          "type": "script",
+          "start": 55,
+          "duration": 12,
+          "bytes": 10160,
+          "decodedBytes": 26315
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2lyj757j0vb17.js",
+          "type": "script",
+          "start": 55,
+          "duration": 13,
+          "bytes": 8529,
+          "decodedBytes": 25125
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/32lw9l0p4hoj4.js",
+          "type": "script",
+          "start": 55,
+          "duration": 13,
+          "bytes": 8581,
+          "decodedBytes": 23738
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2vttv1cygrh-p.js",
+          "type": "script",
+          "start": 55,
+          "duration": 13,
+          "bytes": 9310,
+          "decodedBytes": 27685
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3moj6qbiyrsw7.js",
+          "type": "script",
+          "start": 55,
+          "duration": 14,
+          "bytes": 73397,
+          "decodedBytes": 233463
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/13380-5t4kfhq.js",
+          "type": "script",
+          "start": 55,
+          "duration": 15,
+          "bytes": 11965,
+          "decodedBytes": 33203
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3jpfo1q5qrffe.js",
+          "type": "script",
+          "start": 55,
+          "duration": 16,
+          "bytes": 19589,
+          "decodedBytes": 56429
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/36dierqqh9v7-.js",
+          "type": "script",
+          "start": 56,
+          "duration": 15,
+          "bytes": 11478,
+          "decodedBytes": 30747
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/33od67-bbti0j.js",
+          "type": "script",
+          "start": 56,
+          "duration": 16,
+          "bytes": 22404,
+          "decodedBytes": 61952
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3ovv7qzitfy-b.js",
+          "type": "script",
+          "start": 56,
+          "duration": 16,
+          "bytes": 652,
+          "decodedBytes": 352
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3smubf8sg1x1i.js",
+          "type": "script",
+          "start": 56,
+          "duration": 16,
+          "bytes": 10894,
+          "decodedBytes": 34539
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1z135pb77m5ee.js",
+          "type": "script",
+          "start": 56,
+          "duration": 17,
+          "bytes": 29256,
+          "decodedBytes": 82924
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0hl-z3_qxonq5.js",
+          "type": "script",
+          "start": 56,
+          "duration": 19,
+          "bytes": 10143,
+          "decodedBytes": 32805
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2mfr5k2oqvfrq.js",
+          "type": "script",
+          "start": 57,
+          "duration": 18,
+          "bytes": 542,
+          "decodedBytes": 242
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1hc13nued-fiy.js",
+          "type": "script",
+          "start": 57,
+          "duration": 18,
+          "bytes": 675,
+          "decodedBytes": 375
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0visl-3z9f8av.js",
+          "type": "script",
+          "start": 57,
+          "duration": 20,
+          "bytes": 1038,
+          "decodedBytes": 1486
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/12_8z4pwez7t3.js",
+          "type": "script",
+          "start": 57,
+          "duration": 20,
+          "bytes": 19206,
+          "decodedBytes": 59920
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1lmqau1139z0h.js",
+          "type": "script",
+          "start": 57,
+          "duration": 21,
+          "bytes": 4976,
+          "decodedBytes": 18226
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1c5so0i8qmqzn.js",
+          "type": "script",
+          "start": 57,
+          "duration": 24,
+          "bytes": 64262,
+          "decodedBytes": 244077
+        },
+        {
+          "url": "http://127.0.0.1:3077/startup-recovery.js",
+          "type": "script",
+          "start": 58,
+          "duration": 19,
+          "bytes": 1352,
+          "decodedBytes": 2817
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/awm-logo.png",
+          "type": "link",
+          "start": 78,
+          "duration": 0,
+          "bytes": 18306,
+          "decodedBytes": 18006
+        },
+        {
+          "url": "http://127.0.0.1:3077/site.webmanifest",
+          "type": "other",
+          "start": 78,
+          "duration": 2,
+          "bytes": 954,
+          "decodedBytes": 654
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NotoNaskhArabic-Variable.0c2ejb7elfb45.woff2",
+          "type": "css",
+          "start": 182,
+          "duration": 2,
+          "bytes": 124036,
+          "decodedBytes": 123736
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/vegeta.avif",
+          "type": "img",
+          "start": 705,
+          "duration": 3,
+          "bytes": 75880,
+          "decodedBytes": 75580
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/079y_2g7ykg7w.js",
+          "type": "script",
+          "start": 737,
+          "duration": 2,
+          "bytes": 451,
+          "decodedBytes": 151
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3txruc8gic68g.js",
+          "type": "script",
+          "start": 789,
+          "duration": 3,
+          "bytes": 9758,
+          "decodedBytes": 29810
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3x1hxo4su04p0.js",
+          "type": "script",
+          "start": 827,
+          "duration": 2,
+          "bytes": 450,
+          "decodedBytes": 150
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-0.webp",
+          "type": "img",
+          "start": 1199,
+          "duration": 228,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-1.webp",
+          "type": "img",
+          "start": 1200,
+          "duration": 444,
+          "bytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-2.webp",
+          "type": "img",
+          "start": 1200,
+          "duration": 653,
+          "bytes": 0,
+          "decodedBytes": 0
+        }
+      ],
+      "legacy": false
+    },
+    {
+      "name": "chrome",
+      "run": 0,
+      "shellVisible": 211,
+      "contentVisible": 287.60000002384186,
+      "usable": 1249.4000000953674,
+      "cpu": {
+        "ScriptDuration": 172.777,
+        "TaskDuration": 518.531
+      },
+      "ttfb": 25.800000071525574,
+      "fcp": 728,
+      "commits": [
+        221.70000004768372,
+        234,
+        234.60000002384186,
+        243.80000007152557,
+        251.90000009536743,
+        269.8000000715256,
+        275.5,
+        286.7000000476837,
+        288,
+        288.40000009536743,
+        288.90000009536743,
+        739.2000000476837,
+        749.4000000953674,
+        901.4000000953674,
+        910.5,
+        917.8000000715256,
+        920.4000000953674,
+        1225.5,
+        1238.2000000476837,
+        1239.1000000238419,
+        1249,
+        1255.4000000953674,
+        1256.3000000715256,
+        1256.7000000476837,
+        1476.7000000476837,
+        1476.8000000715256
+      ],
+      "lcp": 728,
+      "longTasks": [],
+      "domContentLoaded": 109.90000009536743,
+      "hydrated": 222.30000007152557,
+      "jsBytes": 391095,
+      "jsDecodedBytes": 1242074,
+      "imageBytes": 75880,
+      "blockingRequests": 2,
+      "totalJsTransferBytes": 394035,
+      "totalImageTransferBytes": 95385,
+      "featuredImage": {
+        "src": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "complete": true,
+        "width": 1
+      },
+      "fontPreloads": [
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        }
+      ],
+      "resources": [
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "link",
+          "start": 32.200000047683716,
+          "duration": 19.5,
+          "bytes": 41164,
+          "decodedBytes": 40864,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "link",
+          "start": 32.40000009536743,
+          "duration": 18.899999976158142,
+          "bytes": 50992,
+          "decodedBytes": 50692,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "link",
+          "start": 32.5,
+          "duration": 20.40000009536743,
+          "bytes": 98856,
+          "decodedBytes": 98556,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/awm-logo.png",
+          "type": "link",
+          "start": 32.60000002384186,
+          "duration": 20.899999976158142,
+          "bytes": 18306,
+          "decodedBytes": 18006,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+          "type": "link",
+          "start": 33.800000071525574,
+          "duration": 25.299999952316284,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0i6e6myb-28o0.css",
+          "type": "link",
+          "start": 34,
+          "duration": 18.40000009536743,
+          "bytes": 5624,
+          "decodedBytes": 24268,
+          "blocking": "blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1st9fjntpr8ls.css",
+          "type": "link",
+          "start": 34,
+          "duration": 19.5,
+          "bytes": 1265,
+          "decodedBytes": 2309,
+          "blocking": "blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3plfv7-n_vhp8.js",
+          "type": "link",
+          "start": 34.10000002384186,
+          "duration": 23.899999976158142,
+          "bytes": 2940,
+          "decodedBytes": 9971,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/17fms_jsrb1ne.js",
+          "type": "script",
+          "start": 34.10000002384186,
+          "duration": 24.700000047683716,
+          "bytes": 8486,
+          "decodedBytes": 30433,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2wdjtr_7x-h4k.js",
+          "type": "script",
+          "start": 34.10000002384186,
+          "duration": 28.5,
+          "bytes": 36110,
+          "decodedBytes": 132106,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3moj6qbiyrsw7.js",
+          "type": "script",
+          "start": 34.10000002384186,
+          "duration": 32.700000047683716,
+          "bytes": 73397,
+          "decodedBytes": 233463,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3516nv78vffqj.js",
+          "type": "script",
+          "start": 34.200000047683716,
+          "duration": 27.600000023841858,
+          "bytes": 9057,
+          "decodedBytes": 27935,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/turbopack-2u1d16houkiyo.js",
+          "type": "script",
+          "start": 34.200000047683716,
+          "duration": 28.600000023841858,
+          "bytes": 4205,
+          "decodedBytes": 9974,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/222ajm33tqo0k.js",
+          "type": "script",
+          "start": 34.200000047683716,
+          "duration": 31,
+          "bytes": 4169,
+          "decodedBytes": 15095,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0vjsg16ul9e52.js",
+          "type": "script",
+          "start": 34.300000071525574,
+          "duration": 31.5,
+          "bytes": 10160,
+          "decodedBytes": 26315,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2lyj757j0vb17.js",
+          "type": "script",
+          "start": 34.300000071525574,
+          "duration": 33.699999928474426,
+          "bytes": 8529,
+          "decodedBytes": 25125,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/32lw9l0p4hoj4.js",
+          "type": "script",
+          "start": 34.300000071525574,
+          "duration": 33.799999952316284,
+          "bytes": 8581,
+          "decodedBytes": 23738,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2vttv1cygrh-p.js",
+          "type": "script",
+          "start": 34.300000071525574,
+          "duration": 34.60000002384186,
+          "bytes": 9310,
+          "decodedBytes": 27685,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/13380-5t4kfhq.js",
+          "type": "script",
+          "start": 34.40000009536743,
+          "duration": 36.5,
+          "bytes": 11965,
+          "decodedBytes": 33203,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3jpfo1q5qrffe.js",
+          "type": "script",
+          "start": 34.40000009536743,
+          "duration": 38,
+          "bytes": 19589,
+          "decodedBytes": 56429,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1z135pb77m5ee.js",
+          "type": "script",
+          "start": 34.40000009536743,
+          "duration": 39,
+          "bytes": 29256,
+          "decodedBytes": 82924,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/36dierqqh9v7-.js",
+          "type": "script",
+          "start": 34.5,
+          "duration": 40.700000047683716,
+          "bytes": 11478,
+          "decodedBytes": 30747,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3smubf8sg1x1i.js",
+          "type": "script",
+          "start": 34.5,
+          "duration": 41,
+          "bytes": 10894,
+          "decodedBytes": 34539,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3ovv7qzitfy-b.js",
+          "type": "script",
+          "start": 34.5,
+          "duration": 43.300000071525574,
+          "bytes": 652,
+          "decodedBytes": 352,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/33od67-bbti0j.js",
+          "type": "script",
+          "start": 34.5,
+          "duration": 41.700000047683716,
+          "bytes": 22404,
+          "decodedBytes": 61952,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0hl-z3_qxonq5.js",
+          "type": "script",
+          "start": 34.60000002384186,
+          "duration": 44.300000071525574,
+          "bytes": 10143,
+          "decodedBytes": 32805,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/12_8z4pwez7t3.js",
+          "type": "script",
+          "start": 34.60000002384186,
+          "duration": 46.10000002384186,
+          "bytes": 19206,
+          "decodedBytes": 59920,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2mfr5k2oqvfrq.js",
+          "type": "script",
+          "start": 34.60000002384186,
+          "duration": 46.700000047683716,
+          "bytes": 542,
+          "decodedBytes": 242,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1hc13nued-fiy.js",
+          "type": "script",
+          "start": 34.60000002384186,
+          "duration": 47.800000071525574,
+          "bytes": 675,
+          "decodedBytes": 375,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0visl-3z9f8av.js",
+          "type": "script",
+          "start": 34.60000002384186,
+          "duration": 47.60000002384186,
+          "bytes": 1038,
+          "decodedBytes": 1486,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1c5so0i8qmqzn.js",
+          "type": "script",
+          "start": 34.60000002384186,
+          "duration": 53.39999997615814,
+          "bytes": 64262,
+          "decodedBytes": 244077,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/startup-recovery.js",
+          "type": "script",
+          "start": 34.700000047683716,
+          "duration": 52,
+          "bytes": 1352,
+          "decodedBytes": 2817,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1lmqau1139z0h.js",
+          "type": "script",
+          "start": 34.700000047683716,
+          "duration": 51.700000047683716,
+          "bytes": 4976,
+          "decodedBytes": 18226,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NotoNaskhArabic-Variable.0c2ejb7elfb45.woff2",
+          "type": "css",
+          "start": 135.10000002384186,
+          "duration": 21.800000071525574,
+          "bytes": 124036,
+          "decodedBytes": 123736,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/favicon.svg",
+          "type": "other",
+          "start": 162.10000002384186,
+          "duration": 3.899999976158142,
+          "bytes": 1199,
+          "decodedBytes": 1689,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/favicon.ico",
+          "type": "other",
+          "start": 199.30000007152557,
+          "duration": 1.100000023841858,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/vegeta.avif",
+          "type": "img",
+          "start": 287.10000002384186,
+          "duration": 9.5,
+          "bytes": 75880,
+          "decodedBytes": 75580,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/079y_2g7ykg7w.js",
+          "type": "script",
+          "start": 747.3000000715256,
+          "duration": 4.899999976158142,
+          "bytes": 451,
+          "decodedBytes": 151,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2",
+          "type": "script",
+          "start": 768.2000000476837,
+          "duration": 1.399999976158142,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3txruc8gic68g.js",
+          "type": "script",
+          "start": 898.9000000953674,
+          "duration": 4.5,
+          "bytes": 9758,
+          "decodedBytes": 29810,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3x1hxo4su04p0.js",
+          "type": "script",
+          "start": 918.5,
+          "duration": 12.200000047683716,
+          "bytes": 450,
+          "decodedBytes": 150,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-0.webp",
+          "type": "img",
+          "start": 1249.1000000238419,
+          "duration": 3.600000023841858,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-1.webp",
+          "type": "img",
+          "start": 1249.2000000476837,
+          "duration": 6.200000047683716,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-2.webp",
+          "type": "img",
+          "start": 1249.3000000715256,
+          "duration": 4.799999952316284,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        }
+      ],
+      "legacy": false
+    },
+    {
+      "name": "chrome",
+      "run": 1,
+      "shellVisible": 220.10000002384186,
+      "contentVisible": 270.90000009536743,
+      "usable": 689.3000000715256,
+      "cpu": {
+        "ScriptDuration": 158.691,
+        "TaskDuration": 605.741
+      },
+      "ttfb": 25.700000047683716,
+      "fcp": 144,
+      "commits": [
+        206.70000004768372,
+        219.20000004768372,
+        219.80000007152557,
+        232.30000007152557,
+        238.70000004768372,
+        256.2000000476837,
+        262,
+        270.3000000715256,
+        283.7000000476837,
+        287.3000000715256,
+        288.2000000476837,
+        335,
+        342,
+        349.60000002384186,
+        352,
+        665,
+        681.3000000715256,
+        682.2000000476837,
+        682.7000000476837,
+        688,
+        695.1000000238419,
+        696.4000000953674,
+        914.8000000715256,
+        915.3000000715256
+      ],
+      "lcp": 144,
+      "longTasks": [],
+      "domContentLoaded": 97.90000009536743,
+      "hydrated": 207.30000007152557,
+      "jsBytes": 391095,
+      "jsDecodedBytes": 1242074,
+      "imageBytes": 75880,
+      "blockingRequests": 2,
+      "totalJsTransferBytes": 394035,
+      "totalImageTransferBytes": 95385,
+      "featuredImage": {
+        "src": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "complete": true,
+        "width": 1
+      },
+      "fontPreloads": [
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        }
+      ],
+      "resources": [
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "link",
+          "start": 30.300000071525574,
+          "duration": 14.399999976158142,
+          "bytes": 41164,
+          "decodedBytes": 40864,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/awm-logo.png",
+          "type": "link",
+          "start": 30.5,
+          "duration": 15.5,
+          "bytes": 18306,
+          "decodedBytes": 18006,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "link",
+          "start": 30.5,
+          "duration": 15.5,
+          "bytes": 98856,
+          "decodedBytes": 98556,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "link",
+          "start": 30.5,
+          "duration": 15.400000095367432,
+          "bytes": 50992,
+          "decodedBytes": 50692,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+          "type": "link",
+          "start": 31.5,
+          "duration": 20.700000047683716,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1st9fjntpr8ls.css",
+          "type": "link",
+          "start": 31.700000047683716,
+          "duration": 13.899999976158142,
+          "bytes": 1265,
+          "decodedBytes": 2309,
+          "blocking": "blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0i6e6myb-28o0.css",
+          "type": "link",
+          "start": 31.700000047683716,
+          "duration": 14.700000047683716,
+          "bytes": 5624,
+          "decodedBytes": 24268,
+          "blocking": "blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3plfv7-n_vhp8.js",
+          "type": "link",
+          "start": 31.700000047683716,
+          "duration": 21.299999952316284,
+          "bytes": 2940,
+          "decodedBytes": 9971,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/17fms_jsrb1ne.js",
+          "type": "script",
+          "start": 31.700000047683716,
+          "duration": 22.700000047683716,
+          "bytes": 8486,
+          "decodedBytes": 30433,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2wdjtr_7x-h4k.js",
+          "type": "script",
+          "start": 31.700000047683716,
+          "duration": 25.200000047683716,
+          "bytes": 36110,
+          "decodedBytes": 132106,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/turbopack-2u1d16houkiyo.js",
+          "type": "script",
+          "start": 31.800000071525574,
+          "duration": 23.699999928474426,
+          "bytes": 4205,
+          "decodedBytes": 9974,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3516nv78vffqj.js",
+          "type": "script",
+          "start": 31.800000071525574,
+          "duration": 23.899999976158142,
+          "bytes": 9057,
+          "decodedBytes": 27935,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/222ajm33tqo0k.js",
+          "type": "script",
+          "start": 31.800000071525574,
+          "duration": 26.399999976158142,
+          "bytes": 4169,
+          "decodedBytes": 15095,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0vjsg16ul9e52.js",
+          "type": "script",
+          "start": 31.800000071525574,
+          "duration": 28.600000023841858,
+          "bytes": 10160,
+          "decodedBytes": 26315,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3moj6qbiyrsw7.js",
+          "type": "script",
+          "start": 31.800000071525574,
+          "duration": 29.5,
+          "bytes": 73397,
+          "decodedBytes": 233463,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/32lw9l0p4hoj4.js",
+          "type": "script",
+          "start": 31.90000009536743,
+          "duration": 30.899999976158142,
+          "bytes": 8581,
+          "decodedBytes": 23738,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2lyj757j0vb17.js",
+          "type": "script",
+          "start": 31.90000009536743,
+          "duration": 32,
+          "bytes": 8529,
+          "decodedBytes": 25125,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2vttv1cygrh-p.js",
+          "type": "script",
+          "start": 32,
+          "duration": 31.700000047683716,
+          "bytes": 9310,
+          "decodedBytes": 27685,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/13380-5t4kfhq.js",
+          "type": "script",
+          "start": 32,
+          "duration": 33.90000009536743,
+          "bytes": 11965,
+          "decodedBytes": 33203,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3jpfo1q5qrffe.js",
+          "type": "script",
+          "start": 32,
+          "duration": 34.60000002384186,
+          "bytes": 19589,
+          "decodedBytes": 56429,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1z135pb77m5ee.js",
+          "type": "script",
+          "start": 32,
+          "duration": 35.90000009536743,
+          "bytes": 29256,
+          "decodedBytes": 82924,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/36dierqqh9v7-.js",
+          "type": "script",
+          "start": 32,
+          "duration": 37.10000002384186,
+          "bytes": 11478,
+          "decodedBytes": 30747,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3ovv7qzitfy-b.js",
+          "type": "script",
+          "start": 32,
+          "duration": 39.40000009536743,
+          "bytes": 652,
+          "decodedBytes": 352,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3smubf8sg1x1i.js",
+          "type": "script",
+          "start": 32,
+          "duration": 37.5,
+          "bytes": 10894,
+          "decodedBytes": 34539,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/33od67-bbti0j.js",
+          "type": "script",
+          "start": 32,
+          "duration": 38.40000009536743,
+          "bytes": 22404,
+          "decodedBytes": 61952,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0hl-z3_qxonq5.js",
+          "type": "script",
+          "start": 32.10000002384186,
+          "duration": 40,
+          "bytes": 10143,
+          "decodedBytes": 32805,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/12_8z4pwez7t3.js",
+          "type": "script",
+          "start": 32.10000002384186,
+          "duration": 41.5,
+          "bytes": 19206,
+          "decodedBytes": 59920,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2mfr5k2oqvfrq.js",
+          "type": "script",
+          "start": 32.10000002384186,
+          "duration": 43.10000002384186,
+          "bytes": 542,
+          "decodedBytes": 242,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0visl-3z9f8av.js",
+          "type": "script",
+          "start": 32.10000002384186,
+          "duration": 44.800000071525574,
+          "bytes": 1038,
+          "decodedBytes": 1486,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1c5so0i8qmqzn.js",
+          "type": "script",
+          "start": 32.10000002384186,
+          "duration": 49.800000071525574,
+          "bytes": 64262,
+          "decodedBytes": 244077,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1hc13nued-fiy.js",
+          "type": "script",
+          "start": 32.200000047683716,
+          "duration": 48,
+          "bytes": 675,
+          "decodedBytes": 375,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1lmqau1139z0h.js",
+          "type": "script",
+          "start": 32.200000047683716,
+          "duration": 48.60000002384186,
+          "bytes": 4976,
+          "decodedBytes": 18226,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/startup-recovery.js",
+          "type": "script",
+          "start": 32.200000047683716,
+          "duration": 48.89999997615814,
+          "bytes": 1352,
+          "decodedBytes": 2817,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NotoNaskhArabic-Variable.0c2ejb7elfb45.woff2",
+          "type": "css",
+          "start": 100.90000009536743,
+          "duration": 25.299999952316284,
+          "bytes": 124036,
+          "decodedBytes": 123736,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/favicon.svg",
+          "type": "other",
+          "start": 179.80000007152557,
+          "duration": 3.299999952316284,
+          "bytes": 1199,
+          "decodedBytes": 1689,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/favicon.ico",
+          "type": "other",
+          "start": 192.60000002384186,
+          "duration": 0.8000000715255737,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/vegeta.avif",
+          "type": "img",
+          "start": 270.60000002384186,
+          "duration": 3,
+          "bytes": 75880,
+          "decodedBytes": 75580,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/079y_2g7ykg7w.js",
+          "type": "script",
+          "start": 285.8000000715256,
+          "duration": 4.199999928474426,
+          "bytes": 451,
+          "decodedBytes": 151,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2",
+          "type": "script",
+          "start": 289,
+          "duration": 1.600000023841858,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3txruc8gic68g.js",
+          "type": "script",
+          "start": 333.40000009536743,
+          "duration": 3.5999999046325684,
+          "bytes": 9758,
+          "decodedBytes": 29810,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3x1hxo4su04p0.js",
+          "type": "script",
+          "start": 350.3000000715256,
+          "duration": 19.199999928474426,
+          "bytes": 450,
+          "decodedBytes": 150,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-0.webp",
+          "type": "img",
+          "start": 688,
+          "duration": 3.5,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-2.webp",
+          "type": "img",
+          "start": 688.1000000238419,
+          "duration": 5.5,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-1.webp",
+          "type": "img",
+          "start": 688.1000000238419,
+          "duration": 6.700000047683716,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        }
+      ],
+      "legacy": false
+    },
+    {
+      "name": "chrome",
+      "run": 2,
+      "shellVisible": 220.20000004768372,
+      "contentVisible": 273.39999997615814,
+      "usable": 681.7000000476837,
+      "cpu": {
+        "ScriptDuration": 156.92800000000003,
+        "TaskDuration": 574.48
+      },
+      "ttfb": 21.899999976158142,
+      "fcp": 152,
+      "commits": [
+        206.20000004768372,
+        218.70000004768372,
+        219.70000004768372,
+        232.30000007152557,
+        238.70000004768372,
+        256.7000000476837,
+        261.89999997615814,
+        272.89999997615814,
+        284.7000000476837,
+        289.10000002384186,
+        291.2000000476837,
+        328.2000000476837,
+        334.7000000476837,
+        341.60000002384186,
+        344.10000002384186,
+        658.7000000476837,
+        674,
+        674.8999999761581,
+        675.3999999761581,
+        680.3000000715256,
+        689.6000000238419,
+        903.8000000715256,
+        903.8999999761581
+      ],
+      "lcp": 152,
+      "longTasks": [],
+      "domContentLoaded": 121.70000004768372,
+      "hydrated": 206.80000007152557,
+      "jsBytes": 391095,
+      "jsDecodedBytes": 1242074,
+      "imageBytes": 75880,
+      "blockingRequests": 2,
+      "totalJsTransferBytes": 394035,
+      "totalImageTransferBytes": 95385,
+      "featuredImage": {
+        "src": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+        "complete": true,
+        "width": 1
+      },
+      "fontPreloads": [
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        },
+        {
+          "href": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "font/woff2",
+          "crossOrigin": "anonymous"
+        }
+      ],
+      "resources": [
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/BalooBhaijaan2_Variable_latin-s.p.2fh178s6k4qm-.woff2",
+          "type": "link",
+          "start": 26,
+          "duration": 11.200000047683716,
+          "bytes": 41164,
+          "decodedBytes": 40864,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/Jost_Variable-s.p.2-ag0y8t48wtu.woff2",
+          "type": "link",
+          "start": 26.100000023841858,
+          "duration": 18.700000047683716,
+          "bytes": 50992,
+          "decodedBytes": 50692,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/awm-logo.png",
+          "type": "link",
+          "start": 26.200000047683716,
+          "duration": 20.399999976158142,
+          "bytes": 18306,
+          "decodedBytes": 18006,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NunitoSans_Variable_latin-s.p.2bnowadapnb6h.woff2",
+          "type": "link",
+          "start": 26.200000047683716,
+          "duration": 19.699999928474426,
+          "bytes": 98856,
+          "decodedBytes": 98556,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/cartoons/test-show.webp",
+          "type": "link",
+          "start": 27.899999976158142,
+          "duration": 23.800000071525574,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0i6e6myb-28o0.css",
+          "type": "link",
+          "start": 28.300000071525574,
+          "duration": 18.09999990463257,
+          "bytes": 5624,
+          "decodedBytes": 24268,
+          "blocking": "blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1st9fjntpr8ls.css",
+          "type": "link",
+          "start": 28.399999976158142,
+          "duration": 19.800000071525574,
+          "bytes": 1265,
+          "decodedBytes": 2309,
+          "blocking": "blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3plfv7-n_vhp8.js",
+          "type": "link",
+          "start": 28.5,
+          "duration": 20.899999976158142,
+          "bytes": 2940,
+          "decodedBytes": 9971,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/17fms_jsrb1ne.js",
+          "type": "script",
+          "start": 28.5,
+          "duration": 22.200000047683716,
+          "bytes": 8486,
+          "decodedBytes": 30433,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3516nv78vffqj.js",
+          "type": "script",
+          "start": 28.600000023841858,
+          "duration": 25.899999976158142,
+          "bytes": 9057,
+          "decodedBytes": 27935,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2wdjtr_7x-h4k.js",
+          "type": "script",
+          "start": 28.600000023841858,
+          "duration": 26.299999952316284,
+          "bytes": 36110,
+          "decodedBytes": 132106,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3moj6qbiyrsw7.js",
+          "type": "script",
+          "start": 28.600000023841858,
+          "duration": 30.200000047683716,
+          "bytes": 73397,
+          "decodedBytes": 233463,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/turbopack-2u1d16houkiyo.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 25.899999976158142,
+          "bytes": 4205,
+          "decodedBytes": 9974,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/222ajm33tqo0k.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 28.899999976158142,
+          "bytes": 4169,
+          "decodedBytes": 15095,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0vjsg16ul9e52.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 28.899999976158142,
+          "bytes": 10160,
+          "decodedBytes": 26315,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/32lw9l0p4hoj4.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 32.299999952316284,
+          "bytes": 8581,
+          "decodedBytes": 23738,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2lyj757j0vb17.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 32.89999997615814,
+          "bytes": 8529,
+          "decodedBytes": 25125,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2vttv1cygrh-p.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 33,
+          "bytes": 9310,
+          "decodedBytes": 27685,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/13380-5t4kfhq.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 34.799999952316284,
+          "bytes": 11965,
+          "decodedBytes": 33203,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3jpfo1q5qrffe.js",
+          "type": "script",
+          "start": 28.700000047683716,
+          "duration": 35.39999997615814,
+          "bytes": 19589,
+          "decodedBytes": 56429,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1z135pb77m5ee.js",
+          "type": "script",
+          "start": 28.800000071525574,
+          "duration": 36.39999997615814,
+          "bytes": 29256,
+          "decodedBytes": 82924,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3smubf8sg1x1i.js",
+          "type": "script",
+          "start": 28.800000071525574,
+          "duration": 38.39999997615814,
+          "bytes": 10894,
+          "decodedBytes": 34539,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/36dierqqh9v7-.js",
+          "type": "script",
+          "start": 28.800000071525574,
+          "duration": 37.5,
+          "bytes": 11478,
+          "decodedBytes": 30747,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3ovv7qzitfy-b.js",
+          "type": "script",
+          "start": 28.800000071525574,
+          "duration": 41.09999990463257,
+          "bytes": 652,
+          "decodedBytes": 352,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/33od67-bbti0j.js",
+          "type": "script",
+          "start": 28.800000071525574,
+          "duration": 39.89999997615814,
+          "bytes": 22404,
+          "decodedBytes": 61952,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0hl-z3_qxonq5.js",
+          "type": "script",
+          "start": 28.899999976158142,
+          "duration": 42.200000047683716,
+          "bytes": 10143,
+          "decodedBytes": 32805,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/12_8z4pwez7t3.js",
+          "type": "script",
+          "start": 28.899999976158142,
+          "duration": 43.300000071525574,
+          "bytes": 19206,
+          "decodedBytes": 59920,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/2mfr5k2oqvfrq.js",
+          "type": "script",
+          "start": 28.899999976158142,
+          "duration": 44.40000009536743,
+          "bytes": 542,
+          "decodedBytes": 242,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1c5so0i8qmqzn.js",
+          "type": "script",
+          "start": 28.899999976158142,
+          "duration": 49.60000002384186,
+          "bytes": 64262,
+          "decodedBytes": 244077,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/0visl-3z9f8av.js",
+          "type": "script",
+          "start": 29,
+          "duration": 45.10000002384186,
+          "bytes": 1038,
+          "decodedBytes": 1486,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1hc13nued-fiy.js",
+          "type": "script",
+          "start": 29,
+          "duration": 45.200000047683716,
+          "bytes": 675,
+          "decodedBytes": 375,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/1lmqau1139z0h.js",
+          "type": "script",
+          "start": 29,
+          "duration": 47,
+          "bytes": 4976,
+          "decodedBytes": 18226,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/startup-recovery.js",
+          "type": "script",
+          "start": 29.100000023841858,
+          "duration": 47.200000047683716,
+          "bytes": 1352,
+          "decodedBytes": 2817,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/media/NotoNaskhArabic-Variable.0c2ejb7elfb45.woff2",
+          "type": "css",
+          "start": 97.10000002384186,
+          "duration": 26.100000023841858,
+          "bytes": 124036,
+          "decodedBytes": 123736,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/favicon.svg",
+          "type": "other",
+          "start": 179.20000004768372,
+          "duration": 2.799999952316284,
+          "bytes": 1199,
+          "decodedBytes": 1689,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/favicon.ico",
+          "type": "other",
+          "start": 193.20000004768372,
+          "duration": 0.5,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/homepage/vegeta.avif",
+          "type": "img",
+          "start": 273.10000002384186,
+          "duration": 3,
+          "bytes": 75880,
+          "decodedBytes": 75580,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/079y_2g7ykg7w.js",
+          "type": "script",
+          "start": 287.60000002384186,
+          "duration": 4.399999976158142,
+          "bytes": 451,
+          "decodedBytes": 151,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2",
+          "type": "script",
+          "start": 298.2000000476837,
+          "duration": 1.1999999284744263,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3txruc8gic68g.js",
+          "type": "script",
+          "start": 326.5,
+          "duration": 3.899999976158142,
+          "bytes": 9758,
+          "decodedBytes": 29810,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "http://127.0.0.1:3077/_next/static/chunks/3x1hxo4su04p0.js",
+          "type": "script",
+          "start": 342.5,
+          "duration": 12.100000023841858,
+          "bytes": 450,
+          "decodedBytes": 150,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-0.webp",
+          "type": "img",
+          "start": 680.3999999761581,
+          "duration": 3.4000000953674316,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-1.webp",
+          "type": "img",
+          "start": 680.3999999761581,
+          "duration": 6.600000023841858,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        },
+        {
+          "url": "https://localhost:4377/storage/v1/object/public/covers/episodes/clip-2.webp",
+          "type": "img",
+          "start": 680.5,
+          "duration": 4.800000071525574,
+          "bytes": 0,
+          "decodedBytes": 0,
+          "blocking": "non-blocking"
+        }
+      ],
+      "legacy": false
+    }
+  ]
+}

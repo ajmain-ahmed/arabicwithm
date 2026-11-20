@@ -26,10 +26,10 @@ afterEach(async () => {
 
 it('scrolls to top when the pathname changes', async () => {
   await act(async () => root.render(<ScrollReset />))
-  expect(window.scrollTo).toHaveBeenCalledTimes(1)
+  expect(window.scrollTo).not.toHaveBeenCalled()
   mocks.pathname = '/cartoons/dbz'
   await act(async () => root.render(<ScrollReset />))
-  expect(window.scrollTo).toHaveBeenCalledTimes(2)
+  expect(window.scrollTo).toHaveBeenCalledTimes(1)
   expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, left: 0, behavior: 'instant' })
 })
 
@@ -37,9 +37,9 @@ it('does not reset on rerenders with the same pathname (query-only filter update
   await act(async () => root.render(<ScrollReset />))
   mocks.pathname = '/cartoons'
   await act(async () => root.render(<ScrollReset />))
-  expect(window.scrollTo).toHaveBeenCalledTimes(2)
+  expect(window.scrollTo).toHaveBeenCalledTimes(1)
   await act(async () => root.render(<ScrollReset />))
-  expect(window.scrollTo).toHaveBeenCalledTimes(2)
+  expect(window.scrollTo).toHaveBeenCalledTimes(1)
 })
 
 it('leaves back/forward navigations to history scroll restoration', async () => {
@@ -47,7 +47,7 @@ it('leaves back/forward navigations to history scroll restoration', async () => 
   await act(async () => { window.dispatchEvent(new PopStateEvent('popstate')) })
   mocks.pathname = '/cartoons/dbz'
   await act(async () => root.render(<ScrollReset />))
-  expect(window.scrollTo).toHaveBeenCalledTimes(1)
+  expect(window.scrollTo).not.toHaveBeenCalled()
 })
 
 it('re-arms the reset after a real click', async () => {
@@ -58,5 +58,5 @@ it('re-arms the reset after a real click', async () => {
   await act(async () => { document.body.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
   mocks.pathname = '/books'
   await act(async () => root.render(<ScrollReset />))
-  expect(window.scrollTo).toHaveBeenCalledTimes(2)
+  expect(window.scrollTo).toHaveBeenCalledTimes(1)
 })

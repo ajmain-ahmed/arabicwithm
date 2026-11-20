@@ -3,7 +3,6 @@
 import { returnToPublicHome } from '@/app/lib/publicHome'
 import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
 import { AppBar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
-import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { usePathname, useRouter } from 'next/navigation'
@@ -33,8 +32,8 @@ const AuthDialog = dynamic(() => import('@/app/components/AuthDialog'), { ssr: f
 const MobileDrawerLazy = dynamic(() => import('./MobileDrawer'), { ssr: false })
 
 export default function Navbar() {
-    const theme = useTheme()
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+    // Only optional account chrome depends on this client hint; layout is CSS-owned.
+    const isMobile = useMediaQuery('(max-width:899.95px)')
     const router = useRouter()
     const pathname = usePathname()
     const { user } = useAuth()
@@ -187,8 +186,9 @@ export default function Navbar() {
             >
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
-                        {isMobile ? (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', width: '100%' }}>
+                        {/* CSS selects the correct header before hydration. A server
+                            desktop default put the Home logo over Watch on phones. */}
+                            <Box data-navbar-mobile sx={{ display: { xs: 'grid', md: 'none' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', width: '100%' }}>
                                 {/* Equal 1fr flanks pin the brand to the true viewport
                                     center: the hamburger and the icon pair have different
                                     widths, so auto columns hugging their content shoved
@@ -204,7 +204,7 @@ export default function Navbar() {
                                 </IconButton>
 
                                 <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center', pl: 0 }}>
-                                    <BrandLogo activeMember={activeMember} isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
+                                    <BrandLogo activeMember={activeMember} isMobile onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
                                 </Box>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifySelf: 'end', gap: 0.25 }}>
@@ -220,11 +220,13 @@ export default function Navbar() {
                                     )}
                                 </Box>
                             </Box>
-                        ) : (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
+                            <Box data-navbar-desktop sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
                                 <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
-                                    {NAV_ITEMS.map((item) => (
-                                        <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                    {NAV_ITEMS.map((item) => {
+                                      // Watch must still open when a cached/pending RSC transition stalls.
+                                      const Destination = item === 'Watch' ? 'a' : Link
+                                      return (
+                                        <Destination key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
                                                 className="nav-link"
                                                 variant="body2"
@@ -240,11 +242,12 @@ export default function Navbar() {
                                             >
                                                 {item}
                                             </Typography>
-                                        </Link>
-                                    ))}
+                                        </Destination>
+                                      )
+                                    })}
                                 </Box>
 
-                                <BrandLogo activeMember={activeMember} isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
+                                <BrandLogo activeMember={activeMember} isMobile={false} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
                                     {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
@@ -253,9 +256,9 @@ export default function Navbar() {
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
                                         </IconButton>
                                     </Tooltip>
-                                    {isLoggedIn && <MemberActions />}
+                                    {isLoggedIn && !isMobile && <MemberActions />}
                                     {isLoggedIn ? (
-                                        <IconButton
+                                        !isMobile && <IconButton
                                             onClick={(e) => setUserMenuAnchor(e.currentTarget)}
                                             size="small"
                                             aria-label="Open user menu"
@@ -288,11 +291,10 @@ export default function Navbar() {
                                     )}
                                 </Box>
                             </Box>
-                        )}
                     </Toolbar>
                 </Container>
 
-                {isMobile && isLoggedIn && <Box sx={{ height: 2, background: 'color-mix(in srgb, var(--awm-gold) 15%, transparent)' }} />}
+                {isLoggedIn && <Box sx={{ display: { xs: 'block', md: 'none' }, height: 2, background: 'color-mix(in srgb, var(--awm-gold) 15%, transparent)' }} />}
             </AppBar>
         </>
     )

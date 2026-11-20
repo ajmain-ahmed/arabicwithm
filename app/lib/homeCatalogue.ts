@@ -15,9 +15,10 @@ const episodes = unstable_cache(async () => {
   return data ?? []
 }, ['home-episode-metadata-v2-direct-covers'], { revalidate: 3600, tags: ['cartoons-public'] })
 
-export async function fetchHomeEpisodes(shows: ShowMeta[]): Promise<{ show: ShowMeta; episode: EpisodeMeta }[]> {
+export async function fetchHomeEpisodes(showsInput: ShowMeta[] | Promise<ShowMeta[]>): Promise<{ show: ShowMeta; episode: EpisodeMeta }[]> {
+  const [shows, rows] = await Promise.all([showsInput, episodes()])
   const byId = new Map(shows.map(s => [s.id, s]))
-  return (await episodes()).flatMap(row => {
+  return rows.flatMap(row => {
     const show = byId.get(row.show_id)
     if (!show) return []
     return [{ show, episode: {

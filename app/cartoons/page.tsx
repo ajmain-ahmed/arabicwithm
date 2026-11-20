@@ -75,7 +75,7 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
     ...Array.from(categoryLabels.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
   ]
   const filters = {
-    category: sanitizeParam(firstParam(sp.category), availableCategories),
+    category: firstParam(sp.category) === 'All Categories' ? '' : sanitizeParam(firstParam(sp.category), availableCategories),
     level: sanitizeParam(firstParam(sp.level), WATCH_LEVELS),
   }
 

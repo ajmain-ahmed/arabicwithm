@@ -13,6 +13,13 @@ vi.mock('@/app/components/home/HomeDashboard', () => ({ default: () => null }))
 vi.mock('next/server', () => ({ connection: vi.fn(async () => {}) }))
 vi.mock('@/app/lib/dailyPhrase.server', () => ({ loadDailyPhrase: vi.fn(async () => null) }))
 import HomePage from './page'
+import { CatalogueSection, FeaturedSection } from '@/app/components/home/HomeSections'
+
+async function dashboard() {
+  const page = await HomePage()
+  return CatalogueSection(page.props.children[2].props.children.props)
+}
+
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -21,7 +28,7 @@ beforeEach(() => {
 })
 
 it('renders public home with safe defaults when every catalogue read fails', async () => {
-  const page = await HomePage()
+  const page = await dashboard()
   expect(page.props).toMatchObject({ books: [], newShows: [], newEpisodes: [] })
 })
 
@@ -38,13 +45,11 @@ it('starts independent homepage reads together instead of serialising their late
   await pending
 })
 
-it('passes the server-selected clip as initial data without a client discovery boundary',async()=>{
- const clip={video:{id:'selected'}};catalogue.spotlight.mockResolvedValue(clip)
- expect((await HomePage()).props.spotlight).toEqual({clip,error:false});expect(catalogue.spotlight).toHaveBeenCalledOnce()
-})
-it('returns an intentional failure state if Spotlight selection fails while Home remains available',async()=>{
- catalogue.spotlight.mockRejectedValue(new Error('Selection unavailable'))
- expect((await HomePage()).props.spotlight).toEqual({clip:null,error:true})
+it('keeps Spotlight discovery out of initial HTML and does not query it twice', async () => {
+  const page = await dashboard()
+  expect(catalogue.spotlight).not.toHaveBeenCalled()
+  expect(page.props.spotlightArea.props.discover).toBe(true)
+  expect(page.props.showFeatured).toBe(false)
 })
 
 it('shuffles full home pools on the server while retaining latest episode order and library order', async () => {
@@ -56,21 +61,29 @@ it('shuffles full home pools on the server while retaining latest episode order 
   const latest=[{id:'newest'},{id:'older'}]
   catalogue.books.mockResolvedValue(books);catalogue.newShows.mockResolvedValue(shows)
   catalogue.newEpisodes.mockResolvedValue(latest)
-  const first=(await HomePage()).props
+  const first=(await dashboard()).props
   expect(first.books).toEqual(books)
   expect(first.homepageBooks).toHaveLength(19)
   expect(first.homepageBooks.some((book:{id:string})=>book.id==='19')).toBe(false)
   expect(first.newEpisodes).toEqual(latest)
   expect(first.newShows).toHaveLength(20)
   for(let refresh=0;refresh<10;refresh++) {
-   const again=(await HomePage()).props
+   const again=(await dashboard()).props
    expect(again.homepageBooks).toEqual(first.homepageBooks)
    expect(again.newShows).toEqual(first.newShows)
   }
   vi.setSystemTime(new Date('2026-11-14T12:00:00Z'))
-  const next=(await HomePage()).props
+  const next=(await dashboard()).props
   expect(next.newShows).not.toEqual(first.newShows)
   expect(next.homepageBooks).not.toEqual(first.homepageBooks)
   expect(next.newEpisodes).toEqual(latest)
  } finally { vi.useRealTimers() }
+})
+
+it('streams Featured and catalogue without waiting for Spotlight', async () => {
+  catalogue.spotlight.mockImplementation(() => new Promise(() => {}))
+  const page = await HomePage()
+  const featured = await FeaturedSection(page.props.children[1].props.children.props)
+  expect(featured.props.items).toEqual([])
+  expect((await CatalogueSection(page.props.children[2].props.children.props)).props.books).toEqual([])
 })

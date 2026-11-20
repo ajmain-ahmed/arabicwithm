@@ -1,0 +1,56 @@
+[
+  {
+    "name": "webkit",
+    "sample": 0,
+    "usable": 1360,
+    "ttfb": 17,
+    "fcp": 90,
+    "jsTransfer": 322263,
+    "jsDecoded": 988090
+  },
+  {
+    "name": "webkit",
+    "sample": 1,
+    "usable": 911,
+    "ttfb": 16,
+    "fcp": 83,
+    "jsTransfer": 322263,
+    "jsDecoded": 988090
+  },
+  {
+    "name": "webkit",
+    "sample": 2,
+    "usable": 556,
+    "ttfb": 15,
+    "fcp": 140,
+    "jsTransfer": 322263,
+    "jsDecoded": 988090
+  },
+  {
+    "name": "chrome",
+    "sample": 0,
+    "usable": 847.8999999761581,
+    "ttfb": 18.299999952316284,
+    "fcp": 748,
+    "jsTransfer": 322263,
+    "jsDecoded": 988090
+  },
+  {
+    "name": "chrome",
+    "sample": 1,
+    "usable": 327.60000002384186,
+    "ttfb": 26.899999976158142,
+    "fcp": 96,
+    "jsTransfer": 322263,
+    "jsDecoded": 988090
+  },
+  {
+    "name": "chrome",
+    "sample": 2,
+    "usable": 301.2999999523163,
+    "ttfb": 18.699999928474426,
+    "fcp": 88,
+    "jsTransfer": 322263,
+    "jsDecoded": 988090
+  }
+]

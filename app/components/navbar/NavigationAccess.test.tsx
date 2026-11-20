@@ -111,7 +111,7 @@ it('keeps floating mobile navigation at five destinations with none active on Wo
   mocks.pathname = '/word-search'
   await act(async () => root.render(<MobileBottomNav />))
   await act(async () => (host.querySelector('[aria-label="Open navigation"]') as HTMLElement).click())
-  const buttons = [...document.querySelectorAll('#mobile-navigation button')]
+  const buttons = [...document.querySelectorAll('#mobile-navigation button,#mobile-navigation a')]
   expect(buttons.map(button => button.textContent)).toEqual(expectedFloating)
   expect(buttons.some(button => button.hasAttribute('aria-current'))).toBe(false)
   await act(async () => (buttons[3] as HTMLElement).click())
@@ -136,8 +136,10 @@ it('routes normal mobile entries and opens dialogs for Contact Us and Support Us
   expect(items.map(item=>item.textContent)).toEqual([...entries.map(([name])=>name),'Contact Us','Support Us','Settings','Sign Out'])
   expect(document.body.textContent).not.toMatch(/Checking permissions|Verifying permissions|Reviewer/)
   const item=items.find(item=>item.textContent===label) as HTMLElement
+  if(label==='Watch')item.addEventListener('click',event=>event.preventDefault(),{once:true})
   mocks.push.mockClear();await act(async()=>item.click())
-  expect(mocks.push).toHaveBeenCalledExactlyOnceWith(href)
+  if(label==='Watch'){expect(item.tagName).toBe('A');expect(item.getAttribute('href')).toBe(href);expect(mocks.push).not.toHaveBeenCalled()}
+  else expect(mocks.push).toHaveBeenCalledExactlyOnceWith(href)
  }
  for(const [label,eventName] of [['Contact Us','open-contact-dialog'],['Support Us','open-support-dialog']]){
   const open=vi.fn();window.addEventListener(eventName,open)

@@ -60,10 +60,18 @@ const nextConfig: NextConfig = {
   async redirects() {
     // Resolve the Admin entry redirect before rendering the streamed router
     // tree, avoiding a hook-order crash during initial client navigation.
-    return [{ source: '/admin', destination: '/admin/shows', permanent: false }]
+    return [
+      { source: '/admin', destination: '/admin/shows', permanent: false },
+      { source: '/grammar/context/:path*', destination: '/grammar', permanent: true },
+      { source: '/grammar/notes/:path*', destination: '/grammar', permanent: true },
+    ]
   },
   async headers() {
     return [
+      // Homepage HTML and the install manifest must not outlive a deployment.
+      { source: '/', headers: [{ key: 'Cache-Control', value: 'private, no-store' }] },
+      { source: '/site.webmanifest', headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }] },
+      { source: '/startup-recovery.js', headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }] },
       {
         source: '/(.*)',
         headers: [

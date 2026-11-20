@@ -18,7 +18,7 @@ it('introduces exactly four destinations, holds for five seconds after expanding
  await render();await advance(40)
  expect(phase()).toBe('expanded')
  const preview=host.querySelector('nav[aria-label="Navigation introduction"]')!
- expect([...preview.querySelectorAll('button')].map(el=>el.textContent)).toEqual(['Explore','Watch','Read','Learn'])
+ expect([...preview.querySelectorAll('button,a')].map(el=>el.textContent)).toEqual(['Explore','Watch','Read','Learn'])
  expect(preview.textContent).not.toContain('Home');expect(sessionStorage.getItem('awm-mobile-nav-intro-seen')).toBe('1')
  await advance(5400);expect(phase()).toBe('expanded')
  await advance(50);expect(phase()).toBe('closing')
@@ -28,13 +28,17 @@ it('menu activation during the intro cancels automation and preserves the comple
  await render();await advance(40)
  await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="Open navigation"]')!.click())
  expect(phase()).toBe('idle')
- expect([...document.querySelectorAll('#mobile-navigation button')].map(el=>el.textContent)).toEqual(['Home','Explore','Watch','Read','Learn'])
+ expect([...document.querySelectorAll('#mobile-navigation button,#mobile-navigation a')].map(el=>el.textContent)).toEqual(['Home','Explore','Watch','Read','Learn'])
  await advance(7000);expect(document.querySelector('#mobile-navigation')).not.toBeNull();expect(host.querySelector('[aria-expanded="true"]')).not.toBeNull()
 })
 it.each([['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Learn','/learn']])('intro %s navigates to %s immediately and cancels the preview',async(label,href)=>{
  await render();await advance(40)
- const button=[...host.querySelectorAll('nav button')].find(el=>el.textContent===label) as HTMLButtonElement
- await act(async()=>button.click());expect(state.push).toHaveBeenCalledExactlyOnceWith(href);expect(phase()).toBe('idle')
+ const button=[...host.querySelectorAll('nav button,nav a')].find(el=>el.textContent===label) as HTMLElement
+ if(label==='Watch')button.addEventListener('click',event=>event.preventDefault(),{once:true})
+ await act(async()=>button.click())
+ if(label==='Watch'){expect(button.tagName).toBe('A');expect(button.getAttribute('href')).toBe(href);expect(state.push).not.toHaveBeenCalled()}
+ else expect(state.push).toHaveBeenCalledExactlyOnceWith(href)
+ expect(phase()).toBe('idle')
  await advance(7000);expect(phase()).toBe('idle')
 })
 it('cancels on route changes and does not replay after remount within the session',async()=>{

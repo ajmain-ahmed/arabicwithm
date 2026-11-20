@@ -8,15 +8,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ExploreOutlined,
   GridOnRounded,
-  MenuBook,
-  OndemandVideo,
   ArrowForward,
   AccountTreeOutlined,
   PsychologyOutlined,
 } from '@mui/icons-material'
-import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
+import { Box, Container, Paper, Skeleton, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
-import { useColorMode } from '@/app/components/ThemeProvider'
 import HomeForYouSpotlight from './HomeForYouSpotlight'
 import type {ForYouClip} from '@/app/lib/forYou'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
@@ -25,9 +22,7 @@ import CheckoutReturnNotice from './CheckoutReturnNotice'
 import AwmPromoSection from './AwmPromoSection'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
-import MemberActions from '@/app/components/navbar/MemberActions'
 import FeaturedCarousel from './FeaturedCarousel'
-import { fetchMyDisplayName } from '@/app/actions/profiles'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import type { PublicBook } from '@/app/actions/books'
 
@@ -109,9 +104,8 @@ function DeferredRowPlaceholder() {
   )
 }
 
-export default function HomeDashboard({ books, homepageBooks = books, newShows, newEpisodes, featured, spotlight, dailyPhrase = null }: { dailyPhrase?: DailyPhrase | null; books: PublicBook[]; homepageBooks?: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; spotlight?:{clip:ForYouClip|null;error:boolean}; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
+export default function HomeDashboard({ books, homepageBooks = books, newShows, newEpisodes, featured, showFeatured = true, spotlight, spotlightArea, dailyPhrase = null }: { showFeatured?: boolean; spotlightArea?: React.ReactNode; dailyPhrase?: DailyPhrase | null; books: PublicBook[]; homepageBooks?: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; spotlight?:{clip:ForYouClip|null;error:boolean}; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
   const featuredItems=Array.isArray(featured)?featured:featured?[featured]:[]
-  const { mode } = useColorMode()
   const { user, loading: authLoading } = useAuth()
   // Membership alone defines active reading. Positions remain resume history.
   const myListCacheItems = useMyListCache((state) => state.items)
@@ -142,22 +136,6 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
     return () => { cancelled = true }
   }, [user?.id, myListCacheItems, setMyListCache])
 
-  const displayNameFallback = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner') : ''
-  /* The saved profile name wins over metadata/email — same source the profile
-     page shows. */
-  const [savedDisplayName, setSavedDisplayName] = useState<string | null>(null)
-  useEffect(() => {
-    let active = true
-    if (!user?.id) {
-      queueMicrotask(() => { if (active) setSavedDisplayName(null) })
-      return () => { active = false }
-    }
-    void fetchMyDisplayName()
-      .then(name => { if (active) setSavedDisplayName(name) })
-      .catch(() => { if (active) setSavedDisplayName(null) })
-    return () => { active = false }
-  }, [user?.id])
-  const displayName = (savedDisplayName ?? displayNameFallback).split(' ')[0]
   const myListRowItems: CatalogueRowItem[] = useMemo(() => [
     ...(myListCacheItems ?? []).map((item) => ({
       key: item.showId,
@@ -188,10 +166,6 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
     imageSrc: book.cover || `/api/covers/books/${book.id}`,
     imageCrop: book.coverCrop,
   })), [homepageBooks])
-  const hour = new Date().getHours()
-  const daypart = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
-  const greeting = `Good ${daypart}, ${displayName}!`
-
   return (
       <Box
         component="div"
@@ -200,53 +174,10 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
           bgcolor: 'var(--awm-cream-light)',
         }}
       >
-        {featuredItems.length ? (
-          <>
-            <Typography component="h1" sx={{ position: 'absolute', width: '1px', height: '1px', p: 0, m: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Learn Arabic through cartoons and books</Typography>
-            <FeaturedCarousel key={featuredItems.map(item=>item.show.id).join(':')} items={featuredItems} />
-          </>
-        ) : (
-        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-          {/* Responsive AVIF set encoded from the pristine source: the browser
-              picks the width per viewport/DPR, so retina screens are never
-              served an upscale (plain <img>, not next/image — a custom loader
-              would route through the optimizer and reintroduce its cold
-              encode latency). React hoists an automatic imagesrcset preload
-              from this img, so no manual link is needed. */}
-          <Box
-            component="img"
-            src="/homepage/hero-1600.avif"
-            srcSet="/homepage/hero-1200.avif 1200w, /homepage/hero-1600.avif 1600w, /homepage/hero-1920.avif 1920w"
-            sizes="100vw"
-            alt=""
-            fetchPriority="high"
-            decoding="async"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-          />
-          {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
-          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 9, md: 14 }, pb: { xs: 4, md: 6 } }}>
-            <Box sx={{ maxWidth: user ? 1140 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
-              {user ? (
-                <Typography component="h1" suppressHydrationWarning sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, sm: 52, md: 62 }, fontWeight: 600, lineHeight: 1.05, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>{greeting}</Typography>
-              ) : (
-                <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
-              )}
-              {/* Desktop surfaces streak/AWM+ in the navbar; on mobile the hero is their home. */}
-              {user && (
-                <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'center', mt: 2.5 }}>
-                  <MemberActions />
-                </Box>
-              )}
-              {!user && (
-                <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                  <Button component={Link} prefetch={false} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
-                  <Button component={Link} prefetch={false} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
-                </Box>
-              )}
-            </Box>
-          </Container>
-        </Box>
-        )}
+        {showFeatured && <>
+          <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}>Learn Arabic through cartoons and books</Typography>
+          <FeaturedCarousel key={featuredItems.map(item => item.show.id).join(':')} items={featuredItems} />
+        </>}
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 3, md: 5 } }}>
           {user && <CheckoutReturnNotice userId={user.id} />}
@@ -311,7 +242,7 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
                 <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" compact viewAllHref="/cartoons" />
               </DeferredSection>
             </>}
-            <HomeForYouSpotlight initialClip={spotlight?.clip??null} initialError={spotlight?.error}/>
+            {spotlightArea ?? <HomeForYouSpotlight initialClip={spotlight?.clip??null} initialError={spotlight?.error}/>}
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" compact viewAllHref="/cartoons?view=shows" />

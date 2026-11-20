@@ -1,0 +1,2839 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "-c",
+      "playwright.watch.config.ts"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.watch.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/watch-navigation.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/watch-navigation.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/watch-navigation.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "edge",
+        "name": "edge",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/watch-navigation.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/watch/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "watch-navigation.pw.ts",
+      "file": "watch-navigation.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Watch, Show, Episode, controls and history at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11457,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:44:46.146Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-c07735e0072f640c1296",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22168,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:44:57.666Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-0f0bfe733cd2ecde0828",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 20103,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:19.857Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-245ece018cb88fef58b9",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14987,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:39.973Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-03dac01bf456f25367d6",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13763,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:54.980Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-47c75390a43ffdec9e5e",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14783,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:08.757Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-5ecd8b07122dcd698af5",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12030,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:23.556Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-e29ed549080b5b253ba3",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14357,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:35.603Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-23feeceb851ba4677eeb",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "first-session animated Watch shortcut at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4073,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:49.973Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-0aa3260fd2129c66bbd5",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3009,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:54.059Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-ae3b61bd73615754d4eb",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3552,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:57.086Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-ec1433702c696b2302f6",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2916,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:00.651Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-74cb9f739f3d54b78306",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2960,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:03.581Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-18e616b8437fa3d8662c",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "server-rendered phone header has no overlaid desktop Watch target",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1926,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:06.553Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-b6b17f8936e23b25fef8",
+          "file": "watch-navigation.pw.ts",
+          "line": 90,
+          "column": 1
+        },
+        {
+          "title": "desktop Watch performs document navigation with JavaScript disabled",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 895,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:08.491Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-2e41b375dcd68161a815",
+          "file": "watch-navigation.pw.ts",
+          "line": 107,
+          "column": 1
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8722,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:09.397Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-6411d75d02b34e033efd",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7932,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:18.129Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-c078bb6e20feee453dee",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "All Categories bookmarks retain existing shows and episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1404,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:26.070Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-abb22826bc525f1c9f51",
+          "file": "watch-navigation.pw.ts",
+          "line": 132,
+          "column": 1
+        },
+        {
+          "title": "the deferred Admin Show editor still opens",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2845,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:27.484Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-d55214f407082b50561b",
+          "file": "watch-navigation.pw.ts",
+          "line": 138,
+          "column": 1
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6436,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:44:46.164Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-1175258f888d23f7ca19",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5898,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:44:53.116Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-e7a8e3959de8e689b79b",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8869,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:44:59.026Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-466242d5344f85ea2050",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 414",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 19278,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/cartoons\u001b[7m?view=shows\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/cartoons\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    2 × locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m      - unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    2 × unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m      - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    28 × unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/cartoons\u001b[7m?view=shows\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/cartoons\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    2 × locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m      - unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    2 × unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m      - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    28 × unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts:44:96",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                      "column": 96,
+                      "line": 44
+                    },
+                    "snippet": "  42 |   await expect.poll(()=>page.locator('main a[href^=\"/cartoons/\"] img').first().evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true)\n  43 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)\n> 44 |   await page.getByRole('button',{name:'Show all shows',exact:true}).click();await expect(page).toHaveURL('/cartoons?view=shows')\n     |                                                                                                ^\n  45 |   await page.locator('main a[href=\"/cartoons/test-show\"]').first().click();await expect(page).toHaveURL('/cartoons/test-show')\n  46 |   await page.locator('main a[href=\"/cartoons/test-show/clip-0\"]').first().click();await expect(page).toHaveURL('/cartoons/test-show/clip-0')\n  47 |   await expect(page.locator('iframe[title=\"YouTube video player\"]')).toBeVisible()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                        "column": 96,
+                        "line": 44
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/cartoons\u001b[7m?view=shows\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/cartoons\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    2 × locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m      - unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    2 × unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m      - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    28 × unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/cartoons\"\u001b[22m\n\n\n  42 |   await expect.poll(()=>page.locator('main a[href^=\"/cartoons/\"] img').first().evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true)\n  43 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)\n> 44 |   await page.getByRole('button',{name:'Show all shows',exact:true}).click();await expect(page).toHaveURL('/cartoons?view=shows')\n     |                                                                                                ^\n  45 |   await page.locator('main a[href=\"/cartoons/test-show\"]').first().click();await expect(page).toHaveURL('/cartoons/test-show')\n  46 |   await page.locator('main a[href=\"/cartoons/test-show/clip-0\"]').first().click();await expect(page).toHaveURL('/cartoons/test-show/clip-0')\n  47 |   await expect(page.locator('iframe[title=\"YouTube video player\"]')).toBeVisible()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts:44:96"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:07.913Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-950eb-controls-and-history-at-414-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-950eb-controls-and-history-at-414-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-950eb-controls-and-history-at-414-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                    "column": 96,
+                    "line": 44
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-f050e8a077aa7f39c5c8",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8949,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:37.381Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-dce4f7dd73b2e70f981e",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6426,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:46.961Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-20e2ae28c890e9fff016",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5279,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:53.402Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-6742eafe1ce0f037b2c4",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6098,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:45:58.693Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-6aba928b63c4f2d317c7",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "first-session animated Watch shortcut at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1302,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:04.804Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-7fd20eef31a4e60521f2",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1285,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:06.118Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-577a2ef27b24e513da19",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1233,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:07.415Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-0b9d810cdbef86b2df66",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1266,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:08.659Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-a798e583365c6483e587",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1285,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:09.938Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-1cd45e8faafe1695c592",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "server-rendered phone header has no overlaid desktop Watch target",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1675,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:11.237Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-472e5f77bdba762174d2",
+          "file": "watch-navigation.pw.ts",
+          "line": 90,
+          "column": 1
+        },
+        {
+          "title": "desktop Watch performs document navigation with JavaScript disabled",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 875,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:12.927Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-72c0d602037f21b8847b",
+          "file": "watch-navigation.pw.ts",
+          "line": 107,
+          "column": 1
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8145,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:13.814Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-01c484aa212c0e1952be",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6347,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:21.974Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-9d4f69c7ee03c0640287",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "All Categories bookmarks retain existing shows and episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 986,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:28.337Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-23fbbe3ed806627907f0",
+          "file": "watch-navigation.pw.ts",
+          "line": 132,
+          "column": 1
+        },
+        {
+          "title": "the deferred Admin Show editor still opens",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3075,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:29.344Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-7a2ba19c13acfe131ae9",
+          "file": "watch-navigation.pw.ts",
+          "line": 138,
+          "column": 1
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 14893,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:37.729Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-1aa11fc92f6a37cf3e9d",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 11697,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:46:53.801Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-95273bc5d7fc1c7eaaf0",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7408,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:05.512Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-2d3b372ce754d6e0ba63",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7098,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:12.932Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-e5b74da3bccae4e37ef3",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6678,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:20.038Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-d1fe46c993449c4a4ce6",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9576,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:26.724Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-186571345aeb37d93673",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9729,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:36.310Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-77b19434bf1a0bf0bd55",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8432,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:46.052Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-b547dabf99634df606c2",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "first-session animated Watch shortcut at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1781,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:54.495Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-219bb8a31ad7fd6dcdb3",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2830,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:56.289Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-8e338eccaa7bf0d931fb",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2128,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:59.128Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-f7410f7e33bf5be01ada",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1717,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:01.268Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-111ea5b7b08aa4d9b585",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1763,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:02.998Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-a5d9cd71a7d3c51d7cd2",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "server-rendered phone header has no overlaid desktop Watch target",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2159,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:04.773Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-2a39cf2ad1915d3d2312",
+          "file": "watch-navigation.pw.ts",
+          "line": 90,
+          "column": 1
+        },
+        {
+          "title": "desktop Watch performs document navigation with JavaScript disabled",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1384,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:06.947Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-215cd3487981ab4f82ef",
+          "file": "watch-navigation.pw.ts",
+          "line": 107,
+          "column": 1
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 22337,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/\u001b[7mcartoons\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/\u001b[7mprofile/22222222-2222-4222-8222-222222222222\u001b[27m\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    2 × locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m      - unexpected value \"http://127.0.0.1:3077/profile\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    27 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/\u001b[7mcartoons\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/\u001b[7mprofile/22222222-2222-4222-8222-222222222222\u001b[27m\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    2 × locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m      - unexpected value \"http://127.0.0.1:3077/profile\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    27 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts:124:83",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                      "column": 83,
+                      "line": 124
+                    },
+                    "snippet": "  122 |   for(const route of ['/explore','/explore?view=foryou','/books','/profile','/learn']){\n  123 |     await page.goto(route);await healthy(page)\n> 124 |     if(route.includes('view=foryou'))await expect(page.locator('[data-for-you-source]').first()).toBeVisible()\n      |                                                                                   ^\n  125 |     const watch=await topWatch(page,width);await watch.click();await expect(page).toHaveURL('/cartoons');await catalogue(page)\n  126 |   }\n  127 |   await page.goto('/');const featured=page.locator('[data-featured-slide][aria-hidden=\"false\"]').first()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                        "column": 83,
+                        "line": 124
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/\u001b[7mcartoons\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/\u001b[7mprofile/22222222-2222-4222-8222-222222222222\u001b[27m\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    2 × locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m      - unexpected value \"http://127.0.0.1:3077/profile\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    27 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\n\n  122 |   for(const route of ['/explore','/explore?view=foryou','/books','/profile','/learn']){\n  123 |     await page.goto(route);await healthy(page)\n> 124 |     if(route.includes('view=foryou'))await expect(page.locator('[data-for-you-source]').first()).toBeVisible()\n      |                                                                                   ^\n  125 |     const watch=await topWatch(page,width);await watch.click();await expect(page).toHaveURL('/cartoons');await catalogue(page)\n  126 |   }\n  127 |   await page.goto('/');const featured=page.locator('[data-featured-slide][aria-hidden=\"false\"]').first()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts:124:83"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:08.352Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-a6c33-ry-Profile-and-Learn-at-390-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-a6c33-ry-Profile-and-Learn-at-390-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-a6c33-ry-Profile-and-Learn-at-390-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                    "column": 83,
+                    "line": 124
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-2dea8c08554ad97e7bd4",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8023,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:32.176Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-1d649b718c390566baed",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "All Categories bookmarks retain existing shows and episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 889,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:40.632Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-8c2b7853eb12e189494f",
+          "file": "watch-navigation.pw.ts",
+          "line": 132,
+          "column": 1
+        },
+        {
+          "title": "the deferred Admin Show editor still opens",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3046,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:41.532Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-0863718781edd21468a8",
+          "file": "watch-navigation.pw.ts",
+          "line": 138,
+          "column": 1
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5838,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:30.892Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-d0ae420500fbbe1e9cc6",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6500,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:37.121Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-dcafaa56be90111d1155",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6588,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:43.634Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-aa9d92ab13409f774a89",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6975,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:50.235Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-8ab0c535ecb57882f52c",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6183,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:47:57.225Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-35a6af026d3c69a56846",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6717,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:03.425Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-0201a2250b0f5326de1a",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5189,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:10.159Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-c965e9e26a619931ee1d",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "Watch, Show, Episode, controls and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3922,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:15.363Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-7b983db6cfaee1ff12d8",
+          "file": "watch-navigation.pw.ts",
+          "line": 29,
+          "column": 51
+        },
+        {
+          "title": "first-session animated Watch shortcut at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 944,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:19.301Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-ed6795a6709dd0e4c766",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 375",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 984,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:20.257Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-193f17b5654486da7628",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 844,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:21.253Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-fd633f7e90705e66174e",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 414",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 845,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:22.107Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-43aebb18e9184f9ac752",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "first-session animated Watch shortcut at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 793,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:22.962Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-3617969f9ce263240de2",
+          "file": "watch-navigation.pw.ts",
+          "line": 82,
+          "column": 32
+        },
+        {
+          "title": "server-rendered phone header has no overlaid desktop Watch target",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1037,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:23.764Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-b126c107bd7fa73dd172",
+          "file": "watch-navigation.pw.ts",
+          "line": 90,
+          "column": 1
+        },
+        {
+          "title": "desktop Watch performs document navigation with JavaScript disabled",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 655,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:24.810Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-0cf9267978a0db717d61",
+          "file": "watch-navigation.pw.ts",
+          "line": 107,
+          "column": 1
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 390",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 20666,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/\u001b[7mcartoons\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/\u001b[7mprofile/22222222-2222-4222-8222-222222222222\u001b[27m\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    3 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m      - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    28 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/\u001b[7mcartoons\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/\u001b[7mprofile/22222222-2222-4222-8222-222222222222\u001b[27m\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    3 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m      - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    28 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts:124:83",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                      "column": 83,
+                      "line": 124
+                    },
+                    "snippet": "  122 |   for(const route of ['/explore','/explore?view=foryou','/books','/profile','/learn']){\n  123 |     await page.goto(route);await healthy(page)\n> 124 |     if(route.includes('view=foryou'))await expect(page.locator('[data-for-you-source]').first()).toBeVisible()\n      |                                                                                   ^\n  125 |     const watch=await topWatch(page,width);await watch.click();await expect(page).toHaveURL('/cartoons');await catalogue(page)\n  126 |   }\n  127 |   await page.goto('/');const featured=page.locator('[data-featured-slide][aria-hidden=\"false\"]').first()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                        "column": 83,
+                        "line": 124
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected: \u001b[32m\"http://127.0.0.1:3077/\u001b[7mcartoons\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"http://127.0.0.1:3077/\u001b[7mprofile/22222222-2222-4222-8222-222222222222\u001b[27m\"\u001b[39m\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m    - locator resolved to <html lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    3 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m      - locator resolved to <html lang=\"en\" data-theme=\"dark\" class=\"theme-animating\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    28 × unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\u001b[2m       - locator resolved to <html class=\"\" lang=\"en\" data-theme=\"dark\" data-awm-hydrated=\"true\">…</html>\u001b[22m\n\u001b[2m    - unexpected value \"http://127.0.0.1:3077/profile/22222222-2222-4222-8222-222222222222\"\u001b[22m\n\n\n  122 |   for(const route of ['/explore','/explore?view=foryou','/books','/profile','/learn']){\n  123 |     await page.goto(route);await healthy(page)\n> 124 |     if(route.includes('view=foryou'))await expect(page.locator('[data-for-you-source]').first()).toBeVisible()\n      |                                                                                   ^\n  125 |     const watch=await topWatch(page,width);await watch.click();await expect(page).toHaveURL('/cartoons');await catalogue(page)\n  126 |   }\n  127 |   await page.goto('/');const featured=page.locator('[data-featured-slide][aria-hidden=\"false\"]').first()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts:124:83"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:25.477Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-a6c33-ry-Profile-and-Learn-at-390-edge\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-a6c33-ry-Profile-and-Learn-at-390-edge\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\watch-navigation.pw.ts-Wat-a6c33-ry-Profile-and-Learn-at-390-edge\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\watch-navigation.pw.ts",
+                    "column": 83,
+                    "line": 124
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-8605d1e640827fef8d04",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "Watch from Explore, For You, Library, Profile and Learn at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4889,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:47.206Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-e981f5a7c65d39ec70f7",
+          "file": "watch-navigation.pw.ts",
+          "line": 118,
+          "column": 31
+        },
+        {
+          "title": "All Categories bookmarks retain existing shows and episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 646,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:52.316Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-092ba36637e4683c3f9f",
+          "file": "watch-navigation.pw.ts",
+          "line": 132,
+          "column": 1
+        },
+        {
+          "title": "the deferred Admin Show editor still opens",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2829,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T22:48:52.972Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e69946acee256fff8f2f-eb350bc53a43fba1c261",
+          "file": "watch-navigation.pw.ts",
+          "line": 138,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-20T22:44:45.650Z",
+    "duration": 250425.761,
+    "expected": 73,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

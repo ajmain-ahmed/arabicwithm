@@ -13,6 +13,7 @@ import { usePathname } from 'next/navigation'
 export default function ScrollReset() {
   const pathname = usePathname()
   const isPop = useRef(false)
+  const previousPathname = useRef(pathname)
   useEffect(() => {
     const pop = () => { isPop.current = true }
     const click = () => { isPop.current = false }
@@ -24,6 +25,10 @@ export default function ScrollReset() {
     }
   }, [])
   useEffect(() => {
+    // Native navigation already handles the initial scroll position. Resetting
+    // on hydration can move a link out from under an early tap, or undo restore.
+    if (previousPathname.current === pathname) return
+    previousPathname.current = pathname
     if (isPop.current) { isPop.current = false; return }
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [pathname])
