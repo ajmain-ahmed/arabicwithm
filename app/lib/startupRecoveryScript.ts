@@ -4,9 +4,13 @@ export const startupRecoveryScript = String.raw`(function () {
   window.__awmRecoveryInstalled = true;
   var failed = false, recovering = false, departing = false, timer, failedAssets = [], firstError = null;
   var marker = '__awm_recovery', key = 'awm-startup-recovery-attempt';
-  var trace = window.__awmStartupTrace = [{stage:'bootstrap',at:performance.now()}];
-  function persist() { try { if (sessionStorage.getItem('awm-startup-diagnostics') === '1') sessionStorage.setItem('awm-startup-trace',JSON.stringify({path:location.pathname,trace:trace,firstError:firstError})); } catch (_) {} }
-  function mark(stage) { trace.push({stage:stage,at:performance.now()}); persist(); }
+  var startedAt = Date.now(), seen = {};
+  var trace = window.__awmStartupTrace = [{stage:'document-start',at:performance.now()},{stage:'inline-recovery-loaded',at:performance.now()}];
+  function safePath(value) { try { var url = new URL(value,location.href); if (url.origin !== location.origin) return '[external origin]'; return url.pathname === '/' || url.pathname === '/startup-check' || url.pathname.indexOf('/_next/static/') === 0 ? url.pathname : '[non-startup route]'; } catch (_) { return '[unknown]'; } }
+  function persist() { try { if (sessionStorage.getItem('awm-startup-diagnostics') === '1') sessionStorage.setItem('awm-startup-trace',JSON.stringify({version:2,startedAt:startedAt,path:safePath(location.href),trace:trace,firstError:firstError,failedAssets:failedAssets.map(safePath)})); } catch (_) {} }
+  function mark(stage, asset) { if (!asset && seen[stage]) return; seen[stage] = true; if (trace.length >= 64) { var remove=2; for(var i=2;i<trace.length;i++)if(trace[i].asset){remove=i;break;} trace.splice(remove,1); } var entry={stage:stage,at:performance.now()}; if(asset)entry.asset=safePath(asset); trace.push(entry); persist(); }
+  window.__awmStartupMark = function(stage) { if (/^(?:react-start|hydration-start|hydration-complete|auth-start|auth-complete|auth-error|auth-session-read|auth-client-loaded|auth-lock-requested|auth-lock-acquired|auth-lock-fallback|homepage-ready)$/.test(stage)) mark(stage); };
+  function rememberError(kind, source, name) { if (!firstError || firstError.kind === 'font-failure') firstError={kind:kind,name:/^(?:Error|TypeError|ReferenceError|SyntaxError|AbortError|NetworkError)$/.test(name || '')?name:'Error',source:safePath(source || '')}; persist(); }
   persist();
   function show(message) {
     if (!document.body) { document.addEventListener('DOMContentLoaded',function () { show(message); },{once:true}); return; }
@@ -48,8 +52,8 @@ export const startupRecoveryScript = String.raw`(function () {
   }
   function chunkFailure(message, asset) {
     if (departing) return;
-    if (asset && failedAssets.indexOf(asset) < 0) failedAssets.unshift(asset);
-    failed = true; mark('application-chunk-failed');
+    if (asset && failedAssets.indexOf(asset) < 0) { failedAssets.unshift(asset); failedAssets.length=Math.min(failedAssets.length,24); }
+    failed = true; mark('application-chunk-failed',asset);
     show('An application update could not load. Getting the current version.');
     // Leave the original error/rejection visible to diagnostics; never preventDefault.
     if (!asset) { retry(); return; }
@@ -63,19 +67,20 @@ export const startupRecoveryScript = String.raw`(function () {
   function chunkMessage(value) { return /ChunkLoadError|Loading chunk|dynamically imported module|Importing a module script failed|Unable to preload CSS/.test(String(value)); }
   window.addEventListener('error',function (event) {
     var target = event.target, source;
-    if (!firstError && event.message) { firstError = {message:String(event.message).replace(/\?[^\s]*/g,'?[redacted]').replace(/[A-Za-z0-9_-]{40,}/g,'[redacted]').slice(0,300),source:event.filename ? new URL(event.filename,location.href).pathname : ''}; persist(); }
+    if(event.message)rememberError('early-exception',event.filename,event.error && event.error.name);
     if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
       source = new URL(target.src || target.href || location.href,location.href);
-      if (source.origin === location.origin && source.pathname.indexOf('/_next/static/') === 0 && (target.tagName === 'SCRIPT' || target.rel === 'stylesheet')) chunkFailure('asset',source.href);
+      if (source.origin === location.origin && source.pathname.indexOf('/_next/static/') === 0 && (target.tagName === 'SCRIPT' || target.rel === 'stylesheet')) { rememberError(target.tagName === 'SCRIPT'?'module-error':'stylesheet-error',source.href); mark(target.tagName === 'SCRIPT'?'module-error':'stylesheet-error',source.href); chunkFailure('asset',source.href); }
+      else if (/\.(?:woff2?|ttf)(?:\?|$)/.test(source.href)) { rememberError('font-failure',source.href); mark('font-failure',source.href); }
     } else if (chunkMessage(event.message)) chunkFailure(event.message);
     else if (event.message && !document.documentElement.dataset.awmHydrated) { mark('runtime-error'); show('Startup encountered an error. Reload to try again.'); }
   },true);
-  window.addEventListener('unhandledrejection',function (event) { if (chunkMessage(event.reason)) chunkFailure(event.reason); });
+  window.addEventListener('unhandledrejection',function (event) { rememberError('unhandled-rejection','',event.reason && event.reason.name); mark('unhandled-rejection'); if (chunkMessage(event.reason)) chunkFailure(event.reason); });
   window.addEventListener('vite:preloadError',function (event) { if (chunkMessage(event.payload)) chunkFailure(event.payload); });
   window.addEventListener('offline',function () { mark('offline'); show('You are offline. Reconnect, then reload ArabicWithM.'); });
   window.addEventListener('online',function () { if (failed) retry(); else if (document.getElementById('awm-startup-recovery')) show('You are back online. Reload to reconnect.'); });
   window.addEventListener('awm-hydrated',function () {
-    mark('hydrated'); window.clearTimeout(timer);
+    mark('hydration-complete'); window.clearTimeout(timer);
     if (!failed && navigator.onLine !== false) {
       var notice = document.getElementById('awm-startup-recovery'); if (notice) notice.remove();
       // Keep the URL guard when storage is denied. Never clear session/cookies.
@@ -83,6 +88,11 @@ export const startupRecoveryScript = String.raw`(function () {
     }
   });
   document.addEventListener('DOMContentLoaded',function () { mark('html-complete'); });
+  function entry(node) { if(node && node.tagName === 'SCRIPT' && node.src && new URL(node.src,location.href).pathname.indexOf('/_next/static/') === 0)mark('entry-module-requested',node.src); }
+  Array.prototype.forEach.call(document.querySelectorAll('script[src]'),entry);
+  if(window.MutationObserver){var observer=new MutationObserver(function(records){records.forEach(function(record){Array.prototype.forEach.call(record.addedNodes,function(node){entry(node);if(node.querySelectorAll)Array.prototype.forEach.call(node.querySelectorAll('script[src]'),entry);});});});observer.observe(document.documentElement,{childList:true,subtree:true});window.setTimeout(function(){observer.disconnect();},30000);}
+  window.addEventListener('load',function(event){var target=event.target;if(target && target.tagName === 'SCRIPT' && target.src && new URL(target.src,location.href).pathname.indexOf('/_next/static/')===0)mark('entry-module-loaded',target.src);},true);
+  if(document.fonts && document.fonts.addEventListener)document.fonts.addEventListener('loadingerror',function(){mark('font-failure');});
   window.addEventListener('pagehide',function () { departing = true; });
   window.addEventListener('pageshow',function () { departing = false; mark('pageshow'); if (navigator.onLine === false) show('You are offline. Reconnect, then reload ArabicWithM.'); });
   timer = window.setTimeout(function () {

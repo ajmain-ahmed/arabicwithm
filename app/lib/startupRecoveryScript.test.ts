@@ -127,3 +127,16 @@ it('records an opt-in local first error without query strings or long token valu
   expect(recorded).toContain('runtime-error');expect(recorded).toContain('/_next/static/chunks/start.js')
   expect(recorded).not.toContain('token=private');expect(recorded).not.toContain('private=value');expect(recorded).not.toContain('a'.repeat(60))
 })
+
+it('bounds startup stages and ignores unknown diagnostic payloads', () => {
+  vi.useFakeTimers()
+  const storage=new Map([['awm-startup-diagnostics','1']]),state=boot({storage})
+  const mark=(state.window as typeof state.window & {__awmStartupMark:(stage:string)=>void}).__awmStartupMark
+  mark('react-start');mark('hydration-start');mark('auth-start');mark('private-token')
+  for(let i=0;i<100;i++)state.emit('load',{target:{tagName:'SCRIPT',src:`https://arabicwithm.com/_next/static/chunks/entry-${i}.js?secret=value`}})
+  const report=JSON.parse(storage.get('awm-startup-trace')!)
+  expect(report.trace).toHaveLength(64)
+  expect(report.trace[0].stage).toBe('document-start');expect(report.trace[1].stage).toBe('inline-recovery-loaded')
+  expect(report.trace.map((event:{stage:string})=>event.stage)).toEqual(expect.arrayContaining(['react-start','hydration-start','auth-start']))
+  expect(JSON.stringify(report)).not.toContain('private-token');expect(JSON.stringify(report)).not.toContain('secret=value')
+})

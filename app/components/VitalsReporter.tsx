@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react'
 import { onCLS, onINP, onLCP, type Metric } from 'web-vitals'
+import { startupMark } from '@/app/lib/startupTrace'
 
 export default function VitalsReporter() {
   useEffect(() => {
+    startupMark('hydration-complete')
     performance.mark('awm-hydrated')
     document.documentElement.dataset.awmHydrated = 'true'
     window.dispatchEvent(new Event('awm-hydrated'))

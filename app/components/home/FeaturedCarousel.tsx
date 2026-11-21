@@ -4,10 +4,12 @@ import {useEffect, useRef, useState, type PointerEvent} from 'react'
 import {Box, IconButton} from '@mui/material'
 import {ChevronLeft, ChevronRight} from '@mui/icons-material'
 import FeaturedHero, {FeaturedShell, type FeaturedShow} from './FeaturedHero'
+import {startupMark} from '@/app/lib/startupTrace'
 
 /** One artwork viewport; navigation is entirely user controlled. */
 export default function FeaturedCarousel({items, loading = false}: {items: FeaturedShow[]; loading?: boolean}) {
  const slides=items.slice(0,3)
+ useEffect(()=>{if(items.length)startupMark('homepage-ready')},[items.length])
  const viewport=useRef<HTMLDivElement>(null)
  const [index,setIndex]=useState(0), [dragging,setDragging]=useState(false)
  const active=useRef(0), suppressClick=useRef(false)
