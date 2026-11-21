@@ -118,3 +118,12 @@ it('clears the watchdog and preserves router history on a successful retry', asy
   expect(state.window.fetch).not.toHaveBeenCalled()
   expect(state.history.replaceState).toHaveBeenCalledWith(state.history.state, '', 'https://arabicwithm.com/')
 })
+
+it('records an opt-in local first error without query strings or long token values', () => {
+  vi.useFakeTimers()
+  const storage=new Map([['awm-startup-diagnostics','1']]),state=boot({storage})
+  state.emit('error',{message:'Failed https://example.test/module?token=private '+ 'a'.repeat(60),filename:'https://arabicwithm.com/_next/static/chunks/start.js?private=value'})
+  const recorded=storage.get('awm-startup-trace')!
+  expect(recorded).toContain('runtime-error');expect(recorded).toContain('/_next/static/chunks/start.js')
+  expect(recorded).not.toContain('token=private');expect(recorded).not.toContain('private=value');expect(recorded).not.toContain('a'.repeat(60))
+})

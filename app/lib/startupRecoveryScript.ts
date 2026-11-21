@@ -2,10 +2,12 @@
 export const startupRecoveryScript = String.raw`(function () {
   if (window.__awmRecoveryInstalled) return;
   window.__awmRecoveryInstalled = true;
-  var failed = false, recovering = false, departing = false, timer, failedAssets = [];
+  var failed = false, recovering = false, departing = false, timer, failedAssets = [], firstError = null;
   var marker = '__awm_recovery', key = 'awm-startup-recovery-attempt';
   var trace = window.__awmStartupTrace = [{stage:'bootstrap',at:performance.now()}];
-  function mark(stage) { trace.push({stage:stage,at:performance.now()}); }
+  function persist() { try { if (sessionStorage.getItem('awm-startup-diagnostics') === '1') sessionStorage.setItem('awm-startup-trace',JSON.stringify({path:location.pathname,trace:trace,firstError:firstError})); } catch (_) {} }
+  function mark(stage) { trace.push({stage:stage,at:performance.now()}); persist(); }
+  persist();
   function show(message) {
     if (!document.body) { document.addEventListener('DOMContentLoaded',function () { show(message); },{once:true}); return; }
     var notice = document.getElementById('awm-startup-recovery');
@@ -61,6 +63,7 @@ export const startupRecoveryScript = String.raw`(function () {
   function chunkMessage(value) { return /ChunkLoadError|Loading chunk|dynamically imported module|Importing a module script failed|Unable to preload CSS/.test(String(value)); }
   window.addEventListener('error',function (event) {
     var target = event.target, source;
+    if (!firstError && event.message) { firstError = {message:String(event.message).replace(/\?[^\s]*/g,'?[redacted]').replace(/[A-Za-z0-9_-]{40,}/g,'[redacted]').slice(0,300),source:event.filename ? new URL(event.filename,location.href).pathname : ''}; persist(); }
     if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
       source = new URL(target.src || target.href || location.href,location.href);
       if (source.origin === location.origin && source.pathname.indexOf('/_next/static/') === 0 && (target.tagName === 'SCRIPT' || target.rel === 'stylesheet')) chunkFailure('asset',source.href);

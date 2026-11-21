@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
   // refresh/verification stalls. The browser restores it independently, and
   // Server Actions and protected routes still verify identity server-side.
   if ((request.method === 'GET' || request.method === 'HEAD') &&
-      ['/', '/site.webmanifest', '/startup-recovery.js'].includes(request.nextUrl.pathname)) return response
+      ['/', '/site.webmanifest', '/startup-recovery.js', '/startup-check'].includes(request.nextUrl.pathname)) return response
   const featuredAdmin = request.nextUrl.pathname === '/admin/featured' || request.nextUrl.pathname.startsWith('/admin/featured/')
   const denyFeatured = () => {
     const redirect = NextResponse.redirect(new URL('/', request.url))
