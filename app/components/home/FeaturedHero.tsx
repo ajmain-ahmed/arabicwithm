@@ -16,6 +16,14 @@ export interface FeaturedShow {
   episodeCount: number
 }
 
+function recoverArtwork(image: HTMLImageElement, cover: string) {
+  if (!image.dataset.fallback) {
+    image.dataset.fallback = 'true'
+    image.removeAttribute('srcset')
+    image.src = cover
+  } else image.style.visibility = 'hidden'
+}
+
 /** The same Featured frame remains visible during loading or a catalogue outage. */
 export function FeaturedShell({ loading = false }: { loading?: boolean }) {
   return <Box data-featured-hero data-featured-shell sx={{ pt: '32px', pb: { xs: 1.5, md: 2.5 }, px: { xs: 2, md: 4 } }}>
@@ -60,6 +68,10 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
       >
         {loadImage&&<Box
           component="img"
+          ref={(image: HTMLImageElement | null) => {
+            // A cached/unsupported image can fail before React attaches onError.
+            if (image?.complete && !image.naturalWidth) recoverArtwork(image, show.cover)
+          }}
           src={featuredImage ?? (show.slug.toLowerCase() === 'dbz' ? '/homepage/dbz-feature.avif' : show.cover)}
           srcSet={featuredImage ? featuredImageSrcSet(featuredImage) : undefined}
           sizes="(max-width: 899px) calc(100vw - 32px), 100vw"
@@ -67,7 +79,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           fetchPriority={priority?"high":"low"}
           loading={priority?"eager":"lazy"}
           decoding="async"
-          onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.srcset='';image.src=show.cover}else image.style.visibility='hidden'}}
+          onError={event => recoverArtwork(event.currentTarget, show.cover)}
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
         />}
         <Box component={Link} prefetch={false} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />

@@ -26,8 +26,23 @@ it('skips the remote auth call for anonymous requests', async () => {
 })
 it('uses bounded auth requests before rendering a route', async () => {
   auth.getUser.mockResolvedValue({ data: { user: null }, error: null })
-  expect((await proxy(requestWithAuthCookie())).status).toBe(200)
+  expect((await proxy(requestWithAuthCookie('/profile'))).status).toBe(200)
   expect(auth.create).toHaveBeenCalledWith('https://example.supabase.co', 'fixture-key', expect.objectContaining({ global: { fetch: boundedFetch } }))
+  expect(auth.getUser).toHaveBeenCalledOnce()
+})
+it.each(['/', '/site.webmanifest', '/startup-recovery.js'])('does not wait for session restoration before public startup HTML/assets at %s', async path => {
+  auth.getUser.mockImplementation(() => new Promise(() => {}))
+  const outcome = await Promise.race([
+    proxy(requestWithAuthCookie(path)).then(response => response.status),
+    new Promise(resolve => setTimeout(() => resolve('auth-blocked-first-byte'), 100)),
+  ])
+  expect(outcome).toBe(200)
+  expect(auth.getUser).not.toHaveBeenCalled()
+})
+it('does not exempt Homepage Server Actions from session verification', async () => {
+  auth.getUser.mockResolvedValue({ data: { user: null }, error: null })
+  const request = new NextRequest('http://localhost/', { method: 'POST', headers: { cookie: 'sb-example-auth-token=session-token', 'next-action': 'fixture-action' } })
+  expect((await proxy(request)).status).toBe(200)
   expect(auth.getUser).toHaveBeenCalledOnce()
 })
 it('does not turn an Auth transport failure into a public-page crash', async () => {
