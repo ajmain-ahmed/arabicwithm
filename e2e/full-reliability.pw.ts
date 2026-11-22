@@ -43,7 +43,7 @@ test.beforeEach(async ({ page, request, browserName }) => {
   await installYouTubeFixture(page)
 })
 
-const publicRoutes=['/','/explore','/explore?view=foryou','/cartoons','/cartoons?view=shows','/cartoons/test-show',episode,'/books','/books?mode=listen','/books/test-book','/books/test-book/chapter-1','/listen/test-book','/learn','/grammar','/grammar/context',...['A1','A2','B1','B2','C1','C2'].map(level=>`/grammar/context/${level}`),note,'/memory','/profile','/search','/explore/search','/word-search','/feedback','/support','/privacy','/terms','/reset-password','/transcripts/abababab-abab-4bab-8bab-abababababab']
+const publicRoutes=['/','/explore','/explore?view=foryou','/cartoons','/cartoons?view=shows','/cartoons/test-show',episode,'/books','/books?mode=listen','/books/test-book','/books/test-book/chapter-1','/listen/test-book','/learn','/grammar','/grammar/context',...['A1','A2','B1','B2','C1','C2'].map(level=>`/grammar/context/${level}`),note,'/memory','/profile','/word-search','/feedback','/support','/privacy','/terms','/reset-password','/transcripts/abababab-abab-4bab-8bab-abababababab']
 for (const width of [390,1440]) test(`every public route direct and refreshed, signed out at ${width}`,async({page})=>{
   test.setTimeout(240000)
   await page.setViewportSize({width,height:1000})

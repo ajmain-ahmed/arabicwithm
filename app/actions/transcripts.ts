@@ -55,7 +55,7 @@ export async function deleteAdminTranscript(id: string): Promise<{ok:true}|{ok:f
     const actor=await adminIdentity();z.string().uuid().parse(id)
     const {error}=await serviceClient.rpc('admin_delete_youtube_transcript',{p_actor:actor,p_id:id})
     if(error)throw new Error('Unable to delete this transcript. Please retry.')
-    for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`])revalidatePath(path)
+    for(const path of ['/admin/transcripts','/explore',`/transcripts/${id}`])revalidatePath(path)
     return {ok:true}
   }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to delete transcript.'}}
 }
@@ -205,7 +205,7 @@ export async function finishAdminManualImport(id:string):Promise<ImportReply>{
   if(error)throw importFailure(error)
   const state=importState.parse(data)
   if(!state.completed||state.committed!==state.expected)throw new Error('Import verification failed.')
-  for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${state.id}`])revalidatePath(path)
+  for(const path of ['/admin/transcripts','/explore',`/transcripts/${state.id}`])revalidatePath(path)
   return {ok:true,state}
  }catch(error){return importError(error)}
 }
@@ -322,7 +322,7 @@ export async function saveAdminTranscriptJson(id: string, input: {json:string;ti
     const {raw} = await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat,youtubeId===video.youtube_id?video.duration_seconds:null)
     const {data,error} = await serviceClient.rpc('website_save_manual_source',{p_actor:actor,p_id:id,p_raw:{...raw,source_language:await manualGroupLanguage(value.groupId,value.sourceLanguage??sourceLanguageFromMetadata(video.raw_transcript)),_source_json:value.json} as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
     if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':transcriptDatabaseError('Edit',error))
-    for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
+    for (const path of ['/admin/transcripts','/explore',`/transcripts/${id}`]) revalidatePath(path)
     const result=z.object({updatedAt:z.string(),enrichment:z.enum(['ready','partial','unavailable'])}).parse(data)
     return {ok:true,...result,json:JSON.stringify({content:raw.content},null,2)}
   } catch (error) {
@@ -355,7 +355,7 @@ export async function saveAdminGeneratedTranscript(id:string,input:{json:string;
   if(raw.content.some(c=>c.duration===null))throw new MissingTranscriptDuration()
   const {data,error}=await serviceClient.rpc('admin_review_generated_transcript',{p_actor:actor,p_id:id,p_raw:{...raw,source_language:value.sourceLanguage??sourceLanguageFromMetadata(video.raw_transcript)} as unknown as Json,p_title:value.title,p_searchable:value.searchable,p_updated_at:value.updatedAt})
   if(error)throw new Error(/transcript_edit_conflict/.test(error.message)?'This transcript changed. Reload its JSON before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for generation to finish before saving.':/not_generated_transcript/.test(error.message)?'This saved video belongs to another workflow. Use its existing editor.':'Unable to save generated JSON. Check its token metadata and retry.')
-  for(const path of ['/admin/transcripts','/explore','/explore/search',`/transcripts/${id}`])revalidatePath(path)
+  for(const path of ['/admin/transcripts','/explore',`/transcripts/${id}`])revalidatePath(path)
   let updatedAt=z.string().parse(data)
   // The legacy review RPC preserves existing metadata but only replaces content.
   // Persist a changed mode with the same guarded metadata-only path.

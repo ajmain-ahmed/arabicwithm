@@ -4,7 +4,7 @@ describe('transcript route origins and timestamps',()=>{
   it('returns to explicit website context without browser history',()=>{
     expect(transcriptReturn('admin').href).toBe('/admin/transcripts')
     expect(transcriptReturn('explore').href).toBe('/explore')
-    expect(transcriptReturn('search').href).toBe('/explore/search')
+    expect(transcriptReturn('search').href).toBe('/explore')
   })
   it('rejects arbitrary return destinations',()=>{
     expect(transcriptOrigin('https://example.com')).toBe('search')

@@ -26,7 +26,7 @@ export default async function TranscriptPage({params,searchParams}:{params:Promi
  const data=await (origin==='admin'?loadAdminTranscript:loadPublicTranscript)(id,-1,start);if(!data)notFound()
  const path=`/transcripts/${id}`
  return <>
-  <StructuredData data={breadcrumbJsonLd([{name:'Home',path:'/'},{name:'Search',path:'/search'},{name:data.video.title,path}])}/>
+  <StructuredData data={breadcrumbJsonLd([{name:'Home',path:'/'},{name:'Explore',path:'/explore'},{name:data.video.title,path}])}/>
   <TranscriptViewer key={id} video={data.video} initialSegments={data.segments} start={start} origin={origin}/>
  </>
 }

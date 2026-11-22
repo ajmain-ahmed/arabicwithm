@@ -55,7 +55,7 @@ Key features:
 │   │   ├── profiles.ts / myList.ts / activity.ts / reviews.ts # User features
 │   │   ├── storage.ts / profilePresets.ts / bookReleaseReminders.ts
 │   │   ├── transcripts.ts        # YouTube/manual transcript admin pipeline
-│   │   ├── feedback.ts / contentSearch.ts / featured.ts
+│   │   ├── feedback.ts / featured.ts
 │   ├── api/                      # Route handlers (all verified server-side)
 │   │   ├── billing/webhook/      # Stripe webhook (signature-verified)
 │   │   ├── books/[book]/download/# Entitlement-gated "PDF" (actually JSON for client render)
@@ -73,7 +73,6 @@ Key features:
 │   ├── listen/[book]/            # Audiobook player (signed-in, entitled)
 │   ├── memory/ grammar/ word-search/         # Learning activities
 │   ├── profile/ profile/[user]/  # Own profile redirect / public profile
-│   ├── search/                   # Unified content search (RPC)
 │   ├── support/ feedback/        # Stripe support checkout / feedback form
 │   ├── transcripts/[id]/         # Public/admin transcript viewer
 │   ├── learn/                    # Static hub linking the activities

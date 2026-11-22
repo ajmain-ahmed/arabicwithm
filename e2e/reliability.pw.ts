@@ -21,7 +21,7 @@ test('repeated real application navigation, reload, new tab and history for publ
  }
 
  const transcript='/transcripts/abababab-abab-4bab-8bab-abababababab'
- for(let cycle=0;cycle<3;cycle++)for(const path of ['/', '/explore','/cartoons/test-show/clip-0','/books','/search',transcript])await check(path)
+ for(let cycle=0;cycle<3;cycle++)for(const path of ['/', '/explore','/cartoons/test-show/clip-0','/books',transcript])await check(path)
  await page.reload();await expect(failure(page)).toHaveCount(0)
  await page.goto('/learn');await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Watch',exact:true}).click();await expect(page).toHaveURL(/\/cartoons$/);await page.goBack();await expect(page).toHaveURL(/\/learn$/);await page.goForward();await expect(page).toHaveURL(/\/cartoons$/)
  await account(context)
@@ -52,7 +52,6 @@ test('public transcript failures stay errors, genuine missing transcripts stay 4
  await page.goto('/transcripts/abababab-abab-4bab-8bab-abababababab');await expect(failure(page)).toBeVisible();await expect(failure(page)).not.toContainText('PGRST')
  await request.post(`${backend}/fixture/reliability`,{data:{reset:true,publicTranscript:true}});await failure(page).getByRole('button',{name:'Reload',exact:true}).click();await expect(page.locator('iframe')).toBeVisible();await expect(failure(page)).toHaveCount(0)
  const missing=await page.goto('/transcripts/00000000-0000-4000-8000-000000000000');expect([200,404]).toContain(missing!.status());await expect(page.getByRole('heading',{name:'Page not found',exact:true})).toBeVisible();await expect(failure(page)).toHaveCount(0)
- await request.post(`${backend}/fixture/reliability`,{data:{emptySearch:true}});await page.goto('/search');await page.getByLabel('Search learning content').fill('zznomatch');await page.getByRole('button',{name:'Search',exact:true}).click();await expect(page.getByText('No matching content. Try another word or phrase.')).toBeVisible();await expect(failure(page)).toHaveCount(0)
 })
 test('supplied error illustration, both themes, responsive sizes and Go Home',async({page,request})=>{
  await request.post(`${backend}/fixture/reliability`,{data:{reset:true,publicTranscript:true,rules:[{path:'/rest/v1/youtube_transcripts',remaining:-1,status:503}]}})

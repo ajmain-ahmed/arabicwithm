@@ -5,7 +5,7 @@ export function transcriptOrigin(value?: string): TranscriptOrigin {
 export function transcriptReturn(origin: TranscriptOrigin): { href: string; label: string } {
   if (origin === 'admin') return { href: '/admin/transcripts', label: 'Back to Transcripts' }
   if (origin === 'explore') return { href: '/explore', label: 'Back to Explore' }
-  return { href: '/explore/search', label: 'Back to transcript search' }
+  return { href: '/explore', label: 'Back to Explore' }
 }
 export function transcriptTime(milliseconds: number): string {
   const seconds = Math.floor(milliseconds / 1000)

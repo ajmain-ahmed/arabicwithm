@@ -33,7 +33,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Verify critical browser journeys
-        run: npx playwright test e2e/auth-session.pw.ts e2e/book-actions-quality.pw.ts e2e/watch-navigation.pw.ts e2e/library-discovery.pw.ts --grep 'registration hand-off|matching book actions|Watch, Show, Episode|mobile library renders|desktop navigation exposes'
+        run: npx playwright test e2e/auth-session.pw.ts e2e/book-actions-quality.pw.ts e2e/watch-navigation.pw.ts e2e/library-discovery.pw.ts --grep 'registration hand-off|matching book actions|Watch, Show, Episode|mobile library renders|desktop navigation omits'
 
       # vinext-cloudflare deploy validates, builds, and deploys the
       # arabicwithm Worker. NEXT_PUBLIC_* values are inlined into the client
