@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ pathname: '/', mobile: false, role: 'admin', p
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { ImageOutlined: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, DiamondOutlined: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon }
+  return { ImageOutlined: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, DiamondOutlined: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon, SearchOutlined: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
 vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
@@ -54,6 +54,7 @@ it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s 
   if (link) expect(link.textContent).toBe('Admin')
   expect(host.querySelector('a[href="/books"]')).not.toBeNull()
   expect(host.querySelector('a[href="/word-search"]')).toBeNull()
+  expect(host.querySelector('a[href="/search"]')).not.toBeNull()
   await act(async () => (host.querySelector('[aria-label="Open user menu"]') as HTMLElement).click())
   const menu = document.querySelector('[role="menu"]')!
   expect(menu.querySelector('a[href="/profile/admin"]')).not.toBeNull()
@@ -128,7 +129,7 @@ it.each([false, true])('preserves authorised Home management navigation on mobil
 
 it('routes normal mobile entries and opens dialogs for Contact Us and Support Us',async()=>{
  mocks.mobile=true;mocks.role='user';mocks.pathname='/books'
- const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Learn','/learn']]
+ const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Learn','/learn'],['Search','/search']]
  await act(async()=>root.render(<Navbar/>))
  for(const [label,href] of entries){
   await act(async()=> (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
@@ -156,7 +157,7 @@ it.each(['user', 'premium'])('groups the normal %s mobile menu with dividers aft
   mocks.mobile = true; mocks.role = role
   await act(async () => root.render(<Navbar />))
   await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Contact Us','Support Us','Settings','Sign Out'])
+  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Search','Contact Us','Support Us','Settings','Sign Out'])
   const dividers = [...document.querySelectorAll('[data-nav-divider]')]
   expect(dividers.map(node => node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Support Us'])
   expect(dividers.map(node => node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn','Support Us'])
@@ -168,7 +169,7 @@ it.each(['admin','editor'])('groups existing %s tools after browsing without cha
  await act(async()=>(host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
  const management=[...(role==='admin'?['Admin','Featured']:[]),'Reviewer','Memory','Grammar','Word Search']
  expect([...document.querySelectorAll('.mobile-list-btn')].map(node=>node.textContent)).toEqual([
-  'My Profile','Home','Explore','Watch','Read','Learn',...management,'Contact Us','Support Us','Settings','Sign Out',
+  'My Profile','Home','Explore','Watch','Read','Learn','Search',...management,'Contact Us','Support Us','Settings','Sign Out',
  ])
  const dividers=[...document.querySelectorAll('[data-nav-divider]')]
  expect(dividers.map(node=>node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Word Search','Support Us'])

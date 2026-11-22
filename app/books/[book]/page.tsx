@@ -10,6 +10,8 @@ import BookDetailMetadata from './BookDetailMetadata'
 import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 import BookInProgress from './BookInProgress'
 import { isBookReleased } from '@/app/lib/bookRelease'
+import StructuredData from '@/app/components/StructuredData'
+import { absoluteUrl, breadcrumbJsonLd } from '@/app/lib/seo'
 
 export const revalidate = 3600
 
@@ -21,7 +23,17 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ book: string }> }) {
   const { book: slug } = await params
   const book = await fetchBookBySlugPublic(slug)
-  return book ? { title: `${book.title} | Arabic Books` } : { title: 'Book Not Found' }
+  if (!book) return { title: 'Book Not Found' }
+  const path = `/books/${encodeURIComponent(book.slug)}`
+  const description = book.description?.slice(0, 240) ?? `Read ${book.title}, a graded Arabic book at ${book.level || 'your'} level.`
+  return {
+    title: `${book.title} | Arabic Books`,
+    description,
+    alternates: { canonical: path },
+    robots: book.isCompleted === false ? { index: false, follow: true } : undefined,
+    openGraph: { type: 'book', title: book.title, description, url: path, images: book.cover ? [{ url: book.cover, alt: `${book.title} cover` }] : undefined },
+    twitter: { card: 'summary_large_image', title: book.title, description, images: book.cover ? [book.cover] : undefined },
+  }
 }
 
 export default async function BookPage({ params }: { params: Promise<{ book: string }> }) {
@@ -61,7 +73,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
       )}
       <BookDetailMetadata level={book.level} readingTimeMinutes={book.readingTimeMinutes} tags={book.tags} audioChapterCount={audioChapterIds.size}/>
       <Box sx={{ mt: 3 }}>
-        {completed ? <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} /> : <BookInProgress bookId={book.id} bookSlug={book.slug} />}
+        {completed ? <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} /> : <BookInProgress bookId={book.id} />}
       </Box>
     </>
   )
@@ -105,6 +117,17 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   return (
     <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
+      <StructuredData data={[
+        breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Arabic Books', path: '/books' }, { name: book.title, path: `/books/${encodeURIComponent(book.slug)}` }]),
+        {
+          '@context': 'https://schema.org', '@type': 'Book', name: book.title,
+          ...(book.titleAr ? { alternateName: book.titleAr } : {}),
+          ...(book.author !== 'Author not listed' ? { author: { '@type': 'Person', name: book.author } } : {}),
+          ...(book.description ? { description: book.description } : {}),
+          ...(book.cover ? { image: book.cover } : {}),
+          inLanguage: 'ar', educationalLevel: book.level, url: absoluteUrl(`/books/${encodeURIComponent(book.slug)}`),
+        },
+      ]} />
       <Container maxWidth="xl">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>

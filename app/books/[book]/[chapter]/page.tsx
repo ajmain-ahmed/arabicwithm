@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ book: str
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) return { title: 'Chapter Not Found' }
   const chapter = (await fetchChaptersForBookPublic(book.id)).find((item) => item.slug === chapterSlug)
-  return chapter ? { title: `${chapter.title} — ${book.title}` } : { title: 'Chapter Not Found' }
+  return chapter ? { title: `${chapter.title} — ${book.title}`, robots: { index: false, follow: true } } : { title: 'Chapter Not Found' }
 }
 
 export default async function ChapterPage({

@@ -28,8 +28,10 @@ Cartoon transcripts are JSON arrays of timed blocks:
 ```
 
 Book chapters use the same `tokens` and `translation` fields but do not need a
-timestamp. A book block may also contain a separate `punctuation` field so
-punctuation renders without becoming part of a hoverable dictionary token.
+timestamp. Audiobook sentence timings live separately in per-language
+`book_chapter_audio.timing_data`, because Arabic and English recordings have
+different pacing. A book block may also contain a separate `punctuation` field
+so punctuation renders without becoming part of a hoverable dictionary token.
 
 ## Token rules
 

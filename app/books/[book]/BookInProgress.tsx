@@ -6,15 +6,14 @@ import { CheckRounded, NotificationsNoneRounded } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
 import { bookReleaseReminder, setBookReleaseReminder, type BookReminderState } from '@/app/actions/bookReleaseReminders'
 import useBookCatalogueRefresh from '@/app/books/useBookCatalogueRefresh'
-import BookMyListToggle from './BookMyListToggle'
 
-export default function BookInProgress({ bookId, bookSlug }: { bookId: string; bookSlug: string }) {
+export default function BookInProgress({ bookId }: { bookId: string }) {
   const { user, loading } = useAuth()
   useBookCatalogueRefresh()
-  return <Reminder key={`${bookId}:${user?.id ?? 'guest'}`} bookId={bookId} bookSlug={bookSlug} userId={user?.id} authLoading={loading} />
+  return <Reminder key={`${bookId}:${user?.id ?? 'guest'}`} bookId={bookId} userId={user?.id} authLoading={loading} />
 }
 
-function Reminder({ bookId, bookSlug, userId, authLoading }: { bookId: string; bookSlug: string; userId?: string; authLoading: boolean }) {
+function Reminder({ bookId, userId, authLoading }: { bookId: string; userId?: string; authLoading: boolean }) {
   const [state, setState] = useState<BookReminderState>({ active: false, fulfilled: false })
   const [loading, setLoading] = useState(Boolean(userId))
   const [busy, setBusy] = useState(false)
@@ -53,8 +52,7 @@ function Reminder({ bookId, bookSlug, userId, authLoading }: { bookId: string; b
     finally { pending.current = false; if (mounted.current) setBusy(false) }
   }
 
-  return <Box>
-    <Box component="section" aria-label="Book release reminder" sx={{ p: { xs: 2, sm: 3 }, borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 7%, var(--awm-white))', border: '1px solid color-mix(in srgb, var(--awm-gold) 22%, transparent)' }}>
+  return <Box component="section" aria-label="Book release reminder" sx={{ p: { xs: 2, sm: 3 }, borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 7%, var(--awm-white))', border: '1px solid color-mix(in srgb, var(--awm-gold) 22%, transparent)' }}>
       <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 25, color: 'var(--awm-bark)' }}>This book is in progress</Typography>
       <Typography sx={{ mt: 1, mb: 2, fontSize: 14, color: 'var(--awm-muted)', lineHeight: 1.6 }}>We’re still preparing this book. Set a reminder and we’ll let you know in AWM Notifications when it’s released.</Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -63,6 +61,4 @@ function Reminder({ bookId, bookSlug, userId, authLoading }: { bookId: string; b
         <Button disabled={busy} onClick={() => void change(false)} sx={{ mt: 1, textTransform: 'none', color: 'var(--awm-muted)', minHeight: 44 }}>Cancel Reminder</Button>
       </> : <Button variant="contained" startIcon={<NotificationsNoneRounded />} disabled={authLoading || loading || busy} onClick={() => void change(true)} sx={{ minHeight: 44, bgcolor: 'var(--awm-forest)', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>{loading ? 'Loading reminder…' : busy ? 'Setting reminder…' : 'Remind Me'}</Button>}
     </Box>
-    <Box sx={{ mt: 2, maxWidth: 200 }}><BookMyListToggle bookSlug={bookSlug} /></Box>
-  </Box>
 }

@@ -140,9 +140,12 @@ export default function EpisodeHeadwordsPage() {
 
   useEffect(() => {
     activeTarget.current = episodeId
-    setEpisode(null);setRows([]);setEditingRowKey(null);setExpandedRows(new Set());setDialogRowKey(null);setDialogEditing(false);setEpisodeEditOpen(false)
-    setSavingTranscript({});setSavingDefinition({})
-    loadEpisode()
+    queueMicrotask(() => {
+      if (activeTarget.current !== episodeId) return
+      setEpisode(null);setRows([]);setEditingRowKey(null);setExpandedRows(new Set());setDialogRowKey(null);setDialogEditing(false);setEpisodeEditOpen(false)
+      setSavingTranscript({});setSavingDefinition({})
+      void loadEpisode()
+    })
     return invalidateLoad
   }, [loadEpisode, episodeId, invalidateLoad])
 
@@ -583,10 +586,11 @@ interface EditableCellProps {
 
 function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing, isExpanded }: EditableCellProps) {
   const [localValue, setLocalValue] = useState(value)
-
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value)
+  if (value !== previousValue) {
+    setPreviousValue(value)
     setLocalValue(value)
-  }, [value])
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !multiline) {

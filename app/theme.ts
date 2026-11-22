@@ -162,7 +162,7 @@ export const baseTheme = createTheme({
       fontWeight: 600,
       letterSpacing: "0.16em",
       textTransform: "uppercase",
-      color: "var(--awm-gold)",
+      color: "var(--awm-gold-text)",
     },
   },
   shape: {

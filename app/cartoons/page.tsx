@@ -7,8 +7,9 @@ import { CataloguePageLoading } from '@/app/components/PageLoading'
 export const revalidate = 3600
 
 export const metadata = {
-  title: 'Arabic Cartoons | ArabicWithM',
-  description: 'Watch your favourite cartoons with interactive Arabic transcripts.',
+  title: 'Arabic Cartoons',
+  description: 'Watch cartoons with interactive Arabic transcripts, English translations, and inline vocabulary support.',
+  alternates: { canonical: '/cartoons' },
 }
 
 const PAGE_SIZE = 24

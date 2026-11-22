@@ -28,6 +28,7 @@ export interface PublicBook {
   slug: string
   title: string
   isCompleted?: boolean
+  updatedAt?: string
   titleAr?: string
   description?: string
   cover?: string
@@ -107,6 +108,7 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     slug,
     title: String(row.title),
     isCompleted: row.is_completed !== false,
+    updatedAt: row.updated_at ? String(row.updated_at) : undefined,
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
     cover: catalogueCoverUrl({ kind: 'books', id: String(row.id), slug, cover: row.cover, version: coverVersion }),

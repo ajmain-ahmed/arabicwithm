@@ -8,7 +8,7 @@ import { isBookReleased } from '@/app/lib/bookRelease'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import SignInRequired from '@/app/components/SignInRequired'
 
-export const metadata = { title: 'Listen | ArabicWithM' }
+export const metadata = { title: 'Listen to Arabic Books', robots: { index: false, follow: true } }
 
 export default async function ListenPage({ params }: { params: Promise<{ book: string }> }) {
   const { book: slug } = await params

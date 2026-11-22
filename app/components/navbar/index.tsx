@@ -1,7 +1,7 @@
 'use client'
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
-import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
+import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person, SearchOutlined } from '@mui/icons-material'
 import { AppBar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -251,6 +251,11 @@ export default function Navbar() {
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
                                     {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
+                                    <Tooltip title="Search ArabicWithM">
+                                        <IconButton component={Link} href="/search" aria-label="Search ArabicWithM" sx={{ color: navColor }}>
+                                            <SearchOutlined />
+                                        </IconButton>
+                                    </Tooltip>
                                     <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
                                         <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}

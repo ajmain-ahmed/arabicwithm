@@ -15,6 +15,7 @@ export interface ShowMeta {
   coverCrop?: ThumbnailCrop
   level: string
   episodeCount: number
+  updatedAt?: string
   category?: string
   tags?: string[]
   duration?: string
@@ -35,6 +36,7 @@ export interface EpisodeMeta {
   cover?: string
   coverCrop?: ThumbnailCrop
   createdAt?: string
+  updatedAt?: string
 }
 
 export type VideoProvider = 'youtube' | 'instagram' | 'tiktok' | 'facebook'

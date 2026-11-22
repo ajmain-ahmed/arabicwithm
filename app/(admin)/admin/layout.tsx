@@ -6,7 +6,7 @@ import AdminNav from "./components/AdminNav"
 import AdminThemeProvider from "./components/AdminThemeProvider"
 
 export const metadata = {
-  title: "Admin | ArabicWithM",
+  title: "Admin",
   robots: { index: false, follow: false },
   description: "Content administration for ArabicWithM",
 }

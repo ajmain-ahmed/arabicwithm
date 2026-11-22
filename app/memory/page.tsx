@@ -6,8 +6,9 @@ import MemoryPage from './MemoryPage'
 import { unstable_rethrow } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'Memory Flashcards | ArabicWithM',
+  title: 'Memory Flashcards',
   description: 'Practise Arabic and English phrases from real cartoon transcripts.',
+  alternates: { canonical: '/memory' },
 }
 
 export default async function Page({

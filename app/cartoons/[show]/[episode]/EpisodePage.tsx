@@ -23,9 +23,8 @@ import {
   Chip,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, KeyboardArrowLeft, KeyboardArrowRight, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon, SpaceBar } from '@mui/icons-material'
+import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, KeyboardArrowLeft, KeyboardArrowRight, PsychologyOutlined, Refresh, Settings as SettingsIcon, SpaceBar } from '@mui/icons-material'
 import { HOME_CAROUSEL_CARD_ASPECT_RATIO } from '@/app/components/home/NewOnRow'
-import { ContentCard } from '@/app/components/content-grid'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -42,6 +41,8 @@ import {
 import { type ShowRow } from '@/app/actions/admin'
 import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
 import { HtmlTooltip, MobileDefinitionSheet, WordTooltip } from '@/app/components/vocab-tooltip'
+import TranscriptBlock from '@/app/components/transcript/TranscriptBlock'
+import { RelatedRail, type RelatedEpisode } from './EpisodeRelatedRail'
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
@@ -75,16 +76,6 @@ const PAGE_CSS = `
 
   /* Fixed mobile header — rendered via portal directly on <body> so no
      ancestor overflow can interfere. Hidden on lg+. */
-  .script-block {
-    transition: background 0.15s ease, border-color 0.2s ease;
-    border-radius: 8px;
-    border-left: 3px solid transparent;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-  }
-  .script-block:hover  { background: rgba(184,134,11,0.06); }
-  .script-block.active { background: rgba(184,134,11,0.12); border-left-color: var(--gold); }
-
   .arabic-line {
     font-family: var(--font-serif), Georgia, serif;
     direction: rtl;
@@ -555,9 +546,13 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
   const hasTimestamp = block.timestamp != null
   return (
     <>
-      <Box
+      <TranscriptBlock
         ref={isActive ? activeBlockRef : undefined}
-        className={`script-block ${isActive ? 'active' : ''}`}
+        active={isActive}
+        timestamp={block.timestamp}
+        interactive={hasTimestamp}
+        dimmed={!hasTimestamp}
+        title={<Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>{block.title}</Typography>}
         onClick={(e) => {
           if (vocabTrackerRef.openCount > 0) return
           if ((e.target as HTMLElement).closest('.vocab-word')) return
@@ -565,24 +560,10 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
             onSeek(block.timestamp!)
           }
         }}
-        sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
       >
-        {/* Block title / timestamp */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-            {hasTimestamp && (
-              <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
-                {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
-              </Typography>
-            )}
-            <Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>
-              {block.title}
-            </Typography>
-          </Box>
-        </Box>
 
         {/* Arabic */}
-        <Typography component="div" className="arabic-line" sx={{ fontFamily: textFontFamily, fontSize: `calc(1.35rem * ${textScale})`, mb: 0.5 }}>
+        <Typography component="div" className="arabic-line" sx={{ fontFamily: textFontFamily, fontSize: `calc(1.35rem * ${textScale})`, mb: 1.5 }}>
           <ArabicLineText
             textScale={textScale}
             text={showDiacritics ? block.arabicDiacritic : block.arabicPlain}
@@ -663,7 +644,7 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
             )}
           </>
         )}
-      </Box>
+      </TranscriptBlock>
       {hasNext && <Divider sx={{ borderColor: 'rgba(44,26,14,0.06)', my: 0.5 }} />}
     </>
   )
@@ -672,115 +653,6 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 /* ─────────────────────────────────────────────
    RelatedRail — YouTube-style "Up next" list (desktop)
 ───────────────────────────────────────────── */
-type RelatedEpisode = EpisodeMeta & { showSlug: string; showTitle?: string }
-
-function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisode[]; currentSlug: string; variant: 'rail' | 'strip' }) {
-  const isStrip = variant === 'strip'
-  return (
-    <Box
-      component={isStrip ? 'section' : 'aside'}
-      aria-label="Up next"
-      sx={{
-        flexDirection: 'column',
-        gap: 1.1,
-        minHeight: 0,
-        scrollbarWidth: 'none',
-        '&::-webkit-scrollbar': { display: 'none' },
-        ...(isStrip
-          ? {
-              /* md–lg: horizontal strip below the video/transcript grid */
-              display: { xs: 'none', md: 'flex', lg: 'none' },
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              scrollSnapType: 'x proximity',
-              width: '100%',
-              px: { md: 2.5, lg: 4 },
-              pt: { md: 3 },
-              pb: { md: 4 },
-            }
-          : {
-              /* lg+: vertical sticky rail left of the video */
-              display: { xs: 'none', lg: 'flex' },
-              overflowY: 'auto',
-              justifySelf: 'end',
-              alignSelf: 'start',
-              position: 'sticky',
-              top: 'calc(var(--awm-navbar-height) + 32px)',
-              width: '100%',
-              maxWidth: 784,
-              height: 'calc(100dvh - 129px)',
-              pt: { lg: '7px' },
-            }),
-      }}
-    >
-      <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5, flexShrink: 0 }}>
-        Up next
-      </Typography>
-      {related.length === 0 && (
-        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.6)', px: 0.5 }}>
-          No other episodes in this show yet.
-        </Typography>
-      )}
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 1,
-          ...(isStrip
-            ? {
-                width: 'max-content',
-                minWidth: '100%',
-                gridAutoFlow: 'column',
-                gridAutoColumns: { md: '180px' },
-                alignItems: 'start',
-              }
-            : {
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                mt: { lg: '14px' },
-                minWidth: 0,
-              }),
-        }}
-      >
-        {related.map((item) => {
-          const active = item.slug === currentSlug
-          return (
-            <Box
-              key={item.id}
-              sx={{
-                borderRadius: '4px',
-                outline: active ? '2px solid rgba(212,168,67,0.7)' : '2px solid transparent',
-                outlineOffset: 2,
-                transition: 'outline-color .15s ease',
-                scrollSnapAlign: 'start',
-                '& img': { filter: 'brightness(0.62)', transition: 'filter .2s ease' },
-                '&:hover img': { filter: 'brightness(1)' },
-              }}
-            >
-              <ContentCard
-                slug={item.slug}
-                hrefPrefix={`/cartoons/${item.showSlug}`}
-                cover={item.cover ?? ''}
-                title={item.title}
-                description={item.description}
-                level={item.level}
-                tags={item.tags}
-                showTags={false}
-                aspectRatio="5 / 6"
-                imageFit="cover"
-                imageCrop={item.coverCrop}
-                denseMobileTile
-                mobileAspectRatio="5 / 6"
-                mobileImagePosition="center"
-                overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}
-                metaItems={[]}
-              />
-            </Box>
-          )
-        })}
-      </Box>
-    </Box>
-  )
-}
-
 /* ─────────────────────────────────────────────
    UpNextList — compact mobile "More" tab: the Up
    next queue as up to nine overlay thumbnails on phones,

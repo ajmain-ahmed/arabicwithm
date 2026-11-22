@@ -1,6 +1,6 @@
 import { Box, Container, Divider, Typography } from '@mui/material'
 
-export const metadata = { title: 'Terms of Service | ArabicWithM' }
+export const metadata = { title: 'Terms of Service', alternates: { canonical: '/terms' } }
 
 const SECTION_PROPS = { component: 'h2' as const, sx: { mt: 4, mb: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' } }
 const BODY = { sx: { fontFamily: 'var(--font-sans), sans-serif', fontSize: 15, lineHeight: 1.75, color: 'var(--awm-bark)', mb: 1.25, '& a': { color: 'var(--awm-gold)', textDecoration: 'underline' } } }

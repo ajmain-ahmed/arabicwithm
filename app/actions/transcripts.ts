@@ -265,6 +265,16 @@ export async function importAdminManualTranscriptResult(input: Parameters<typeof
   try { return {ok:true,...await importManualSource(input)} }
   catch(error) { return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error instanceof z.ZodError?error.issues[0].message:error.message):'Unable to import transcript.'} }
 }
+export async function fetchPublicTranscriptSitemap(): Promise<Array<{id:string;updatedAt:string}>> {
+ const rows:Array<{id:string;updatedAt:string}>=[]
+ for(let offset=0;offset<50000;offset+=1000){
+  const {data,error}=await serviceClient.from('youtube_transcripts').select('id,updated_at').eq('status','ready').eq('searchable',true).order('updated_at',{ascending:false}).order('id').range(offset,offset+999)
+  if(error)throw new Error('Unable to load the public transcript sitemap.')
+  rows.push(...(data??[]).map(row=>({id:String(row.id),updatedAt:String(row.updated_at)})))
+  if((data?.length??0)<1000)break
+ }
+ return rows
+}
 export async function loadPublicTranscript(id:string,after=-1,seconds?:number){return loadTranscript(id,after,seconds)}
 export async function loadAdminTranscript(id:string,after=-1,seconds?:number){await guardAdmin();return loadTranscript(id,after,seconds,true)}
 

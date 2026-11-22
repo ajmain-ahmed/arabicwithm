@@ -159,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
         setLoading(false)
         if (_event === 'SIGNED_OUT') {
+          void import('@/store/audiobookStore').then(({ useAudiobookStore }) => useAudiobookStore.getState().clearPlaybackCache())
           // Never refresh a private profile after its session has disappeared.
           // A full replacement also clears cached authenticated route payloads.
           returnToPublicHome()

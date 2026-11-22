@@ -63,7 +63,10 @@ export default function ShowEditDialog({
 
   useEffect(() => {
     if (!open) return
-    setError(null)
+    let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      setError(null)
 
     if (isNew) {
       setLoading(false)
@@ -77,7 +80,6 @@ export default function ShowEditDialog({
       return
     }
 
-    let active = true
     setLoading(true)
     boundedRead(fetchShowForAdmin(showId!))
       .then((row: ShowRow | null) => {
@@ -94,8 +96,9 @@ export default function ShowEditDialog({
         setCategory(row.category ?? "")
         setCoverCrop(row.cover_crop)
       })
-      .catch((e: unknown) => { if (active) setError("Unable to load show details. Close this dialog and reload the page.") })
+      .catch(() => { if (active) setError("Unable to load show details. Close this dialog and reload the page.") })
       .finally(() => { if (active) setLoading(false) })
+    })
     return () => { active = false }
   }, [open, showId, isNew])
 

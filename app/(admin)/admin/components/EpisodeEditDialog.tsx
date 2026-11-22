@@ -89,9 +89,12 @@ export default function EpisodeEditDialog({
 
   useEffect(() => {
     if (!open) return
-    setTab(0)
-    setError(null)
-    setShowId(initialShowId ?? "")
+    let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      setTab(0)
+      setError(null)
+      setShowId(initialShowId ?? "")
 
     if (isNew) {
       setLoading(false)
@@ -110,7 +113,6 @@ export default function EpisodeEditDialog({
       return
     }
 
-    let active = true
     setLoading(true)
     boundedRead(fetchEpisodeForAdmin(episodeId!))
       .then((row: EpisodeWithTranscript | null) => {
@@ -133,8 +135,9 @@ export default function EpisodeEditDialog({
         setCoverCrop(row.cover_crop)
         setTranscriptJson(JSON.stringify(row.transcript ?? [], null, 2))
       })
-      .catch((e: unknown) => { if (active) setError("Unable to load episode details. Close this dialog and reload the page.") })
+      .catch(() => { if (active) setError("Unable to load episode details. Close this dialog and reload the page.") })
       .finally(() => { if (active) setLoading(false) })
+    })
     return () => { active = false }
   }, [open, episodeId, isNew, initialShowId])
 

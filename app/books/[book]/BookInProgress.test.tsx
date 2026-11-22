@@ -5,12 +5,11 @@ const mocks = vi.hoisted(() => ({ user: { id: 'reader' } as { id: string } | nul
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: mocks.user, loading: false }) }))
 vi.mock('@/app/actions/bookReleaseReminders', () => ({ bookReleaseReminder: mocks.load, setBookReleaseReminder: mocks.set }))
 vi.mock('@/app/books/useBookCatalogueRefresh', () => ({ default: () => {} }))
-vi.mock('./BookMyListToggle', () => ({ default: () => <button>My List</button> }))
 import BookInProgress from './BookInProgress'
 let host: HTMLDivElement, root: Root
 const book = '11111111-1111-4111-8111-111111111111'
 const button = (label: string) => Array.from(host.querySelectorAll('button')).find(element => element.textContent === label)!
-const render = () => act(async () => root.render(<BookInProgress bookId={book} bookSlug="prepared" />))
+const render = () => act(async () => root.render(<BookInProgress bookId={book} />))
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true }); vi.clearAllMocks(); sessionStorage.clear()
   mocks.user = { id: 'reader' }; mocks.load.mockResolvedValue({ ok: true, state: { active: false, fulfilled: false } })
@@ -20,6 +19,7 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
 it('sets one reminder, displays confirmation and allows cancellation', async () => {
   await render(); expect(host.textContent).toContain('This book is in progress')
+  expect(host.textContent).not.toContain('My List')
   await act(async () => { button('Remind Me').click(); button('Remind Me').click() })
   expect(mocks.set).toHaveBeenCalledTimes(1); expect(host.textContent).toContain('Reminder set')
   await act(async () => button('Cancel Reminder').click())

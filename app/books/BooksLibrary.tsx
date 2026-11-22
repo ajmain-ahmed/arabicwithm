@@ -7,6 +7,7 @@ import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, I
 import { Close, Search, Tune } from '@mui/icons-material'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import useBookCatalogueRefresh from '@/app/books/useBookCatalogueRefresh'
+import type { AudioLanguage } from '@/app/lib/audioUpload'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 
@@ -22,6 +23,7 @@ export interface LibraryBook {
   cover?: string | null
   coverCrop?: Parameters<typeof thumbnailCropCss>[0]
   chapterCount: number
+  isCompleted?: boolean
   premiumExempt: boolean
 }
 
@@ -42,13 +44,13 @@ const FILTER_BUTTON_SX = {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 1.75 }}>
+    <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--awm-gold-text)', mb: 1.75 }}>
       {children}
     </Typography>
   )
 }
 
-export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBook[]; audioBookIds: string[] }) {
+export default function BooksLibrary({ books, audioLanguagesByBook }: { books: LibraryBook[]; audioLanguagesByBook: Record<string, AudioLanguage[]> }) {
   const [changingMode, startModeTransition] = useTransition()
   useBookCatalogueRefresh(!changingMode)
   const searchParams = useSearchParams()
@@ -60,7 +62,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
   const [categories, setCategories] = useState<string[]>([])
   const [audioOnly, setAudioOnly] = useState(false)
   const [query, setQuery] = useState('')
-  const audioIds = useMemo(() => new Set(audioBookIds), [audioBookIds])
+  const audioIds = useMemo(() => new Set(Object.keys(audioLanguagesByBook)), [audioLanguagesByBook])
 
   /* Genre = the book's category; deduped case-insensitively ("Young Adult"
      vs "Young Adults" style duplicates collapse to one chip). */
@@ -89,22 +91,6 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
   }), [books, level, categories, audioOnly, mode, query, audioIds])
 
   const activeFilterCount = (level ? 1 : 0) + categories.length + (audioOnly ? 1 : 0)
-
-  // Use canonical categories and tags already supplied by the library.
-  // Books without either remain discoverable in their own fallback section.
-  const discoverySections = useMemo(() => {
-    const sections = new Map<string, { title: string; books: LibraryBook[] }>()
-    for (const book of visible) {
-      const labels = [...new Set([book.category, ...book.tags].map(value => value?.trim()).filter((value): value is string => Boolean(value)))]
-      for (const label of labels.length ? labels : ['More books']) {
-        const key = label.toLocaleLowerCase()
-        const section = sections.get(key) ?? { title: label, books: [] }
-        if (!section.books.some(existing => existing.id === book.id)) section.books.push(book)
-        sections.set(key, section)
-      }
-    }
-    return sections
-  }, [visible])
 
   /* Grey out options that would produce zero results (given the other
      active filters), so the empty state is unreachable through the UI. */
@@ -310,30 +296,10 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         </DialogActions>
       </Dialog>
 
-      {mode === 'read' && <Box component="section" aria-labelledby="all-books-title" sx={{ mb: 3, display: { xs: 'block', sm: 'none' } }}>
-        <Typography id="all-books-title" component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>All Books</Typography>
-        <Box data-all-books-row role="group" aria-label="Scroll All Books" tabIndex={0} sx={{
-          display: 'grid', gridAutoFlow: 'column', gridAutoColumns: { xs: 'calc((100% - 20px) / 3)', sm: '175px', md: '200px' },
-          gap: 1.25, overflowX: 'auto', overflowY: 'hidden', py: 1,
-          scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
-          '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 },
-          '@media (max-width: 299px)': { gridAutoColumns: 'calc((100% - 10px) / 2)' },
-        }}>
-          {visible.map(book => <LibraryBookCard key={book.id} book={book} compact />)}
-        </Box>
-      </Box>}
-      {mode === 'read' && <Box data-mobile-read-sections sx={{ display: { xs: 'block', sm: 'none' } }}>
-        {[...discoverySections.entries()].map(([key, section]) => <Box component="section" aria-label={section.title} key={key} sx={{ mb: 3 }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>{section.title}</Typography>
-          <Box data-mobile-book-grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.25, '@media (max-width: 299px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' } }}>
-            {section.books.map(book => <LibraryBookCard key={book.id} book={book} compact />)}
-          </Box>
-        </Box>)}
-        {!visible.length && <Typography>{query.trim() ? `No books match "${query.trim()}".` : 'No books match these filters.'}</Typography>}
-      </Box>}
-      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'All Books'} sx={{ ...LIBRARY_GRID_SX, ...(mode === 'read' ? { display: { xs: 'none', sm: 'grid' } } : {}) }}>
-        {visible.map(book => <LibraryBookCard key={book.id} book={book} listen={mode === 'listen'} />)}
-        {!visible.length && <Typography>{query.trim() ? `No books match "${query.trim()}".` : mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
+      {mode === 'read' && <Typography component="h2" sx={{ display: { xs: 'block', sm: 'none' }, fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>All Books</Typography>}
+      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'All Books'} sx={LIBRARY_GRID_SX}>
+        {visible.map(book => <LibraryBookCard key={book.id} book={book} listen={mode === 'listen'} compact={mode === 'read'} audioLanguages={audioLanguagesByBook[book.id]} />)}
+        {!visible.length && <Typography sx={{ gridColumn: '1 / -1' }}>{query.trim() ? `No books match "${query.trim()}".` : mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
       </Box>
     </Box>
   )

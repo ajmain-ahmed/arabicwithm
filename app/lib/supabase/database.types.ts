@@ -31,7 +31,7 @@ export interface Database {
       memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>
       memory_legacy_progress: Table<{ user_id: string; xp: number }>
       word_search_completions: Table<{ id: string; user_id: string; puzzle_id: string; source_type: 'episode' | 'book'; source_id: string; difficulty: string; word_count: number; words_found: number; mistakes: number; hints_used: number; reveals_used: number; duration_seconds: number; xp_earned: number; activity_date: string; completed_at: string }>
-      book_chapter_audio: Table<{ id: string; chapter_id: string; language: 'ar' | 'en'; source_type: 'supabase_storage' | 'youtube' | 'external_url'; storage_bucket: string | null; external_url: string | null; storage_path: string | null; external_video_id: string | null; duration_seconds: number | null; narrator: string | null; is_published: boolean; created_at: string; updated_at: string }>
+      book_chapter_audio: Table<{ id: string; chapter_id: string; language: 'ar' | 'en'; source_type: 'supabase_storage' | 'youtube' | 'external_url'; storage_bucket: string | null; external_url: string | null; storage_path: string | null; external_video_id: string | null; duration_seconds: number | null; narrator: string | null; is_published: boolean; timing_data: Json | null; created_at: string; updated_at: string }>
       book_audio_progress: Table<{ user_id: string; chapter_id: string; language: 'ar' | 'en'; position_seconds: number; completed: boolean; updated_at: string }>
       leaderboard_public_profiles: Table<{user_id:string;display_name:string;avatar_url:string|null;handle:string|null;updated_at:string}>
       public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
@@ -48,6 +48,7 @@ export interface Database {
           cover_crop: Json
           level: string
           category: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -59,6 +60,7 @@ export interface Database {
           cover_crop?: Json
           level?: string
           category?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -70,6 +72,7 @@ export interface Database {
           cover_crop?: Json
           level?: string
           category?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -89,6 +92,7 @@ export interface Database {
           cover: string | null
           cover_crop: Json
           created_at: string | null
+          updated_at: string | null
           transcript: Json | null
         }
         Insert: {
@@ -106,6 +110,7 @@ export interface Database {
           cover?: string | null
           cover_crop?: Json
           created_at?: string | null
+          updated_at?: string | null
           transcript?: Json | null
         }
         Update: {
@@ -123,6 +128,7 @@ export interface Database {
           cover?: string | null
           cover_crop?: Json
           created_at?: string | null
+          updated_at?: string | null
           transcript?: Json | null
         }
         Relationships: []

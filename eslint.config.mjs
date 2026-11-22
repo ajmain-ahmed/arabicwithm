@@ -10,6 +10,10 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     ".next-browser/**",
+    ".cloudflare/**",
+    ".vinext/**",
+    "artifacts/**",
+    "dist/**",
     "test-results/**",
     "playwright-report/**",
     "out/**",

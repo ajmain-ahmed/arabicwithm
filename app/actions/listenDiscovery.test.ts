@@ -44,7 +44,7 @@ vi.mock('@/app/lib/supabase', () => ({ serviceClient: { from: (table: string) =>
   return query
 } } }))
 
-import { deleteChapterAudioForAdmin, fetchBookIdsWithPublishedAudio, fetchPublishedAudioForBook, fetchPublishedChapterAudioForChapter, saveChapterAudioForAdmin } from './audiobooks'
+import { deleteChapterAudioForAdmin, fetchBookIdsWithPublishedAudio, fetchPublishedAudioForBook, fetchPublishedAudioLanguagesForBooks, fetchPublishedChapterAudioForChapter, saveChapterAudioForAdmin } from './audiobooks'
 const chapter = '11111111-1111-4111-8111-111111111111'
 const second = '22222222-2222-4222-8222-222222222222'
 const save = (language: 'ar' | 'en', chapterId = chapter, isPublished = true) => saveChapterAudioForAdmin({ chapterId, language, isPublished, sourceType: 'supabase_storage', storagePath: `fixture/${language}/audio.wav` })
@@ -69,12 +69,14 @@ it.each(['ar', 'en'] as const)('discovers the first %s audio after Admin save de
 it('discovers later chapters, preserves partial audio and removes the book only after the last published source goes', async () => {
   await save('ar'); await fetchPublishedAudioForBook('book')
   await save('en', second)
+  expect(await fetchPublishedAudioLanguagesForBooks(['book'])).toEqual({ book: ['ar', 'en'] })
   expect(await fetchPublishedAudioForBook('book')).toHaveLength(2)
   expect(await fetchPublishedChapterAudioForChapter(chapter)).toMatchObject({ ar: { chapterId: chapter }, en: null })
   expect(await fetchPublishedChapterAudioForChapter(second)).toMatchObject({ ar: null, en: { chapterId: second } })
   await save('ar', chapter, false)
   expect(await fetchBookIdsWithPublishedAudio(['book'])).toEqual(['book'])
   await deleteChapterAudioForAdmin(second, 'en')
+  expect(await fetchPublishedAudioLanguagesForBooks(['book'])).toEqual({})
   expect(await fetchBookIdsWithPublishedAudio(['book'])).toEqual([])
   expect(await fetchPublishedAudioForBook('book')).toEqual([])
 })

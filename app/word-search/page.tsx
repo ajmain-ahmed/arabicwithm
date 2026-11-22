@@ -5,8 +5,9 @@ import { generateWordSearch } from '@/app/lib/transcriptPuzzles'
 import WordSearchGame from './WordSearchGame'
 
 export const metadata: Metadata = {
-  title: 'Arabic Word Search | ArabicWithM',
+  title: 'Arabic Word Search',
   description: 'Find useful Arabic vocabulary selected from real transcripts and graded books.',
+  alternates: { canonical: '/word-search' },
 }
 
 export default async function WordSearchPage() {

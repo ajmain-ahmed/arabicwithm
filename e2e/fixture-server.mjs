@@ -123,6 +123,12 @@ function configureAudiobookAudit(format){
     tables.book_audio_progress=[]
 }
 if(process.env.AWM_TEST_AUDIO_AUDIT==='1')configureAudiobookAudit()
+if(process.env.AWM_TEST_AUDIO_TIMING==='1'){
+ tables.book_chapter_audio=tables.book_chapter_audio.filter(row=>row.language==='ar')
+ const canonical=value=>Array.isArray(value)?`[${value.map(canonical).join(',')}]`:value&&typeof value==='object'?`{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`:JSON.stringify(value)??'null'
+ tables.book_chapter_audio.find(row=>row.language==='ar').timing_data={version:1,contentHash:createHash('sha256').update(canonical(content)).digest('hex'),durationMs:60000,segments:content.map((_,blockIndex)=>({blockIndex,startMs:blockIndex*2000,endMs:blockIndex*2000+1500}))}
+ tables.book_audio_progress.push({user_id:ids.premium,chapter_id:chapterId,language:'ar',position_seconds:25,completed:false})
+}
 // Optional larger catalogue exercises viewport-gated covers and pagination.
 if(process.env.AWM_TEST_WATCH_THUMBNAILS==='1'){
  const original=tables.shows[0]
@@ -909,7 +915,7 @@ if(process.env.AWM_TEST_CHAPTER_PUBLICATION==='1'){
 
 
 backend.listen(backendPort, '127.0.0.1', () => {
-  const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate }
+  const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NEXT_PUBLIC_TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '', NODE_EXTRA_CA_CERTS: certificate }
   let next
   const finish=code=>{backend.close();process.exit(code??0)}
   const serve=()=>{

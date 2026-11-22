@@ -60,4 +60,16 @@ describe('audiobook migration', () => {
     await db.query("delete from book_chapter_audio where language='en'")
     expect((await db.query('select * from book_chapter_audio')).rows).toHaveLength(1)
   })
+
+  it('adds optional per-source timing objects without changing access controls', async () => {
+    await db.exec(readFileSync('supabase/migrations/20261121124438_audiobook_timing_data.sql', 'utf8'))
+    expect((await db.query<{ timing_data: unknown }>('select timing_data from book_chapter_audio')).rows[0].timing_data).toBeNull()
+    const timings = { version: 1, contentHash: 'a'.repeat(64), durationMs: 5000, segments: [{ blockIndex: 0, startMs: 100, endMs: 900 }] }
+    await db.query('update book_chapter_audio set timing_data=$1::jsonb', [JSON.stringify(timings)])
+    expect((await db.query<{ timing_data: unknown }>('select timing_data from book_chapter_audio')).rows[0].timing_data).toEqual(timings)
+    await expect(db.query("update book_chapter_audio set timing_data='[]'::jsonb")).rejects.toThrow()
+    await db.exec('set role authenticated')
+    await expect(db.query('select timing_data from book_chapter_audio')).rejects.toThrow(/permission denied/)
+    await db.exec('reset role')
+  })
 })

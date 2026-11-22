@@ -88,10 +88,12 @@ const FOOTER_CSS = `
     cursor: pointer;
     transition: color 0.2s;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
     background: none;
     border: none;
-    padding: 0;
+    padding: 0 2px;
     text-align: left;
   }
   .awm-footer-link:hover { color: var(--awm-gold); }
@@ -99,12 +101,13 @@ const FOOTER_CSS = `
   .awm-legal-link {
     font-family: var(--font-sans), sans-serif;
     font-size: 0.72rem;
-    color: var(--awm-muted-light);
+    color: var(--awm-muted-light-text);
     cursor: pointer;
     transition: color 0.2s;
     background: none;
     border: none;
-    padding: 0;
+    padding: 0 4px;
+    min-height: 32px;
   }
   .awm-legal-link:hover { color: var(--awm-bark); }
 
@@ -126,6 +129,10 @@ const FOOTER_CSS = `
     background: linear-gradient(90deg, transparent, rgba(184,134,11,0.4), transparent);
     background-size: 200% auto;
     animation: shimmer-awm-footer 4s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .awm-footer-link, .awm-legal-link, .awm-social-btn { transition: none; }
+    .awm-footer-gold-line { animation: none; }
   }
 `
 
@@ -184,7 +191,7 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
               {/* contact */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Email sx={{ fontSize: 15, color: 'rgba(184,134,11,0.7)' }} />
-                <Typography component="a" href="mailto:support@arabicwithm.com" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)', textDecoration: 'none', '&:hover': { color: 'var(--awm-gold)' } }}>
+                <Typography component="a" href="mailto:support@arabicwithm.com" sx={{ display: 'inline-flex', alignItems: 'center', minHeight: 32, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)', textDecoration: 'none', '&:hover': { color: 'var(--awm-gold-text)' } }}>
                   support@arabicwithm.com
                 </Typography>
               </Box>

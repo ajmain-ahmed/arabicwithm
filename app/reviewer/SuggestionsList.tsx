@@ -26,7 +26,7 @@ export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCo
  const [loadFailure,setLoadFailure]=useState(false)
  const needsScope=scopeRequired&&!parent
  const key=JSON.stringify([admin,status,type,authorFilter,parent,target,since,until,page,revision])
- const contentTop=useContentPageTop(key,loadedKey===key&&!loadFailure&&!needsScope)
+ const {ref:contentRef,requestScroll}=useContentPageTop(key,loadedKey===key&&!loadFailure&&!needsScope)
  const actionInFlight=useRef(false)
  useEffect(()=>{let active=true;if(needsScope)return;boundedRead(listSuggestions(admin,{status,type:type||undefined,author:authorFilter||undefined,parent:parent||undefined,target:target||undefined,since:since?new Date(`${since}T00:00:00Z`).toISOString():undefined,until:until?new Date(`${until}T23:59:59.999Z`).toISOString():undefined},page)).then(x=>{if(active){setRows(x.suggestions);setTotal(x.total);setLoadFailure(false);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setRows([]);setTotal(0);setLoadFailure(true);setError(e.message);setLoadedKey(key)}});return()=>{active=false}},[admin,status,type,authorFilter,parent,target,since,until,page,revision,key,needsScope])
  useEffect(()=>{let active=true;if(type)boundedRead(reviewCatalogue(type)).then(x=>{if(active)setParents(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type])
@@ -65,7 +65,7 @@ export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCo
   {admin&&<Stack spacing={2}>
    <TextField select label="Content type" value={type} onChange={e=>{setType(e.target.value as ReviewType|'');setParent('');setTarget('');setPage(0);setParents([]);setTargets([])}}><MenuItem value="">All content</MenuItem><MenuItem value="book">Books</MenuItem><MenuItem value="show">Shows</MenuItem></TextField>
    {type&&<TextField select label={type==='book'?'Book':'Show'} value={parent} onChange={e=>{setParent(e.target.value);setTarget('');setPage(0);setTargets([])}}><MenuItem value="">All</MenuItem>{parents.map(x=><MenuItem key={x.id} value={x.id}>{x.title}</MenuItem>)}</TextField>}
-   {parent&&<ChapterNavigator units={targets} value={target} label={type==='book'?'Chapter':'Episode'} emptyLabel="All" onChange={id=>{setTarget(id);setPage(0);contentTop.requestScroll()}}/>}
+   {parent&&<ChapterNavigator units={targets} value={target} label={type==='book'?'Chapter':'Episode'} emptyLabel="All" onChange={id=>{setTarget(id);setPage(0);requestScroll()}}/>}
    <Stack direction={{xs:'column',sm:'row'}} spacing={1}><TextField label="Editor account ID" value={author} onChange={e=>setAuthor(e.target.value)} fullWidth/><Button onClick={()=>{setAuthorFilter(author.trim());setPage(0)}}>Filter editor</Button></Stack>
    <Stack direction={{xs:'column',sm:'row'}} spacing={2}><TextField type="date" label="From" slotProps={{inputLabel:{shrink:true}}} value={since} onChange={e=>{setSince(e.target.value);setPage(0)}}/><TextField type="date" label="Through" slotProps={{inputLabel:{shrink:true}}} value={until} onChange={e=>{setUntil(e.target.value);setPage(0)}}/></Stack>
    {type&&parent&&<Card variant="outlined"><CardContent><Stack spacing={1}>
@@ -77,7 +77,7 @@ export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCo
    </Stack></CardContent></Card>}
   </Stack>}
   {error&&(admin&&loadFailure?<AwmPageError error={error}/>:<Alert severity="error" action={<Button onClick={()=>setRevision(x=>x+1)}>{admin?'Reload':'Retry'}</Button>}>{error}</Alert>)}{notice&&<Alert severity="success">{notice}</Alert>}
-  <Box ref={contentTop.ref}><Typography>{needsScope?'Choose a book or show to manage its suggestions.':loadedKey!==key?'Loading suggestions…':loadFailure?'Suggestions could not be loaded.':`${total} suggestions`}</Typography></Box>
+  <Box ref={contentRef}><Typography>{needsScope?'Choose a book or show to manage its suggestions.':loadedKey!==key?'Loading suggestions…':loadFailure?'Suggestions could not be loaded.':`${total} suggestions`}</Typography></Box>
   {!needsScope&&loadedKey===key&&rows.map(s=><Card key={s.id} variant="outlined"><CardContent><Stack spacing={1}>
    <Typography sx={{fontWeight:700}}>{s.location}{s.unit_label?` · ${s.unit_label}`:''} · Line {s.line_index+1}</Typography><Chip label={s.status} size="small" sx={{alignSelf:'start'}}/>
    {admin&&<Typography variant="caption" sx={{overflowWrap:'anywhere'}}>Editor: {s.author_name??s.author_id} · {s.author_id}</Typography>}
@@ -88,7 +88,7 @@ export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCo
    <Button sx={{alignSelf:'start'}} onClick={()=>open(s)}>{admin?'Review / Reply':s.status==='pending'?'Edit / Withdraw':'View details'}</Button>
   </Stack></CardContent></Card>)}
   {!needsScope&&!error&&loadedKey===key&&total===0&&<Typography>No suggestions match these filters.</Typography>}
-  <Stack direction="row" spacing={2}><Button disabled={!page||loadedKey!==key} onClick={()=>{setPage(x=>x-1);contentTop.requestScroll()}}>Previous</Button><Typography>Page {page+1}</Typography><Button disabled={(page+1)*25>=total||loadedKey!==key} onClick={()=>{setPage(x=>x+1);contentTop.requestScroll()}}>Next</Button></Stack>
+  <Stack direction="row" spacing={2}><Button disabled={!page||loadedKey!==key} onClick={()=>{setPage(x=>x-1);requestScroll()}}>Previous</Button><Typography>Page {page+1}</Typography><Button disabled={(page+1)*25>=total||loadedKey!==key} onClick={()=>{setPage(x=>x+1);requestScroll()}}>Next</Button></Stack>
   <Dialog open={Boolean(selected)} onClose={()=>!busy&&setSelected(null)} maxWidth="md" fullWidth><DialogTitle>{selected?.location} · Line {(selected?.line_index??0)+1}</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>
    {error&&<Alert severity="error">{error}</Alert>}
    <Typography>Original Arabic</Typography><Typography dir="rtl">{selected?.original_arabic}</Typography><Typography>Original English</Typography><Typography>{selected?.original_english}</Typography>

@@ -8,6 +8,8 @@ import {
   fetchAllEpisodesForPublic,
 } from '@/app/actions/cartoons'
 import EpisodePage from './EpisodePage'
+import StructuredData from '@/app/components/StructuredData'
+import { absoluteUrl, breadcrumbJsonLd } from '@/app/lib/seo'
 
 export const revalidate = false
 
@@ -31,9 +33,14 @@ export async function generateMetadata({
   const { show, episode } = await params
   const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) return { title: 'Not Found' }
+  const path = `/cartoons/${encodeURIComponent(show)}/${encodeURIComponent(ep.slug)}`
+  const description = ep.description ?? `Watch ${ep.title} with an interactive Arabic transcript and English translation.`
   return {
-    title: `${ep.title} | ArabicWithM`,
-    description: ep.description ?? `Watch ${ep.title} with an interactive Arabic transcript.`,
+    title: `${ep.title} | Arabic Cartoons`,
+    description,
+    alternates: { canonical: path },
+    openGraph: { type: 'video.episode', title: ep.title, description, url: path, images: ep.cover ? [{ url: ep.cover, alt: `${ep.title} thumbnail` }] : undefined },
+    twitter: { card: 'summary_large_image', title: ep.title, description, images: ep.cover ? [ep.cover] : undefined },
   }
 }
 
@@ -76,5 +83,23 @@ export default async function Page({
     .slice(0, 12)
     .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show, showTitle: showTitleById.get(item.showId) ?? showTitle }))
 
-  return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
+  const path = `/cartoons/${encodeURIComponent(show)}/${encodeURIComponent(ep.slug)}`
+  return <>
+    <StructuredData data={[
+      breadcrumbJsonLd([
+        { name: 'Home', path: '/' }, { name: 'Arabic Cartoons', path: '/cartoons' },
+        { name: showTitle, path: `/cartoons/${encodeURIComponent(show)}` }, { name: ep.title, path },
+      ]),
+      {
+        '@context': 'https://schema.org', '@type': 'VideoObject', name: ep.title,
+        description: ep.description ?? `Watch ${ep.title} with an interactive Arabic transcript and English translation.`,
+        ...(ep.cover ? { thumbnailUrl: [ep.cover] } : {}),
+        ...(ep.createdAt ? { uploadDate: ep.createdAt } : {}),
+        ...(ep.youtubeId ? { embedUrl: `https://www.youtube.com/embed/${ep.youtubeId}` } : {}),
+        inLanguage: 'ar', isAccessibleForFree: true, url: absoluteUrl(path),
+        publisher: { '@id': 'https://www.arabicwithm.com/#organization' },
+      },
+    ]} />
+    <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
+  </>
 }

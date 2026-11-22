@@ -19,7 +19,7 @@ export const revalidate = 3600
 
 export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const inherited = await parent
-  return { openGraph: { ...inherited.openGraph, url: 'https://www.arabicwithm.com/' } }
+  return { alternates: { canonical: '/' }, openGraph: { ...inherited.openGraph, url: 'https://www.arabicwithm.com/' } }
 }
 
 export default async function HomePage() {

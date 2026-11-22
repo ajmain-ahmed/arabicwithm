@@ -182,7 +182,7 @@ export function activityKindForPath(pathname: string, videoPlaying: boolean): Ac
   if (pathname.startsWith('/memory')) return null
   if (videoPlaying) return 'video'
   if (/^\/books\/[^/]+\/[^/]+/.test(pathname)) return 'reading'
-  if (/^\/cartoons\/[^/]+\/[^/]+/.test(pathname) || pathname === '/explore' || pathname.startsWith('/practice') || pathname.startsWith('/memory')) return 'other'
+  if (/^\/cartoons\/[^/]+\/[^/]+/.test(pathname) || pathname === '/explore' || pathname.startsWith('/memory')) return 'other'
   return null
 }
 

@@ -1,6 +1,8 @@
 'use client'
 
 import { Box, Button, FormControl, FormControlLabel, InputLabel, LinearProgress, MenuItem, Select, Switch, Typography } from '@mui/material'
+import type { ReactNode } from 'react'
+import type { ChapterAudioTimings } from '@/app/lib/chapterAudioTimings'
 import AdminTextField from './AdminTextField'
 import type { AudioSourceType, AdminChapterAudio } from '@/app/actions/audiobooks'
 import type { AudioLanguage } from '@/app/lib/audioUpload'
@@ -9,19 +11,21 @@ export interface AudioDraft {
   exists: boolean; source: AudioSourceType; path: string | null; file: File | null
   youtubeId: string; narrator: string; duration: string; published: boolean
   sourceInput: string; linkedInput: string; bucket: string | null; externalUrl: string | null; preview: string | null; status: string
+  timingData: ChapterAudioTimings | null
 }
-export const emptyAudioDraft = (language: AudioLanguage = 'ar'): AudioDraft => ({ exists: false, source: 'supabase_storage', path: null, file: null, youtubeId: '', narrator: '', duration: '', published: language === 'ar', sourceInput: '', linkedInput: '', bucket: null, externalUrl: null, preview: null, status: '' })
+export const emptyAudioDraft = (language: AudioLanguage = 'ar'): AudioDraft => ({ exists: false, source: 'supabase_storage', path: null, file: null, youtubeId: '', narrator: '', duration: '', published: language === 'ar', sourceInput: '', linkedInput: '', bucket: null, externalUrl: null, preview: null, status: '', timingData: null })
 export function audioDraft(audio: AdminChapterAudio | null, language: AudioLanguage = 'ar'): AudioDraft {
   const input = audio?.externalUrl ?? (audio?.storagePath ? (/^https:/i.test(audio.storagePath) ? audio.storagePath : `${audio.storageBucket ?? 'audiobooks'}/${audio.storagePath}`) : '')
-  return audio ? { ...emptyAudioDraft(language), exists: true, source: audio.sourceType, path: audio.storagePath, bucket: audio.storageBucket ?? 'audiobooks', externalUrl: audio.externalUrl ?? null, sourceInput: input, linkedInput: input, youtubeId: audio.externalVideoId ?? '', narrator: audio.narrator ?? '', duration: audio.durationSeconds ? String(audio.durationSeconds) : '', published: audio.isPublished ?? (language === 'ar') } : emptyAudioDraft(language)
+  return audio ? { ...emptyAudioDraft(language), exists: true, source: audio.sourceType, path: audio.storagePath, bucket: audio.storageBucket ?? 'audiobooks', externalUrl: audio.externalUrl ?? null, sourceInput: input, linkedInput: input, youtubeId: audio.externalVideoId ?? '', narrator: audio.narrator ?? '', duration: audio.durationSeconds ? String(audio.durationSeconds) : '', published: audio.isPublished ?? (language === 'ar'), timingData: audio.timingData } : emptyAudioDraft(language)
 }
 
 export interface AudioOperation { phase: 'idle' | 'authorizing' | 'uploading' | 'saving' | 'saved' | 'error'; percent: number; error?: string }
-export default function ChapterAudioFields({ language, value, onChange, onFile, onRemove, onLink, disabled, operation, onCancel, onRetry, onPreview }: {
+export default function ChapterAudioFields({ language, value, onChange, onFile, onRemove, onLink, disabled, operation, onCancel, onRetry, onPreview, timingEditor }: {
   language: AudioLanguage; value: AudioDraft; onChange: (value: AudioDraft) => void
   onFile: (file: File) => void; onRemove: () => void; disabled: boolean
   onLink: () => void
   operation: AudioOperation; onCancel: () => void; onRetry: () => void; onPreview: () => void
+  timingEditor?: ReactNode
 }) {
   const label = language === 'ar' ? 'Arabic' : 'English'
   return <Box component="fieldset" sx={{ display: 'flex', flexDirection: 'column', gap: 2, border: '1px solid var(--awm-gold)', borderRadius: '10px', p: 2, m: 0 }}>
@@ -36,7 +40,8 @@ export default function ChapterAudioFields({ language, value, onChange, onFile, 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{value.file?.name ?? value.path ?? value.externalUrl ?? 'MP3, M4A, AAC, WAV or OGG, up to 50 MB. Existing chapters upload and save immediately.'}</Typography>
       {value.file && <Button disabled={disabled} onClick={() => onChange({ ...value, file: null })}>Clear selected file</Button>}
       {(value.status || value.file || value.path || value.externalUrl) && <Typography variant="body2" sx={{ mt: 1 }}>{value.status || 'Audio linked'}{value.duration ? ` · ${Math.floor(Number(value.duration) / 60)}:${String(Number(value.duration) % 60).padStart(2, '0')}` : ' · Duration unknown'}</Typography>}
-      {value.preview && <audio controls preload="metadata" src={value.preview} style={{ width: '100%', marginTop: 8 }} />}
+      {value.preview && !timingEditor && <audio controls preload="metadata" src={value.preview} style={{ width: '100%', marginTop: 8 }} />}
+      {timingEditor}
     </Box> : <AdminTextField disabled={disabled} label={`${label} YouTube URL or video ID`} value={value.youtubeId} onChange={event => onChange({ ...value, youtubeId: event.target.value })} helperText="Public or unlisted watch links, youtu.be links, or an 11-character ID. Private videos cannot play for other listeners." fullWidth size="small" />}
     <Box role="status" aria-live="polite">
       {operation.phase !== 'idle' && <Typography variant="body2">{operation.phase === 'authorizing' ? 'Preparing upload…' : operation.phase === 'uploading' ? `Uploading ${operation.percent}%` : operation.phase === 'saving' ? 'Saving audio reference…' : operation.phase === 'saved' ? 'Audio saved' : operation.error}</Typography>}

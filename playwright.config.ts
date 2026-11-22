@@ -15,7 +15,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     launchOptions: {
-      executablePath: process.env.PLAYWRIGHT_CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+      executablePath: process.env.PLAYWRIGHT_CHROME_PATH,
     },
   },
   webServer: {

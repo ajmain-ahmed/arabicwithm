@@ -61,11 +61,11 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
 
   useEffect(() => {
     if (!user) return
-    if (myListCache) {
-      setInMyList(myListCache.some((item) => item.showId === show.id))
-      return
-    }
     let cancelled = false
+    if (myListCache) {
+      queueMicrotask(() => { if (!cancelled) setInMyList(myListCache.some((item) => item.showId === show.id)) })
+      return () => { cancelled = true }
+    }
     fetchMyListShowIds()
       .then((ids) => {
         if (!cancelled) setInMyList(ids.includes(show.id))

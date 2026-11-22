@@ -6,8 +6,9 @@ import SupportForm from './SupportForm'
 import { verifySupportCheckout, type SupportCheckoutStatus } from '@/app/lib/supportPayments'
 
 export const metadata: Metadata = {
-  title: 'Support Us — Arabic with M',
+  title: 'Support Us',
   description: 'Support the creation of thoughtful Arabic learning resources.',
+  alternates: { canonical: '/support' },
 }
 
 export const dynamic = 'force-dynamic'

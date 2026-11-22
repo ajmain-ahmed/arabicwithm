@@ -85,7 +85,7 @@ export default function BooksAdminPage() {
 
   useEffect(() => {
     mounted.current = true
-    void load()
+    queueMicrotask(() => { if (mounted.current) void load() })
     return () => { mounted.current = false; loadVersion.current += 1 }
   }, [load])
 

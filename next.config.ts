@@ -61,6 +61,12 @@ const nextConfig: NextConfig = {
     // Resolve the Admin entry redirect before rendering the streamed router
     // tree, avoiding a hook-order crash during initial client navigation.
     return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'arabicwithm.com' }],
+        destination: 'https://www.arabicwithm.com/:path*',
+        permanent: true,
+      },
       { source: '/admin', destination: '/admin/shows', permanent: false },
       { source: '/grammar/context/:path*', destination: '/grammar', permanent: true },
       { source: '/grammar/notes/:path*', destination: '/grammar', permanent: true },

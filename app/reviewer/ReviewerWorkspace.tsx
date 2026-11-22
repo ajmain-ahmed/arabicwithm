@@ -27,16 +27,15 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
  useEffect(()=>{active.current=true;return()=>{active.current=false;invalidateScope()}},[invalidateScope])
  const resetComments=()=>{invalidateScope();setCommentStates({});setComments([]);setCommentHistoryError('');setCorrections([]);setCorrectionsReady(false);setSelecting(false);setSelectedCorrections(new Set())}
  const updateComment=(index:number,patch:Partial<CommentState>)=>setCommentStates(states=>({...states,[index]:{...(states[index]??emptyComment),...patch}}))
- const contentTop=useContentPageTop(`${target}:${page}`,Boolean(source)&&!loadingSource)
- useEffect(()=>{let active=true;if(contentTab){setLoadingParents(true);reviewCatalogue(tab as ReviewType).then(x=>{if(active){setParents(x);setLoadingParents(false)}}).catch(e=>{if(active){setError(e.message);setLoadingParents(false)}})}return()=>{active=false}},[tab,contentTab,retry])
- useEffect(()=>{let active=true;if(contentTab&&parent){setLoadingTargets(true);reviewCatalogue(tab as ReviewType,parent).then(x=>{if(active){setTargets(x);setLoadingTargets(false)}}).catch(e=>{if(active){setError(e.message);setLoadingTargets(false)}})}return()=>{active=false}},[tab,contentTab,parent,retry])
- useEffect(()=>{let active=true;if(contentTab&&target){setLoadingSource(true);loadReviewSource(tab as ReviewType,target).then(x=>{if(active){setSource(x);setLoadingSource(false)}}).catch(e=>{if(active){setSource(null);setError(e.message);setLoadingSource(false)}})}return()=>{active=false}},[tab,contentTab,target,retry])
+ const {ref:contentRef,requestScroll}=useContentPageTop(`${target}:${page}`,Boolean(source)&&!loadingSource)
+ useEffect(()=>{let active=true;if(contentTab){queueMicrotask(()=>{if(active)setLoadingParents(true)});reviewCatalogue(tab as ReviewType).then(x=>{if(active){setParents(x);setLoadingParents(false)}}).catch(e=>{if(active){setError(e.message);setLoadingParents(false)}})}return()=>{active=false}},[tab,contentTab,retry])
+ useEffect(()=>{let active=true;if(contentTab&&parent){queueMicrotask(()=>{if(active)setLoadingTargets(true)});reviewCatalogue(tab as ReviewType,parent).then(x=>{if(active){setTargets(x);setLoadingTargets(false)}}).catch(e=>{if(active){setError(e.message);setLoadingTargets(false)}})}return()=>{active=false}},[tab,contentTab,parent,retry])
+ useEffect(()=>{let active=true;if(contentTab&&target){queueMicrotask(()=>{if(active)setLoadingSource(true)});loadReviewSource(tab as ReviewType,target).then(x=>{if(active){setSource(x);setLoadingSource(false)}}).catch(e=>{if(active){setSource(null);setError(e.message);setLoadingSource(false)}})}return()=>{active=false}},[tab,contentTab,target,retry])
  useEffect(()=>{
   let current=true
   const revision=scopeRevision.current
   if(contentTab&&target){
-   setCommentHistoryError('')
-   setCorrectionsReady(false)
+   queueMicrotask(()=>{if(current&&revision===scopeRevision.current){setCommentHistoryError('');setCorrectionsReady(false)}})
    const historyRequest=admin&&tab==='book'?loadAdminBookCorrections(parent,target):loadReviewerComments(tab as ReviewType,target)
    historyRequest.then(history=>{
     if(current&&revision===scopeRevision.current){
@@ -69,10 +68,10 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
    {loading&&<Typography role="status">{loadingSource?'Loading source…':loadingTargets?'Loading chapters / episodes…':'Loading content…'}</Typography>}
    {!loading&&!error&&!parents.length&&<Typography>No {tab==='book'?'books':'shows'} are available for review.</Typography>}
    <TextField select label={tab==='book'?'Book':'Show'} value={parent} onChange={e=>{resetComments();setError('');setParent(e.target.value);setTarget('');setTargets([]);setSource(null);setPage(0);setLoadingTargets(false);setLoadingSource(false)}}><MenuItem value="">Choose…</MenuItem>{parents.map(x=><MenuItem key={x.id} value={x.id}>{x.title}</MenuItem>)}</TextField>
-   {parent&&<ChapterNavigator units={targets} label={tab==='book'?'Chapter':'Episode'} value={target} onChange={id=>{if(id===target)return;resetComments();setError('');setTarget(id);setSource(null);setPage(0);setLoadingSource(false);if(id)contentTop.requestScroll()}}/>}
+   {parent&&<ChapterNavigator units={targets} label={tab==='book'?'Chapter':'Episode'} value={target} onChange={id=>{if(id===target)return;resetComments();setError('');setTarget(id);setSource(null);setPage(0);setLoadingSource(false);if(id)requestScroll()}}/>}
    {parent&&!loading&&!error&&!targets.length&&<Typography>No chapters / episodes are available in this content.</Typography>}
    {source&&!source.document.length&&<Typography>This source has no reviewable lines.</Typography>}
-   <Box ref={contentTop.ref}>{source&&<Typography variant="h6">{parents.find(p=>p.id===parent)?.title} / {targets.find(t=>t.id===target)?reviewUnitLabel(targets.find(t=>t.id===target)!):source.location}</Typography>}</Box>
+   <Box ref={contentRef}>{source&&<Typography variant="h6">{parents.find(p=>p.id===parent)?.title} / {targets.find(t=>t.id===target)?reviewUnitLabel(targets.find(t=>t.id===target)!):source.location}</Typography>}</Box>
    {admin&&tab==='book'&&source&&<Stack spacing={1}>
     <Stack direction="row" spacing={1} sx={{flexWrap:'wrap',gap:1}}>
      <CorrectionCopyButton key={`${parent}:${target}:all`} bookId={parent} chapterId={target} disabled={!correctionsReady||!corrections.length}/>
@@ -103,7 +102,7 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
      </Box>)}
     </CardContent></Card>
    })}
-   {source&&<Stack direction="row" spacing={2}><Button disabled={!page} onClick={()=>{setPage(p=>p-1);contentTop.requestScroll()}}>Previous</Button><Typography>Page {page+1}</Typography><Button disabled={(page+1)*25>=source.document.length} onClick={()=>{setPage(p=>p+1);contentTop.requestScroll()}}>Next</Button></Stack>}
+   {source&&<Stack direction="row" spacing={2}><Button disabled={!page} onClick={()=>{setPage(p=>p-1);requestScroll()}}>Previous</Button><Typography>Page {page+1}</Typography><Button disabled={(page+1)*25>=source.document.length} onClick={()=>{setPage(p=>p+1);requestScroll()}}>Next</Button></Stack>}
   </>}
  </Stack>
 }

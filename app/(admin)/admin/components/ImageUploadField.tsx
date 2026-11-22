@@ -51,15 +51,19 @@ export default function ImageUploadField({
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    controller.current?.abort(); setStatus(''); setError(null)
-    generation.current += 1; uploadBusy.current = false; setUploading(false); uploadChange.current?.(false)
-    setLocalPreview((current) => {
-      if (current?.startsWith("blob:")) URL.revokeObjectURL(current)
-      return null
+    let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      controller.current?.abort(); setStatus(''); setError(null)
+      generation.current += 1; uploadBusy.current = false; setUploading(false); uploadChange.current?.(false)
+      setLocalPreview((current) => {
+        if (current?.startsWith("blob:")) URL.revokeObjectURL(current)
+        return null
+      })
+      setCropOpen(false)
+      setUploadedPreview(null)
     })
-    setCropOpen(false)
-    setUploadedPreview(null)
-    return () => { controller.current?.abort(); generation.current += 1; uploadBusy.current = false; uploadChange.current?.(false) }
+    return () => { active = false; controller.current?.abort(); generation.current += 1; uploadBusy.current = false; uploadChange.current?.(false) }
   }, [path])
 
   useEffect(() => () => {

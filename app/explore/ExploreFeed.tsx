@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowForward, ExploreOutlined, KeyboardArrowDown, KeyboardArrowUp, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
+import { ArrowForward, ExploreOutlined, KeyboardArrowDown, KeyboardArrowUp, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
-import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
+import { WordTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
 import CefrChip from '@/app/components/CefrChip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, type VideoProvider } from '@/app/lib/cartoons'
-import type { ExploreBookPage } from '@/app/actions/books'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
 import { useExploreFeedCache } from '@/store/exploreFeedStore'
@@ -18,6 +17,7 @@ import AwmPageError from '@/app/components/AwmPageError'
 import { boundedRead } from '@/app/lib/readRecovery'
 import { ExplorePageLoading } from '@/app/components/PageLoading'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
+import { ExploreBookPageSlide, type OpenDefinition } from './ExploreBookPageSlide'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import {
   EXPLORE_PREFETCH_AHEAD,
@@ -35,140 +35,11 @@ function feedItemKey(item: ExploreFeedItem): string {
   return item.kind === 'video' ? `video:${item.episode.id}` : `book:${item.page.id}`
 }
 
-type OpenDefinition = (
-  entry: VocabEntry,
-  anchor: HTMLElement,
-  context: string,
-  itemIndex: number,
-) => void
-
 interface SelectedDefinition {
   cacheKey: string
   entry: VocabEntry
   anchor: HTMLElement
   itemIndex: number
-}
-
-function ExploreDefinitionWord({
-  entry,
-  context,
-  itemIndex,
-  onOpen,
-  onPeek,
-}: {
-  entry: VocabEntry
-  context: string
-  itemIndex: number
-  onOpen: OpenDefinition
-  onPeek: (itemIndex: number | null) => void
-}) {
-  const theme = useTheme()
-  /* Same breakpoint as the episode page: below lg, taps open the shared
-     definition popover; at lg and above, hovering opens an instant tooltip. */
-  const isTouchLayout = useMediaQuery(theme.breakpoints.down('lg'))
-  const [hoverOpen, setHoverOpen] = useState(false)
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const clearLeaveTimer = useCallback(() => {
-    if (leaveTimerRef.current) {
-      clearTimeout(leaveTimerRef.current)
-      leaveTimerRef.current = null
-    }
-  }, [])
-
-  const scheduleClose = useCallback(() => {
-    clearLeaveTimer()
-    leaveTimerRef.current = setTimeout(() => {
-      setHoverOpen(false)
-      onPeek(null)
-    }, 60)
-  }, [clearLeaveTimer, onPeek])
-
-  const handleHoverOpen = useCallback(() => {
-    clearLeaveTimer()
-    setHoverOpen(true)
-    onPeek(itemIndex)
-    dispatchWordLookup()
-  }, [clearLeaveTimer, itemIndex, onPeek])
-
-  useEffect(() => () => clearLeaveTimer(), [clearLeaveTimer])
-
-  const wordStyles = {
-    display: 'inline-block',
-    mx: '0.1em',
-    cursor: 'pointer',
-    borderBottom: '2px dotted var(--awm-gold)',
-    transition: 'background-color .12s ease',
-    '&:hover, &:focus-visible': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', outline: 'none' },
-  } as const
-
-  if (isTouchLayout) {
-    const open = (target: HTMLElement) => onOpen(entry, target, context, itemIndex)
-    return (
-      <Box
-        component="span"
-        className="vocab-word"
-        role="button"
-        tabIndex={0}
-        aria-label={`Show definition for ${entry.arabic}`}
-        onClick={(event) => {
-          event.stopPropagation()
-          open(event.currentTarget)
-        }}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter' && event.key !== ' ') return
-          event.preventDefault()
-          open(event.currentTarget)
-        }}
-        sx={wordStyles}
-      >
-        {entry.arabic}
-      </Box>
-    )
-  }
-
-  return (
-    <HtmlTooltip
-      open={hoverOpen}
-      title={
-        hoverOpen ? (
-          <Box
-            onMouseEnter={clearLeaveTimer}
-            onMouseLeave={scheduleClose}
-            sx={{ p: 2.5 }}
-          >
-            <WordTooltip entry={entry} />
-          </Box>
-        ) : (
-          <></>
-        )
-      }
-      placement="bottom"
-      arrow
-      describeChild
-      disableHoverListener
-      disableFocusListener
-      disableTouchListener
-      slotProps={{
-        popper: {
-          modifiers: [
-            { name: 'preventOverflow', enabled: true, options: { padding: 16, boundary: 'viewport' } },
-            { name: 'flip', enabled: true, options: { padding: 16 } },
-          ],
-        },
-      }}
-    >
-      <Box
-        component="span"
-        className="vocab-word"
-        onMouseEnter={handleHoverOpen}
-        onMouseLeave={scheduleClose}
-        sx={wordStyles}
-      >
-        {entry.arabic}
-      </Box>
-    </HtmlTooltip>
-  )
 }
 
 function ExploreVideo({
@@ -493,93 +364,10 @@ function ExploreVideo({
   )
 }
 
-function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionPeek }: { page: ExploreBookPage; itemIndex: number; onDefinitionOpen: OpenDefinition; onDefinitionPeek: (itemIndex: number | null) => void }) {
-  return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'grid',
-        placeItems: 'center',
-        px: { xs: 1.5, sm: 3, md: 6 },
-        pt: { xs: 1.5, md: 3 },
-        pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', md: 3 },
-      }}
-    >
-      <Box
-        sx={{
-          width: 'min(920px, 100%)',
-          maxHeight: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)',
-          borderRadius: { xs: '16px', md: '22px' },
-          bgcolor: 'var(--awm-white)',
-          boxShadow: '0 22px 60px rgba(44,26,14,0.12)',
-        }}
-      >
-        <Box sx={{ px: { xs: 2.25, md: 4 }, py: { xs: 1.75, md: 2.5 }, bgcolor: '#0e2e1f', color: '#fff' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <MenuBook sx={{ color: '#d4a843', fontSize: 20 }} />
-            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', color: '#d4a843', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Random reading · Page {page.pageNumber}
-            </Typography>
-          </Box>
-          <Typography component="h2" sx={{ mt: 0.6, fontFamily: 'var(--font-heading)', fontSize: { xs: 23, md: 30 }, fontWeight: 600, lineHeight: 1.15 }}>
-            {page.bookTitle}
-          </Typography>
-          <Typography sx={{ mt: 0.4, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, opacity: 0.76 }}>
-            Chapter {page.chapterNumber}: {page.chapterTitle}
-          </Typography>
-        </Box>
-
-        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: { xs: 2.25, md: 4 }, py: { xs: 1.5, md: 2.5 } }}>
-          {page.blocks.map((block, blockIndex) => (
-            <Box key={blockIndex} sx={{ py: { xs: 1, md: 1.35 }, borderBottom: blockIndex < page.blocks.length - 1 ? '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' : 0 }}>
-              <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: { xs: 22, md: 28 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.85, textAlign: 'right' }}>
-                {block.words.map((word, wordIndex) => (
-                  <ExploreDefinitionWord
-                    key={`${word.plain}-${wordIndex}`}
-                    entry={word}
-                    context={`book:${page.id}:block:${blockIndex}`}
-                    itemIndex={itemIndex}
-                    onOpen={onDefinitionOpen}
-                    onPeek={onDefinitionPeek}
-                  />
-                ))}
-                {block.punctuation}
-              </Typography>
-              {block.translation && (
-                <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.6 }}>
-                  {block.translation}
-                </Typography>
-              )}
-            </Box>
-          ))}
-        </Box>
-
-        <Box sx={{ px: { xs: 2.25, md: 4 }, py: { xs: 1.5, md: 2 }, borderTop: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}>
-          <Button
-            component={Link}
-            href={`/books/${encodeURIComponent(page.bookSlug)}/${encodeURIComponent(page.chapterSlug)}`}
-            fullWidth
-            variant="contained"
-            endIcon={<ArrowForward />}
-            sx={{ bgcolor: '#0e2e1f', color: '#fff', borderRadius: '10px', py: 1.1, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}
-          >
-            Continue to chapter
-          </Button>
-        </Box>
-      </Box>
-    </Box>
-  )
-}
-
 export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { railTop?: ReactNode; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const theme = useTheme()
   const [hydrated,setHydrated] = useState(false)
-  useEffect(()=>setHydrated(true),[])
+  useEffect(()=>{queueMicrotask(()=>setHydrated(true))},[])
   const videosOnly = useMediaQuery(theme.breakpoints.down('md'))
   const isMobileDefinitionLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
@@ -592,7 +380,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
   const [cachedItems] = useState(()=>storedSession===initialSeed?storedItems:[])
   const setCachedItems = useExploreFeedCache((state) => state.setItems)
   const [items, setItems] = useState<ExploreFeedItem[]>(()=>cachedItems.length > 0 ? cachedItems.filter(item=>!videosOnly||item.kind==='video') : (initialBatch?.items ?? []).filter(item=>!videosOnly||item.kind==='video'))
-  useEffect(()=>{if(videosOnly)setItems(current=>current.filter(item=>item.kind==='video'))},[videosOnly])
+  useEffect(()=>{if(videosOnly)queueMicrotask(()=>setItems(current=>current.filter(item=>item.kind==='video')))},[videosOnly])
   const [hasMore, setHasMore] = useState(initialBatch ? initialBatch.hasMore : cachedItems.length > 0)
   const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0 || initialBatch != null)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -639,12 +427,9 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
     if (!restore && initialBatch) {
       /* Server-rendered first visit: items are already in state, so only the
          pagination cursor is adopted here; the next batch loads on approach. */
-      setHasMore(initialBatch.hasMore)
-      setInitialLoaded(true)
       return
     }
-    setItems((current) => (restore ? current : []))
-    setLoadingMore(true)
+    queueMicrotask(()=>{setItems((current) => (restore ? current : []));setLoadingMore(true)})
     void boundedRead(fetchExploreFeedPage(seedRef.current, 0, videosOnly))
       .then((batch) => {
         const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
@@ -693,7 +478,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
   }, [hasMore, videosOnly])
 
   useEffect(() => {
-    if (activeIndex >= items.length - EXPLORE_PREFETCH_AHEAD) void loadNextBatch()
+    if (activeIndex >= items.length - EXPLORE_PREFETCH_AHEAD) queueMicrotask(()=>{void loadNextBatch()})
   }, [activeIndex, items.length, loadNextBatch])
 
   const setItemRef = useCallback((index: number, node: HTMLElement | null) => {
@@ -837,13 +622,14 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
   if (items.length === 0) {
     return (
       <Box sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' } }}>
-        <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}>No videos to explore yet</Typography></Box>
+        <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography component="h1" sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}>No videos to explore yet</Typography></Box>
       </Box>
     )
   }
 
   return (
       <Box sx={{ position: 'relative', height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, '@supports (height: 100dvh)': { height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }, minHeight: { xs: 0, md: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }}>
+      <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>Explore Arabic</Typography>
       {loadError && <Box role="alert" sx={{position:'absolute',top:8,left:8,right:8,zIndex:20,bgcolor:'var(--awm-white)',color:'var(--awm-bark)',p:1.5,borderRadius:'10px'}}>More content could not load. <Button onClick={()=>void loadNextBatch()}>Retry</Button></Box>}
       <Box
         id="explore-feed"

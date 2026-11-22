@@ -47,6 +47,7 @@ import { validateAudioFile, type AudioLanguage } from '@/app/lib/audioUpload'
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
 import { removeAudiobookAudio } from '@/app/actions/storage'
 import ChapterAudioFields, { audioDraft, emptyAudioDraft, type AudioDraft, type AudioOperation } from './ChapterAudioFields'
+import ChapterAudioTimingEditor from './ChapterAudioTimingEditor'
 
 interface ChapterEditDialogProps {
   open: boolean
@@ -81,9 +82,10 @@ export default function ChapterEditDialog({
   const [published, setPublished] = useState(false)
   const [chapterNumber, setChapterNumber] = useState("")
   const [contentJson, setContentJson] = useState(defaultContent)
-  const structuredPreview = useMemo(() => {
-    try { return detectChapterFormat(JSON.parse(contentJson)) } catch { return null }
+  const parsedContent = useMemo(() => {
+    try { return JSON.parse(contentJson) as unknown } catch { return null }
   }, [contentJson])
+  const structuredPreview = useMemo(() => parsedContent === null ? null : detectChapterFormat(parsedContent), [parsedContent])
   const [audioUnavailable, setAudioUnavailable] = useState(false)
   const [audio, setAudio] = useState<Record<AudioLanguage, AudioDraft>>({ ar: emptyAudioDraft(), en: emptyAudioDraft('en') })
   const busyRef = useRef(false)
@@ -91,6 +93,11 @@ export default function ChapterEditDialog({
   const stagedPaths = useRef(new Set<string>())
   const [operations, setOperations] = useState<Record<AudioLanguage, AudioOperation>>({ ar: { phase: 'idle', percent: 0 }, en: { phase: 'idle', percent: 0 } })
   const laneBusy = useRef({ ar: false, en: false })
+  const [busyLanguages, setBusyLanguages] = useState({ ar: false, en: false })
+  const setLaneBusy = (language: AudioLanguage, busy: boolean) => {
+    laneBusy.current[language] = busy
+    setBusyLanguages(current => ({ ...current, [language]: busy }))
+  }
   const controllers = useRef<Partial<Record<AudioLanguage, AbortController>>>({})
   const audioBaseline = useRef<Record<AudioLanguage, string>>({ ar: '', en: '' })
   const chapterBaseline = useRef('')
@@ -116,8 +123,11 @@ export default function ChapterEditDialog({
 
   useEffect(() => {
     if (!open) return
-    setTab(0)
-    setLoading(false)
+    let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      setTab(0)
+      setLoading(false)
     setError(null)
     setBookId(initialBookId ?? "")
     savedIdRef.current = chapterId
@@ -135,7 +145,6 @@ export default function ChapterEditDialog({
       return
     }
 
-    let active = true
     setLoading(true)
     setAudioUnavailable(false)
     Promise.all([boundedRead(fetchChapterForAdmin(chapterId!)), Promise.allSettled([boundedRead(fetchChapterAudioForAdmin(chapterId!, 'ar')), boundedRead(fetchChapterAudioForAdmin(chapterId!, 'en'))])])
@@ -155,6 +164,7 @@ export default function ChapterEditDialog({
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load chapter and audio") })
       .finally(() => { if (active) setLoading(false) })
+    })
     return () => { active = false }
   }, [open, chapterId, isNew, initialBookId])
 
@@ -241,24 +251,28 @@ export default function ChapterEditDialog({
 
   async function persistAudio(language: AudioLanguage, initial: AudioDraft, id: string) {
     if (laneBusy.current[language]) throw new Error('This language is already saving.')
-    laneBusy.current[language] = true
-    let draft = initial
+    setLaneBusy(language, true)
     let percent = 0
     try {
-      if (draft.file) {
-        const controller = new AbortController()
-        controllers.current[language] = controller
-        setOperation(language, { phase: 'authorizing', percent: 0 })
-        const path = await uploadChapterAudio(id, language, draft.file, {
-          signal: controller.signal,
-          onAuthorized: () => setOperation(language, { phase: 'uploading', percent: 0 }),
-          onProgress: value => { percent = value; setOperation(language, { phase: 'uploading', percent: value }) },
-        })
-        stagedPaths.current.add(path)
-        draft = { ...draft, path, bucket: 'audiobooks', source: 'supabase_storage', sourceInput: `audiobooks/${path}`, linkedInput: `audiobooks/${path}`, file: null, externalUrl: null, preview: null }
-        // Retain the uploaded key for a metadata-save retry; never upload it twice.
-        setAudio(current => ({ ...current, [language]: draft }))
-      } else if (draft.source !== 'youtube') draft = prepareAudioLink(draft)
+      const draft = await (async (): Promise<AudioDraft> => {
+        const file = initial.file
+        if (file) {
+          const controller = new AbortController()
+          controllers.current[language] = controller
+          setOperation(language, { phase: 'authorizing', percent: 0 })
+          const path = await uploadChapterAudio(id, language, file, {
+            signal: controller.signal,
+            onAuthorized: () => setOperation(language, { phase: 'uploading', percent: 0 }),
+            onProgress: value => { percent = value; setOperation(language, { phase: 'uploading', percent: value }) },
+          })
+          stagedPaths.current.add(path)
+          const uploaded = { ...initial, path, bucket: 'audiobooks', source: 'supabase_storage' as const, sourceInput: `audiobooks/${path}`, linkedInput: `audiobooks/${path}`, file: null, externalUrl: null, preview: null }
+          // Retain the uploaded key for a metadata-save retry; never upload it twice.
+          setAudio(current => ({ ...current, [language]: uploaded }))
+          return uploaded
+        }
+        return initial.source !== 'youtube' ? prepareAudioLink(initial) : initial
+      })()
       setOperation(language, { phase: 'saving', percent })
       const result = await saveChapterAudioResult({
         chapterId: id, language, sourceType: draft.source,
@@ -271,16 +285,16 @@ export default function ChapterEditDialog({
       })
       if (!result.ok) throw new Error(result.error)
       if (draft.path) stagedPaths.current.delete(draft.path)
-      draft = { ...draft, exists: true, status: 'Audio saved' }
-      audioBaseline.current[language] = fingerprint(draft)
-      setAudio(current => ({ ...current, [language]: draft }))
+      const saved = { ...draft, exists: true, status: 'Audio saved' }
+      audioBaseline.current[language] = fingerprint(saved)
+      setAudio(current => ({ ...current, [language]: saved }))
       setOperation(language, { phase: 'saved', percent: 100 })
     } catch (cause) {
       const message = `${language === 'ar' ? 'Arabic' : 'English'} audio: ${errorMessage(cause) ?? 'Save failed. Please retry.'}`
       setOperation(language, { phase: 'error', percent, error: message })
       throw new Error(message)
     } finally {
-      laneBusy.current[language] = false
+      setLaneBusy(language, false)
       delete controllers.current[language]
     }
   }
@@ -303,11 +317,11 @@ export default function ChapterEditDialog({
 
   const handleAudioSelection = async (language: AudioLanguage, file: File) => {
     if (busyRef.current || laneBusy.current[language]) return
-    laneBusy.current[language] = true
+    setLaneBusy(language, true)
     if (savedIdRef.current) setOperation(language, { phase: 'authorizing', percent: 0 })
     try {
       await validateAudioFile(file, file.name)
-      laneBusy.current[language] = false
+      setLaneBusy(language, false)
       const draft = { ...audio[language], file, source: 'supabase_storage' as const, externalUrl: null, bucket: 'audiobooks', preview: null, duration: '', status: 'File ready' }
       setAudio(current => ({ ...current, [language]: draft }))
       // Local metadata is optional and only used for a new chapter's deferred upload.
@@ -319,7 +333,7 @@ export default function ChapterEditDialog({
         catch { /* persistAudio retains the actual progress and failure. */ }
       }
     } catch (cause) {
-      laneBusy.current[language] = false
+      setLaneBusy(language, false)
       setOperation(language, { phase: 'error', percent: 0, error: errorMessage(cause) ?? 'Unable to upload audio.' })
     }
   }
@@ -496,7 +510,17 @@ export default function ChapterEditDialog({
 
             {tab === 2 && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {(['ar', 'en'] as const).map(language => <ChapterAudioFields key={language} language={language} value={audio[language]} disabled={saving || laneBusy.current[language] || loading || audioUnavailable} operation={operations[language]} onCancel={() => controllers.current[language]?.abort()} onRetry={() => void handleAudioLink(language)} onPreview={() => void handlePreview(language)}
+                {(['ar', 'en'] as const).map(language => <ChapterAudioFields key={language} language={language} value={audio[language]} disabled={saving || busyLanguages[language] || loading || audioUnavailable} operation={operations[language]} onCancel={() => controllers.current[language]?.abort()} onRetry={() => void handleAudioLink(language)} onPreview={() => void handlePreview(language)}
+                  timingEditor={audio[language].exists && audio[language].source !== 'youtube' && chapterId ? <ChapterAudioTimingEditor
+                    key={`${chapterId}:${language}`}
+                    chapterId={chapterId}
+                    language={language}
+                    content={parsedContent}
+                    audioUrl={audio[language].preview}
+                    initialTimings={audio[language].timingData}
+                    disabled={saving || busyLanguages[language] || loading || audioUnavailable}
+                    onSaved={timingData => setAudio(current => ({ ...current, [language]: { ...current[language], timingData, duration: String(Math.round(timingData.durationMs / 1000)) } }))}
+                  /> : null}
                   onChange={value => { setOperation(language, { phase: 'idle', percent: 0 }); setAudio(current => ({ ...current, [language]: value })) }}
                   onLink={() => void handleAudioLink(language)} onFile={file => void handleAudioSelection(language, file)} onRemove={() => void handleRemoveAudio(language)} />)}
               </Box>

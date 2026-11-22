@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Button, Collapse, FormControlLabel, Switch, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
+import { Box, Button, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
 import { Close, MenuBook, ViewAgenda } from '@mui/icons-material'
 import type { BookReaderFont } from '@/app/lib/bookReaderSettings'
 import {
@@ -18,8 +18,6 @@ const FONT_OPTIONS: Array<{ value: BookReaderFont; label: string }> = [
 export default function BookReaderSettingsDialog({
   open,
   onClose,
-  wordHelp,
-  onWordHelpChange,
   readerFont,
   onReaderFontChange,
   textScale,
@@ -28,12 +26,14 @@ export default function BookReaderSettingsDialog({
   onViewChange,
   language,
   onLanguageChange,
+  audioRate,
+  onAudioRateChange,
+  onRestartAudio,
+  hasAudio,
   structured = false,
 }: {
   open: boolean
   onClose: () => void
-  wordHelp: boolean
-  onWordHelpChange: (enabled: boolean) => void
   readerFont: BookReaderFont
   onReaderFontChange: (font: BookReaderFont) => void
   textScale: number
@@ -43,6 +43,10 @@ export default function BookReaderSettingsDialog({
   structured?: boolean
   language: 'ar' | 'en'
   onLanguageChange: (language: 'ar' | 'en') => void
+  audioRate: number
+  onAudioRateChange: (rate: number) => void
+  onRestartAudio: () => void
+  hasAudio: boolean
 }) {
   return (
     <Dialog
@@ -105,9 +109,6 @@ export default function BookReaderSettingsDialog({
             </Box>
           </Collapse>
         </Box>
-        {!structured && <Box>
-          <FormControlLabel control={<Switch checked={wordHelp} onChange={(_, checked) => onWordHelpChange(checked)} />} label="Word hover help" />
-        </Box>}
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
           <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>
             Arabic font
@@ -154,6 +155,23 @@ export default function BookReaderSettingsDialog({
             <Typography aria-hidden="true" sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 24, lineHeight: 1, fontWeight: 700, textAlign: 'center' }}>A</Typography>
           </Box>
         </Box>
+        {hasAudio && <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2 }}>
+            <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>Audio speed</Typography>
+            <Typography aria-live="polite" sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>{audioRate}×</Typography>
+          </Box>
+          <Slider
+            value={audioRate}
+            min={0.5}
+            max={2}
+            step={0.25}
+            marks={[{ value: 0.5, label: '0.5×' }, { value: 1, label: '1×' }, { value: 1.5, label: '1.5×' }, { value: 2, label: '2×' }]}
+            onChange={(_, value) => onAudioRateChange(value as number)}
+            aria-label="Audiobook playback speed"
+            sx={{ mt: 1.5, color: '#b8860b', '& .MuiSlider-markLabel': { fontFamily: 'var(--font-sans), sans-serif', fontSize: 10 } }}
+          />
+          <Button variant="outlined" onClick={onRestartAudio} sx={{ mt: 1, textTransform: 'none', color: 'var(--awm-bark)', borderColor: 'rgba(184,134,11,0.4)' }}>Restart chapter</Button>
+        </Box>}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button variant="contained" onClick={onClose} sx={{ bgcolor: '#2c1a0e', color: '#f5ede0', borderRadius: '9px', px: 3, textTransform: 'none', '&:hover': { bgcolor: '#1a0f08' } }}>

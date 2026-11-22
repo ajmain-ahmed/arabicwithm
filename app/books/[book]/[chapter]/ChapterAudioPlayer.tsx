@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Alert, Box, Button, ButtonGroup, CircularProgress, Collapse, IconButton, Menu, MenuItem, Paper, Slider, Typography } from '@mui/material'
-import { Forward10Rounded, PauseRounded, PlayArrowRounded, RefreshRounded, Replay10Rounded, VolumeUp } from '@mui/icons-material'
+import { PauseRounded, PlayArrowRounded, RefreshRounded, VolumeUp } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
+import { chapterAudioPageMarkers, type ChapterAudioTimings } from '@/app/lib/chapterAudioTimings'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import { useAuth } from '@/app/AuthContext'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
 import { usePlayerStore } from '@/store/playerStore'
+import { useAudiobookStore } from '@/store/audiobookStore'
 
-type VideoControls = { play: () => void; pause: () => void; seek: (seconds: number) => void; time: () => number }
+type VideoControls = { play: () => void; pause: () => void; seek: (seconds: number) => void }
 
 function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, rate, onRates, hideFrame = false }: {
   rate: number
@@ -22,11 +24,11 @@ function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, ra
   onPlaying: (playing: boolean) => void
   hideFrame?: boolean
 }) {
-  const { wrapRef, errorCode, retry, isReady, isPlaying, playWithSound, pauseVideo, seekToOnly, getCurrentTime, getDuration, setPlaybackRate, getPlaybackRates } = useYouTubePlayer(playback.videoId, onTime, playback.positionSeconds, { autoplay: true })
+  const { wrapRef, errorCode, retry, isReady, isPlaying, playWithSound, pauseVideo, seekToOnly, getDuration, setPlaybackRate, getPlaybackRates } = useYouTubePlayer(playback.videoId, onTime, playback.positionSeconds, { autoplay: true })
   useEffect(() => { if (isReady) setPlaybackRate(rate) }, [isReady, rate, setPlaybackRate])
   useEffect(() => { if (isReady) onRates(getPlaybackRates()) }, [isReady, getPlaybackRates, onRates])
   const unsupportedRate = isReady && !(getPlaybackRates?.() ?? [1]).includes(rate)
-  useEffect(() => { controlsRef.current = { play: playWithSound, pause: pauseVideo, seek: seekToOnly, time: getCurrentTime }; return () => { controlsRef.current = null } }, [controlsRef, pauseVideo, playWithSound, seekToOnly, getCurrentTime])
+  useEffect(() => { controlsRef.current = { play: playWithSound, pause: pauseVideo, seek: seekToOnly }; return () => { controlsRef.current = null } }, [controlsRef, pauseVideo, playWithSound, seekToOnly])
   useEffect(() => { onPlaying(isPlaying) }, [isPlaying, onPlaying])
   useEffect(() => { const timer = setInterval(() => { const duration = getDuration?.() ?? 0; if (duration > 0) onDuration(duration) }, 1000); return () => clearInterval(timer) }, [getDuration, onDuration])
   const message = errorCode === 100 ? 'This YouTube video is private, removed, or unavailable.'
@@ -40,27 +42,42 @@ function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, ra
 }
 
 interface AudioLayout { button: ReactNode; player: ReactNode }
+export interface ChapterAudioSeekRequest { revision: number; seconds: number }
 interface Props {
-  /* The current language's audio summary, or null when the chapter has no
-     audio in that language. The component stays mounted either way so the
-     surrounding reader chrome (settings dialog included) never remounts on a
-     language switch; the null case simply renders empty audio slots. */
+  /* The selected narration summary, or null when the chapter has no audio.
+     The component stays mounted either way so the surrounding reader chrome
+     (settings dialog included) never remounts on a language switch. */
   audio: ChapterAudioSummary | null
   chapterTitle: string
   label?: string
   render?: (layout: AudioLayout) => ReactNode
   dedicated?: boolean
-  /* Available narration languages + the reader's current language; drives the
+  /* Available narration languages + the active narration language; drives the
      language pills in the inline (non-dedicated) control panel. */
   audioLanguages?: Array<'ar' | 'en'>
   language?: 'ar' | 'en'
   onLanguageChange?: (language: 'ar' | 'en') => void
+  onPositionChange?: (seconds: number, timings: ChapterAudioTimings | null) => void
+  seekRequest?: ChapterAudioSeekRequest | null
+  pageStarts?: number[]
+  blockCount?: number
 }
 
+function currentEpochMs(): number { return Date.now() }
+
+const PAGE_MARKER_SX = {
+  '& .MuiSlider-mark': { width: 2, height: 8, borderRadius: 1, bgcolor: 'var(--awm-bark)', opacity: 0.3 },
+  '& .MuiSlider-markActive': { bgcolor: 'var(--awm-gold)', opacity: 0.9 },
+  '& .MuiSlider-markLabel': { top: 26, display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 9, fontWeight: 600, color: 'var(--awm-muted)' },
+} as const
+
 const CONTROL_BUTTON_SX = {
-  width: { xs: 28, md: 36 },
-  height: { xs: 28, md: 36 },
+  width: { xs: 32, md: 36 },
+  height: { xs: 32, md: 36 },
+  minWidth: { xs: 32, md: 36 },
+  p: 0,
   flex: '0 0 auto',
+  '& svg': { fontSize: { xs: 17, md: 20 } },
   color: 'inherit',
   border: '1px solid',
   borderColor: 'rgba(184,134,11,0.5)',
@@ -68,7 +85,7 @@ const CONTROL_BUTTON_SX = {
 } as const
 
 /** One media element owned by the reader; presentation never owns playback. */
-export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated, audioLanguages, language, onLanguageChange }: Props) {
+export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated, audioLanguages, language, onLanguageChange, onPositionChange, seekRequest, pageStarts, blockCount }: Props) {
   const { user, loading: authLoading } = useAuth()
   const authKey = user?.id ?? 'signed-out'
   /* Expanded lives here, above the AudioSession remount boundary. The inline
@@ -79,18 +96,29 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play 
      their session key also includes language to replace the old source. */
   const [expanded, setExpanded] = useState(false)
   if (!audio) return render ? render({ button: null, player: null }) : null
-  return <AudioSession key={`${authKey}:${audio.chapterId}${dedicated ? `:${audio.language}` : ''}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
+  return <AudioSession key={`${authKey}:${audio.chapterId}${dedicated ? `:${audio.language}` : ''}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} onPositionChange={onPositionChange} seekRequest={seekRequest} pageStarts={pageStarts} blockCount={blockCount} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
 }
 
-function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
+function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, onPositionChange, seekRequest, pageStarts, blockCount, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
   const rate = usePlayerStore(state => state.audiobookRate)
   const setRate = usePlayerStore(state => state.setAudiobookRate)
+  const cachePlayback = useAudiobookStore(state => state.cachePlayback)
+  const readCachedPlayback = useAudiobookStore(state => state.readCachedPlayback)
+  const recordProgress = useAudiobookStore(state => state.recordProgress)
+  const markProgressSynced = useAudiobookStore(state => state.markProgressSynced)
+  const flushProgressOutbox = useAudiobookStore(state => state.flushProgressOutbox)
   const [speedAnchor, setSpeedAnchor] = useState<HTMLElement | null>(null)
+  const [pageAnchor, setPageAnchor] = useState<HTMLElement | null>(null)
   const [youtubeRates, setYoutubeRates] = useState<number[]>([1])
   const [source, setSource] = useState<{ authKey: string; playback: ChapterAudioPlayback; expiresAt: number | null } | null>(null)
   const playback = source?.authKey === authKey ? source.playback : null
   const [position, setPosition] = useState(0)
-  const [duration, setDuration] = useState(audio.durationSeconds ?? 0)
+  const audioDurationKey = `${audio.language}:${audio.durationSeconds ?? ''}`
+  const [durationState, setDurationState] = useState({ key: audioDurationKey, value: audio.durationSeconds ?? 0 })
+  const duration = durationState.key === audioDurationKey ? durationState.value : audio.durationSeconds ?? 0
+  const setDuration = (value: number) => setDurationState({ key: audioDurationKey, value })
+  const pageMarkers = chapterAudioPageMarkers(playback?.timings ?? audio.timings ?? null, pageStarts ?? [], blockCount ?? 0, duration)
+  const currentPage = [...pageMarkers].reverse().find(marker => marker.seconds <= position + 0.001)?.page ?? pageMarkers[0]?.page ?? 1
   const [loading, setLoading] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [error, setError] = useState('')
@@ -99,28 +127,48 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
   const videoRef = useRef<VideoControls | null>(null)
   const lastSavedRef = useRef(0)
   const resumeRef = useRef<number | null>(null)
+  const pendingSeekRef = useRef<number | null>(null)
   const playRequestedRef = useRef(false)
   const requestRef = useRef({ revision: 0 })
   const busyRef = useRef(false)
+  const loadPlaybackRef = useRef<() => Promise<void>>(async () => {})
+  const seekToRef = useRef<(seconds: number) => void>(() => {})
+  const persistSeekRef = useRef<(seconds: number) => void>(() => {})
+  const progressQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const queueProgressRef = useRef<(seconds: number, completed?: boolean) => void>(() => {})
+
+  useEffect(() => {
+    if (authKey === 'signed-out') return
+    const flush = () => { void flushProgressOutbox(authKey) }
+    flush()
+    window.addEventListener('online', flush)
+    return () => window.removeEventListener('online', flush)
+  }, [authKey, flushProgressOutbox])
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = rate
   }, [rate, playback])
 
   const speedControl = <>
-    <Button aria-label={`Audiobook playback speed: ${rate}×`} aria-haspopup="menu" aria-expanded={Boolean(speedAnchor)} onClick={event => setSpeedAnchor(event.currentTarget)} sx={{order:8,minWidth:52,minHeight:36,px:1,borderRadius:'9999px',border:'1px solid var(--awm-gold)',color:'inherit',fontWeight:600,textTransform:'none'}}>{rate}×</Button>
+    <Button aria-label={`Audiobook playback speed: ${rate}×`} aria-haspopup="menu" aria-expanded={Boolean(speedAnchor)} onClick={event => setSpeedAnchor(event.currentTarget)} sx={{order:8,width:{xs:32,md:52},minWidth:{xs:32,md:52},height:{xs:32,md:36},minHeight:{xs:32,md:36},p:0,borderRadius:{xs:'50%',md:'9999px'},border:'1px solid var(--awm-gold)',color:'inherit',fontSize:{xs:11,md:13},lineHeight:1,fontWeight:600,textTransform:'none',alignSelf:'center'}}>{rate}×</Button>
     <Menu anchorEl={speedAnchor} open={Boolean(speedAnchor)} onClose={() => setSpeedAnchor(null)} slotProps={{list:{'aria-label':'Audiobook playback speed'}}}>
-      {[0.75, 1, 1.25, 1.5, 1.75, 2].map(value => <MenuItem key={value} disabled={playback?.sourceType==='youtube'&&!youtubeRates.includes(value)} selected={rate === value} onClick={() => { setRate(value); setSpeedAnchor(null) }}>{value}×</MenuItem>)}
+      {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map(value => <MenuItem key={value} disabled={playback?.sourceType==='youtube'&&!youtubeRates.includes(value)} selected={rate === value} onClick={() => { setRate(value); setSpeedAnchor(null) }}>{value}×</MenuItem>)}
     </Menu>
   </>
 
-  /* Without a per-language remount, the duration initializer can't re-run —
-     follow the audio summary instead until playback loads real metadata. */
-  useEffect(() => { setDuration(audio.durationSeconds ?? 0) }, [audio.language, audio.durationSeconds])
+  const timedMeta = pageMarkers.length > 0 ? <Box sx={{ order: { xs: 2, md: 3 }, flex: { xs: '1 1 100%', md: '0 0 auto' }, display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', md: 'flex-start' }, gap: 1, minWidth: 0 }}>
+    <Button aria-label="Choose audiobook page" aria-haspopup="menu" aria-expanded={Boolean(pageAnchor)} onClick={event => setPageAnchor(event.currentTarget)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 26, px: 0.75, py: 0.25, borderRadius: '6px', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 600, textTransform: 'none' }}>
+      Page {currentPage} of {pageStarts?.length ?? pageMarkers.length}
+    </Button>
+    <Menu anchorEl={pageAnchor} open={Boolean(pageAnchor)} onClose={() => setPageAnchor(null)} slotProps={{ list: { 'aria-label': 'Audiobook pages' } }}>
+      {pageMarkers.map(marker => <MenuItem key={marker.page} selected={marker.page === currentPage} onClick={() => { seekTo(marker.seconds); persistSeek(marker.seconds); setPageAnchor(null) }}>Page {marker.page}</MenuItem>)}
+    </Menu>
+    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>{formatTime(position)} / {formatTime(duration)}</Typography>
+  </Box> : null
 
   useEffect(() => {
     const request = requestRef.current
-    return () => { request.revision++; busyRef.current = false; playRequestedRef.current = false }
+    return () => { request.revision++; busyRef.current = false; playRequestedRef.current = false; pendingSeekRef.current = null }
   }, [authKey, audio.chapterId, audio.language])
 
   useEffect(() => {
@@ -128,21 +176,21 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     return () => {
       if (!element) return
       element.pause()
-      void saveAudioProgress(audio.chapterId, element.currentTime, false, audio.language, authKey).catch(() => {})
+      queueProgressRef.current(element.currentTime, false)
     }
   }, [authKey, audio.chapterId, audio.language, playback?.sourceType])
 
   useEffect(()=>{
     const stop=()=>{
       requestRef.current.revision++
-      playRequestedRef.current=false;busyRef.current=false;resumeRef.current=null
+      playRequestedRef.current=false;busyRef.current=false;resumeRef.current=null;pendingSeekRef.current=null
       audioRef.current?.pause();videoRef.current?.pause()
-      setPlaying(false);setLoading(false);setSource(null);setPosition(0)
+      setPlaying(false);setLoading(false);setSource(null);setPosition(0);onPositionChange?.(0,null)
       if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'
     }
     window.addEventListener(BOOK_LANGUAGE_STOP_EVENT,stop)
     return()=>window.removeEventListener(BOOK_LANGUAGE_STOP_EVENT,stop)
-  },[])
+  },[onPositionChange])
 
   async function startMedia(element: HTMLAudioElement) {
     try { await element.play(); setError('') }
@@ -159,12 +207,19 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     setLoading(true); setError('')
     if (audioRef.current) { resumeRef.current = audioRef.current.currentTime; audioRef.current.pause() }
     try {
+      const cached = readCachedPlayback(authKey, audio.chapterId, audio.language)
+      if (cached) {
+        setSource({ authKey, playback: cached.playback, expiresAt: cached.expiresAt })
+        return
+      }
       const result = await requestChapterAudioResult(audio.chapterId, audio.language)
       if (request !== requestRef.current.revision) return
       if (result.status === 'upgrade') { playRequestedRef.current = false; setUpgrade(true) }
       else if (result.status === 'error') { playRequestedRef.current = false; setError(result.message) }
       else {
-        setSource({ authKey, playback: result.playback, expiresAt: result.playback.sourceType === 'supabase_storage' && result.playback.expiresIn > 0 ? Date.now() + result.playback.expiresIn * 1000 - 30_000 : null })
+        const expiresAt = result.playback.sourceType === 'supabase_storage' && result.playback.expiresIn > 0 ? currentEpochMs() + result.playback.expiresIn * 1000 - 30_000 : null
+        cachePlayback(authKey, audio.chapterId, audio.language, result.playback, expiresAt)
+        setSource({ authKey, playback: result.playback, expiresAt })
         // A retry can return the same signed URL; explicitly reload a failed
         // element in that case while retaining the reader's saved position.
         if (result.playback.sourceType === 'supabase_storage' && audioRef.current?.getAttribute('src') === result.playback.url) audioRef.current.load()
@@ -177,7 +232,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     if (!signedIn) { setUpgrade(true); return }
     if (playing) { audioRef.current?.pause(); videoRef.current?.pause(); return }
     if (playback?.sourceType === 'youtube') { videoRef.current?.play(); return }
-    if (audioRef.current && playback && !audioRef.current.error && (source?.expiresAt == null || Date.now() < source.expiresAt)) {
+    if (audioRef.current && playback && !audioRef.current.error && (source?.expiresAt == null || currentEpochMs() < source.expiresAt)) {
       void startMedia(audioRef.current)
       return
     }
@@ -185,19 +240,44 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     void loadPlayback()
   }
 
-  function skipBy(delta: number) {
-    if (playback?.sourceType === 'youtube') { videoRef.current?.seek((videoRef.current.time?.() ?? 0) + delta); return }
-    const element = audioRef.current
-    if (!element) return
-    const target = element.currentTime + delta
-    element.currentTime = Number.isFinite(element.duration) ? Math.min(Math.max(0, target), element.duration) : Math.max(0, target)
-  }
-
   function seekTo(seconds: number) {
     if (audioRef.current) audioRef.current.currentTime = seconds
     videoRef.current?.seek(seconds)
     setPosition(seconds)
+    onPositionChange?.(seconds, playback?.timings ?? null)
   }
+
+  function queueProgress(seconds: number, completed = false) {
+    const updatedAt = recordProgress(authKey, audio.chapterId, audio.language, seconds, completed)
+    const request = progressQueueRef.current.catch(() => {}).then(async () => {
+      try {
+        await saveAudioProgress(audio.chapterId, seconds, completed, audio.language, authKey)
+        markProgressSynced(authKey, audio.chapterId, audio.language, updatedAt)
+      } catch {
+        // The outbox retains the entry for a later online retry.
+      }
+    })
+    progressQueueRef.current = request
+    void request.catch(() => {})
+  }
+
+  function persistSeek(seconds: number) {
+    queueProgress(seconds, false)
+  }
+
+  useEffect(() => { loadPlaybackRef.current = loadPlayback; seekToRef.current = seekTo; persistSeekRef.current = persistSeek; queueProgressRef.current = queueProgress })
+  useEffect(() => {
+    if (!seekRequest) return
+    pendingSeekRef.current = seekRequest.seconds
+    if (!playback?.timings) {
+      pendingSeekRef.current = seekRequest.seconds
+      if (!busyRef.current) void loadPlaybackRef.current()
+      return
+    }
+    let active = true
+    queueMicrotask(() => { if (active) { seekToRef.current(seekRequest.seconds); persistSeekRef.current(seekRequest.seconds) } })
+    return () => { active = false }
+  }, [seekRequest, playback?.timings])
 
   useEffect(() => {
     if (!playback || !('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return
@@ -209,10 +289,10 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
   const savePosition = (completed = false) => {
     const element = audioRef.current
     if (!element) return
-    void saveAudioProgress(audio.chapterId, completed ? 0 : element.currentTime, completed, audio.language, authKey).catch(() => {})
+    queueProgress(completed ? 0 : element.currentTime, completed)
   }
 
-  const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
+  function formatTime(seconds: number) { return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` }
 
   const button = dedicated
     ? <Button data-reader-audio-trigger disabled={loading || authLoading} onClick={togglePlayback}
@@ -239,23 +319,27 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
         onLoadedMetadata={event => {
           const element = event.currentTarget
           element.playbackRate = rate
-          const position = resumeRef.current ?? playback.positionSeconds
+          const pendingSeek = pendingSeekRef.current
+          const position = pendingSeek ?? resumeRef.current ?? playback.positionSeconds
           if (Number.isFinite(element.duration)) element.currentTime = Math.min(position, Math.max(0, element.duration - 1))
           setDuration(Number.isFinite(element.duration) ? element.duration : audio.durationSeconds ?? 0)
           setPosition(element.currentTime)
+          onPositionChange?.(element.currentTime, playback.timings)
+          if (pendingSeek !== null) { pendingSeekRef.current = null; persistSeekRef.current(element.currentTime) }
           resumeRef.current = null
           lastSavedRef.current = Math.floor(element.currentTime)
           if (playRequestedRef.current) { playRequestedRef.current = false; void startMedia(element) }
         }}
         onPlay={() => setPlaying(true)}
-        onTimeUpdate={event => { setPosition(event.currentTarget.currentTime); const second = Math.floor(event.currentTarget.currentTime); if (Math.abs(second - lastSavedRef.current) >= 10) { lastSavedRef.current = second; savePosition() } }}
+        onTimeUpdate={event => { const time = event.currentTarget.currentTime; setPosition(time); onPositionChange?.(time, playback.timings); const second = Math.floor(time); if (Math.abs(second - lastSavedRef.current) >= 10) { lastSavedRef.current = second; savePosition() } }}
         onPause={() => { setPlaying(false); savePosition() }} onEnded={() => { setPlaying(false); savePosition(true) }}
         onError={() => { setPlaying(false); setError('Audio couldn\'t be loaded. Tap to retry.') }} style={{ display: 'none' }} />
     : null
   const mediaYouTube = playback?.sourceType === 'youtube'
     ? <YouTubeAudio playback={playback} rate={rate} onRates={setYoutubeRates} hideFrame={!dedicated} controlsRef={videoRef} onPlaying={setPlaying} onDuration={setDuration} onTime={time => {
         setPosition(time)
-        if (Math.abs(time - lastSavedRef.current) >= 10) { lastSavedRef.current = time; void saveAudioProgress(audio.chapterId, time, false, audio.language, authKey).catch(() => {}) }
+        onPositionChange?.(time, playback.timings)
+        if (Math.abs(time - lastSavedRef.current) >= 10) { lastSavedRef.current = time; queueProgress(time, false) }
       }} />
     : null
 
@@ -265,12 +349,9 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
         {mediaYouTube}
         {speedControl}
         {dedicated && <Box sx={{ px: 1, pt: 1 }}>
-          <Slider aria-label="Audiobook position" min={0} max={duration || 1} step={1} value={Math.min(position, duration || 1)} disabled={!playback || !duration} onChange={(_, value) => {
-            const seconds = value as number
-            if (audioRef.current) audioRef.current.currentTime = seconds
-            videoRef.current?.seek(seconds)
-            setPosition(seconds)
-          }} sx={{ color: 'var(--awm-gold)', py: 2 }} />
+          <Slider aria-label="Audiobook position" min={0} max={duration || 1} step={1} marks={pageMarkers.map(marker=>({value:marker.seconds,label:`P${marker.page}`}))} value={Math.min(position, duration || 1)} disabled={!playback || !duration} onChange={(_, value) => {
+            seekTo(value as number)
+          }} onChangeCommitted={(_, value) => persistSeek(value as number)} sx={{ color: 'var(--awm-gold)', py: 2, ...(pageMarkers.length ? PAGE_MARKER_SX : {}) }} />
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 13 }}>{formatTime(position)}</Typography><Typography sx={{ fontSize: 13 }}>{formatTime(duration)}</Typography></Box>
         </Box>}
         {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>}
@@ -285,37 +366,38 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
           component="section"
           aria-label="Chapter audio"
           sx={{
-            mt: 1.5, mb: 0.5, mx: { md: 1.5 }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 0.75, md: 1.25 },
-            rowGap: { xs: 1.5, md: 1.25 },
+            mt: 1.5, mb: 0.5, mx: { xs: 0.75, md: 1.5 }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 0.75, md: 1.25 },
+            rowGap: { xs: 1, md: 1.25 },
             justifyContent: { xs: 'space-between', md: 'flex-start' },
-            px: { xs: 1.5, md: 1.25 }, py: { xs: 2, md: 1 }, borderRadius: { xs: '10px', md: '9999px' },
+            px: { xs: 1, md: 1.25 }, py: { xs: 1.25, md: 1 }, borderRadius: { xs: '10px', md: '9999px' },
             color: 'var(--awm-bark)',
             bgcolor: 'var(--awm-white)',
-            border: '1px solid', borderColor: 'var(--awm-gold)',
+            border: 0,
           }}
         >
           {/* Transport trio grouped as one control on mobile (contents on
               desktop so each button joins the single pill row). */}
-          <Box sx={{ order: { xs: 4, md: 0 }, display: { xs: 'inline-flex', md: 'contents' }, gap: { xs: 1.5, md: 0 }, alignItems: 'center' }}>
+          <Box sx={{ order: { xs: 4, md: 0 }, display: { xs: 'inline-flex', md: 'contents' }, gap: { xs: 1, md: 0 }, alignItems: 'center', alignSelf: 'center' }}>
             <IconButton aria-label={playing ? 'Pause audio' : 'Play audio'} onClick={togglePlayback} disabled={loading || authLoading} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 4, md: 1 } }}>
               {loading ? <CircularProgress size={16} sx={{ color: 'currentColor' }} /> : playing ? <PauseRounded /> : <PlayArrowRounded />}
             </IconButton>
-            <IconButton aria-label="Back 10 seconds" onClick={() => skipBy(-10)} disabled={!playback} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 5, md: 2 } }}><Replay10Rounded /></IconButton>
-            <IconButton aria-label="Forward 10 seconds" onClick={() => skipBy(10)} disabled={!playback} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 6, md: 3 } }}><Forward10Rounded /></IconButton>
           </Box>
+          {timedMeta}
           <Slider
             aria-label="Audio position"
             min={0}
             max={duration || 1}
             step={1}
+            marks={pageMarkers.map(marker=>({value:marker.seconds,label:`P${marker.page}`}))}
             value={Math.min(position, duration || 1)}
             disabled={!playback || !duration}
             onChange={(_, value) => seekTo(value as number)}
-            sx={{ order: { xs: 3, md: 4 }, mx: { xs: 1, md: 0 }, ml: { md: 2 }, flex: { xs: '1 1 100%', md: '1 1 210px' }, color: '#b8860b', py: { xs: 0.25, md: 0.5 }, '& .MuiSlider-thumb': { width: 14, height: 14 }, '& .MuiSlider-track, & .MuiSlider-rail': { height: 4 } }}
+            onChangeCommitted={(_, value) => persistSeek(value as number)}
+            sx={{ order: { xs: 3, md: 4 }, mx: { xs: 1, md: 0 }, ml: { md: 2 }, flex: { xs: '1 1 100%', md: '1 1 210px' }, color: '#b8860b', py: { xs: 0.25, md: 0.5 }, ...(pageMarkers.length ? PAGE_MARKER_SX : {}), '& .MuiSlider-thumb': { width: 14, height: 14 }, '& .MuiSlider-track, & .MuiSlider-rail': { height: 4 } }}
           />
-          <Typography sx={{ order: { xs: 7, md: 5 }, ml: { xs: 'auto', md: 0 }, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, minWidth: { xs: 68, md: 84 }, textAlign: 'center' }}>
+          {pageMarkers.length === 0 && <Typography sx={{ order: { xs: 7, md: 5 }, ml: { xs: 'auto', md: 0 }, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, minWidth: { xs: 68, md: 84 }, height: { xs: 32, md: 36 }, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             {formatTime(position)} / {formatTime(duration)}
-          </Typography>
+          </Typography>}
           {audioLanguages && audioLanguages.length > 1 && onLanguageChange && (
             <ButtonGroup size="small" aria-label="Audio language" sx={{ order: { xs: 1, md: 6 }, ml: 'auto', '& .MuiButton-root': { minWidth: 0, px: { xs: 1, md: 1.75 }, py: { xs: 0.3, md: 0.75 }, fontSize: { xs: 11, md: 13.5 }, lineHeight: 1.2, textTransform: 'none', whiteSpace: 'nowrap' } }}>
               {audioLanguages.map(value => (
@@ -332,7 +414,6 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
               ))}
             </ButtonGroup>
           )}
-          {speedControl}
           {error && (
             <Box sx={{ flexBasis: '100%', minWidth: 0 }}>
               <Alert severity="info" sx={{ py: 0, alignItems: 'center' }} action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>

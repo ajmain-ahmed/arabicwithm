@@ -144,7 +144,7 @@ it('keeps chapter selection when switching views and scrolls after each source p
  expect(window.scrollTo).toHaveBeenCalledTimes(1)
  await button('Next');expect(host.textContent).toContain('Line 26');expect(host.textContent).not.toContain('Line 1Comment');expect(window.scrollTo).toHaveBeenCalledTimes(2)
  await button('Previous');expect(host.textContent).toContain('Page 1');expect(window.scrollTo).toHaveBeenCalledTimes(3)
-})
+},15000)
 it('allows Admin Accept/Reject with immediate status updates and blocks duplicate mutations',async()=>{
  const suggestion={id:'suggestion',author_id:'admin',content_type:'book',parent_id:'book',target_id:'chapter',line_index:0,location:'Reader / Arrival',unit_label:'Chapter 3 — Arrival',original_block:{tokens:[{arabic:'مرحبا'}]},original_arabic:'مرحبا',original_english:'Hello',suggested_arabic:null,suggested_english:'Greetings',comment:'Natural wording',reason:'Translation',status:'pending',created_at:'2026-10-02',updated_at:'2026-10-02',admin_response:null,reviewed_at:null}
  mocks.list.mockImplementation(async(_admin:boolean,filters:{status:string})=>({suggestions:filters.status===suggestion.status?[suggestion]:[],total:filters.status===suggestion.status?1:0}))

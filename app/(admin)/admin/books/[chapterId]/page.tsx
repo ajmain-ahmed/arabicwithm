@@ -101,9 +101,12 @@ export default function ChapterHeadwordsPage() {
 
   useEffect(() => {
     activeTarget.current = chapterId
-    setChapter(null);setRows([]);setEditingRowKey(null);setExpandedRows(new Set());setDialogRowKey(null);setDialogEditing(false)
-    setSavingContent({});setSavingHans({})
-    loadChapter()
+    queueMicrotask(() => {
+      if (activeTarget.current !== chapterId) return
+      setChapter(null);setRows([]);setEditingRowKey(null);setExpandedRows(new Set());setDialogRowKey(null);setDialogEditing(false)
+      setSavingContent({});setSavingHans({})
+      void loadChapter()
+    })
     return invalidateLoad
   }, [loadChapter, chapterId, invalidateLoad])
 
@@ -502,10 +505,11 @@ interface EditableCellProps {
 
 function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing, isExpanded }: EditableCellProps) {
   const [localValue, setLocalValue] = useState(value)
-
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value)
+  if (value !== previousValue) {
+    setPreviousValue(value)
     setLocalValue(value)
-  }, [value])
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !multiline) {

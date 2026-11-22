@@ -97,6 +97,7 @@ export const fetchShowsForPublic = unstable_cache(
         ...(tagsByShow.get(String(row.id)) ?? []),
       ]),
       episodeCount: counts.get(String(row.id)) ?? 0,
+      updatedAt: row.updated_at ? String(row.updated_at) : undefined,
     }))
   },
   ["cartoons", "shows", "public", "catalogue-storage-covers-v4-direct"],
@@ -227,7 +228,7 @@ export const fetchAllEpisodesForPublic = unstable_cache(
 
     const { data, error } = await serviceClient
       .from("episodes")
-      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at, updated_at")
       .not("transcript", "is", null)
       .not("transcript", "eq", "[]")
       .order("created_at", { ascending: false })
@@ -401,7 +402,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
       serviceClient.from("shows").select("id, slug, title"),
       serviceClient
         .from("episodes")
-        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at, updated_at")
         .not("transcript", "is", null)
         .not("transcript", "eq", "[]")
         .order("created_at", { ascending: true }),
@@ -512,7 +513,7 @@ const fetchExploreEpisodesByIdsPublicCached = unstable_cache(
     if (!hasServiceClientConfig() || uniqueIds.length === 0) return [...episodes.entries()]
     const { data: rows, error } = await serviceClient
       .from("episodes")
-      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at, updated_at")
       .in("id", uniqueIds)
     if (error) throw new Error(error.message)
     if (!rows?.length) return [...episodes.entries()]
@@ -565,5 +566,6 @@ function mapEpisodeRow(
     cover,
     coverCrop: normalizeThumbnailCrop(row.cover_crop),
     createdAt: row.created_at ? String(row.created_at) : undefined,
+    updatedAt: row.updated_at ? String(row.updated_at) : undefined,
   }
 }

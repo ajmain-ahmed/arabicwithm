@@ -3,7 +3,11 @@ import { Box, Container, Typography } from '@mui/material'
 import { AccountTreeOutlined, GridOnRounded, PsychologyOutlined } from '@mui/icons-material'
 import { LEARN_ITEMS } from '@/app/lib/navigation'
 
-export const metadata = { title: 'Learn | ArabicWithM' }
+export const metadata = {
+  title: 'Learn Arabic',
+  description: 'Practise Arabic with Memory flashcards, grammar activities, and vocabulary word searches.',
+  alternates: { canonical: '/learn' },
+}
 const icons = [PsychologyOutlined, AccountTreeOutlined, GridOnRounded]
 
 export default function LearnPage() {

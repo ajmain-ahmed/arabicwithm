@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import {
   Dialog,
   DialogTitle,
@@ -187,10 +187,11 @@ interface DialogFieldProps {
 
 function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditing }: DialogFieldProps) {
   const [localValue, setLocalValue] = useState(value)
-
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value)
+  if (value !== previousValue) {
+    setPreviousValue(value)
     setLocalValue(value)
-  }, [value])
+  }
 
   return (
     <Box>

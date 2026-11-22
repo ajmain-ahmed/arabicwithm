@@ -5,8 +5,9 @@ import { getExploreSeed } from '@/app/lib/explore'
 
 
 export const metadata: Metadata = {
-  title: 'Explore Arabic | ArabicWithM',
-  description: 'Discover randomized Arabic videos and book passages with translations.',
+  title: 'Explore Arabic',
+  description: 'Discover Arabic videos and graded-book passages with interactive transcripts and translations.',
+  alternates: { canonical: '/explore' },
 }
 
 /* The first feed batch is fetched here (not in the browser) so the streamed

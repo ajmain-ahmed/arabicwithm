@@ -8,9 +8,10 @@ vi.mock('@/app/AuthContext',()=>({useAuth:()=>({user:mocks.user,loading:mocks.lo
 vi.mock('@/app/lib/useYouTubePlayer',()=>({default:mocks.youtube}))
 vi.mock('@mui/icons-material',()=>({PauseRounded:()=>null,PlayArrowRounded:()=>null,RefreshRounded:()=>null,Replay10Rounded:()=>null,Forward10Rounded:()=>null,ExpandLess:()=>null,VolumeUp:()=>null}))
 import ChapterAudioPlayer from './ChapterAudioPlayer'
+import { useAudiobookStore } from '@/store/audiobookStore'
 let root:Root,host:HTMLDivElement
 const audio={chapterId:'11111111-1111-4111-8111-111111111111',language:'en' as const,narrator:null,durationSeconds:15}
-beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.loading=false;mocks.save.mockResolvedValue(undefined);mocks.user={id:'listener'};mocks.request.mockResolvedValue({status:'ready',playback:{sourceType:'supabase_storage',url:'https://example.test/private',expiresIn:900,positionSeconds:3}});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);vi.spyOn(HTMLMediaElement.prototype,'play').mockResolvedValue(undefined);vi.spyOn(HTMLMediaElement.prototype,'pause').mockImplementation(()=>{})})
+beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();useAudiobookStore.setState({session:null,playbackCache:{},progressOutbox:{}});mocks.loading=false;mocks.save.mockResolvedValue(undefined);mocks.user={id:'listener'};mocks.request.mockResolvedValue({status:'ready',playback:{sourceType:'supabase_storage',url:'https://example.test/private',expiresIn:900,positionSeconds:3}});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);vi.spyOn(HTMLMediaElement.prototype,'play').mockResolvedValue(undefined);vi.spyOn(HTMLMediaElement.prototype,'pause').mockImplementation(()=>{})})
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.restoreAllMocks()})
 const openPanel=async()=>{await act(async()=>host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!.click())}
 const pressPlay=async()=>{await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="Play audio"]')!.click())}
@@ -30,7 +31,8 @@ it('reveals playback and language controls when the Audio trigger is pressed',as
  await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" audioLanguages={['ar','en']} language="en" onLanguageChange={mocks.selectLanguage}/>))
  const trigger=host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!
  expect(trigger.getAttribute('aria-expanded')).toBe('false')
- expect(host.querySelector<HTMLButtonElement>('[aria-label="Forward 10 seconds"]')!.disabled).toBe(true)
+ expect(host.querySelector('[aria-label="Forward 10 seconds"]')).toBeNull()
+ expect(host.querySelector('[aria-label="Back 10 seconds"]')).toBeNull()
  await openPanel()
  expect(trigger.getAttribute('aria-expanded')).toBe('true')
  expect(host.textContent).toContain('0:00 / 0:15')
@@ -142,4 +144,57 @@ it('replaces a dedicated Listen source on language changes without requiring the
  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
  await act(async()=>host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!.click())
  expect(mocks.request).toHaveBeenLastCalledWith(audio.chapterId,'ar')
+})
+
+
+it('reports timed playback positions and applies reader page seeks',async()=>{
+ const timings={version:1 as const,contentHash:'a'.repeat(64),durationMs:15000,segments:[{blockIndex:0,startMs:0,endMs:5000},{blockIndex:12,startMs:7000,endMs:10000}]}
+ mocks.request.mockResolvedValue({status:'ready',playback:{sourceType:'supabase_storage',url:'https://example.test/private',expiresIn:900,positionSeconds:3,timings}})
+ const onPosition=vi.fn()
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" onPositionChange={onPosition} pageStarts={[0,12]} blockCount={13}/>))
+ await openAndPlay()
+ const element=host.querySelector('audio')!;Object.defineProperty(element,'duration',{value:15})
+ await act(async()=>element.dispatchEvent(new Event('loadedmetadata')))
+ expect(onPosition).toHaveBeenLastCalledWith(3,timings)
+ expect(host.querySelector('.MuiSlider-markLabel')?.textContent).toBe('P1')
+ expect(host.textContent).toContain('P2')
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" onPositionChange={onPosition} pageStarts={[0,12]} blockCount={13} seekRequest={{revision:1,seconds:7}}/>))
+ expect(element.currentTime).toBe(7)
+ expect(onPosition).toHaveBeenLastCalledWith(7,timings)
+ await act(async()=>{element.currentTime=8;element.dispatchEvent(new Event('timeupdate'))})
+ expect(onPosition).toHaveBeenLastCalledWith(8,timings)
+})
+
+
+it('reuses a valid cached source and timing map after reopening',async()=>{
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>))
+ await openAndPlay()
+ await act(async()=>window.dispatchEvent(new Event('awm-book-language-stop')))
+ await openAndPlay()
+ expect(mocks.request).toHaveBeenCalledOnce()
+ expect(useAudiobookStore.getState().playbackCache).toHaveProperty('listener:11111111-1111-4111-8111-111111111111:en')
+})
+
+it('retains progress in the outbox when its server save fails',async()=>{
+ mocks.save.mockRejectedValue(new Error('offline'))
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>))
+ await openAndPlay()
+ const element=host.querySelector('audio')!;Object.defineProperty(element,'duration',{value:15})
+ await act(async()=>element.dispatchEvent(new Event('loadedmetadata')))
+ await act(async()=>element.dispatchEvent(new Event('pause')))
+ expect(Object.keys(useAudiobookStore.getState().progressOutbox)).toHaveLength(1)
+})
+
+
+it('loads a timed source before applying a timestamp seek',async()=>{
+ const timings={version:1 as const,contentHash:'a'.repeat(64),durationMs:15000,segments:[{blockIndex:0,startMs:0,endMs:5000},{blockIndex:12,startMs:7000,endMs:10000}]}
+ mocks.request.mockResolvedValue({status:'ready',playback:{sourceType:'supabase_storage',url:'https://example.test/private',expiresIn:900,positionSeconds:0,timings}})
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" seekRequest={{revision:1,seconds:7}}/>))
+ await act(async()=>Promise.resolve())
+ const element=host.querySelector('audio')!
+ expect(mocks.request).toHaveBeenCalledOnce()
+ Object.defineProperty(element,'duration',{value:15})
+ await act(async()=>element.dispatchEvent(new Event('loadedmetadata')))
+ expect(element.currentTime).toBe(7)
+ expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
 })

@@ -16,7 +16,7 @@ Key features:
 - **Audiobooks**: Per-chapter Arabic/English audio playback (private Supabase Storage signed URLs or YouTube sources), entitlement-gated.
 - **AWM+ (billing)**: Stripe subscription for premium features; webhook-driven entitlement sync; one-time "Support Us" checkout.
 - **Explore / For You**: Randomized short-video + book-passage feed; the For You feed is metered for free accounts with an AWM+ unlock.
-- **Learning activities**: Memory flashcards, grammar bank, word search, practice wordlists — most require sign-in and some are premium-gated.
+- **Learning activities**: Memory flashcards, grammar bank, and word search — most require sign-in and some are premium-gated.
 - **Profiles & social**: Public profiles with optional reading-progress sharing; My List; reviews.
 - **Admin CMS**: Protected `/admin/*` routes (role `admin` in the `account_roles` table) for managing shows, episodes, books, chapters, audiobooks, phrases, Hans Wehr entries, featured content, and user roles/premium.
 - **Reviewer tools**: `editor`/`admin` roles can suggest content corrections (`/reviewer`); admins review and apply them with an audit trail.
@@ -50,7 +50,7 @@ Key features:
 │   │   ├── audiobooks.ts         # Audiobook metadata, playback gating, admin audio saves
 │   │   ├── cartoons.ts           # Public cartoon browsing + transcript normalization
 │   │   ├── explore.ts / forYou.ts / forYouUsage.ts  # Feeds + metered-usage sync
-│   │   ├── memory.ts / grammar.ts / puzzles.ts / practice.ts  # Learning activities
+│   │   ├── memory.ts / grammar.ts / puzzles.ts             # Learning activities
 │   │   ├── premium.ts / entitlements.ts / support.ts          # Billing + entitlements
 │   │   ├── profiles.ts / myList.ts / activity.ts / reviews.ts # User features
 │   │   ├── storage.ts / profilePresets.ts / bookReleaseReminders.ts
@@ -71,7 +71,7 @@ Key features:
 │   ├── cartoons/                 # List, show detail, episode watch page
 │   ├── explore/                  # Explore + For You feeds (client-heavy)
 │   ├── listen/[book]/            # Audiobook player (signed-in, entitled)
-│   ├── memory/ grammar/ practice/ word-search/  # Learning activities
+│   ├── memory/ grammar/ word-search/         # Learning activities
 │   ├── profile/ profile/[user]/  # Own profile redirect / public profile
 │   ├── search/                   # Unified content search (RPC)
 │   ├── support/ feedback/        # Stripe support checkout / feedback form
@@ -111,7 +111,8 @@ Key features:
 │   ├── layout.tsx / theme.ts / globals.css
 │   └── page.tsx                  # Homepage
 ├── store/                        # Zustand client stores
-│   ├── playerStore.ts            # PiP video player state
+│   ├── playerStore.ts            # PiP video player state and audiobook speed
+│   ├── audiobookStore.ts         # In-memory playback/timing cache + persisted progress outbox
 │   ├── readingProgressStore.ts   # Book reading progress (flush-on-unmount)
 │   ├── myListStore.ts            # My List session cache
 │   ├── forYouStore.ts            # For You session cache
@@ -217,7 +218,7 @@ GLADIA_API_KEY=...           # optional
 ### Supabase Schema (key tables)
 - `shows` / `episodes` — Cartoon catalogue. `episodes.transcript` JSONB: new format is an array of `{ tokens, timestamp, translation }` blocks (each token carries `pos`, lowercase `cefr`); the legacy `{ scriptBlocks, vocabList, grammarPoints }` object is still read for old episodes.
 - `books` / `chapters` — Graded books and chapter content (`content` JSONB of token blocks). Release is gated by `is_completed`; `premium_exempt` books are free.
-- `book_chapter_audio` / `book_audio_progress` — Audiobook sources (private `audiobooks` storage bucket or YouTube) and per-user playback position.
+- `book_chapter_audio` / `book_audio_progress` — Audiobook sources (private `audiobooks` storage bucket or YouTube), optional per-language sentence timing maps, and per-user playback position.
 - `subscriptions` — Stripe customer/subscription state, written by webhook via `apply_subscription_event`; `manual_premium_grants` covers manual comp access (audit-logged).
 - `account_roles` / `access_change_audit` — Role assignments and admin/role change history.
 - `content_suggestions` — Reviewer corrections (editor/admin authors, admin review workflow).
@@ -271,9 +272,9 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 The project uses **Vitest** with `jsdom` and `@vitejs/plugin-react`, plus **Playwright** e2e specs in `e2e/`.
 
 - **Config**: `vitest.config.ts` at project root.
-- **Coverage**: ~160 test files alongside the code they test — unit tests for libs/actions (Arabic normalization, transcript formats, entitlements, migrations via PGlite, feed selection, reader pagination…) and component tests for the interactive pages. Migration tests replay `supabase/migrations` against in-memory Postgres.
-- **How to run**: `npm test` (vitest) and `npm run test:browser` (Playwright).
-- There is no CI/CD pipeline configured. If you add tests, create new `*.test.ts` / `*.test.tsx` files alongside the code they test.
+- **Coverage**: ~240 test files alongside the code they test — unit tests for libs/actions (Arabic normalization, transcript formats, entitlements, migrations via PGlite, feed selection, reader pagination…) and component tests for the interactive pages. Migration tests replay `supabase/migrations` against in-memory Postgres.
+- **How to run**: `npm test` (Vitest), `npm run test:ci` (one-shot unit suite), `npm run typecheck`, and `npm run test:browser` (Playwright).
+- GitHub Actions validates TypeScript, source lint, unit tests, and critical Playwright journeys before the Cloudflare deployment on `main`. If you add tests, create new `*.test.ts` / `*.test.tsx` files alongside the code they test.
 
 ## Security Considerations
 

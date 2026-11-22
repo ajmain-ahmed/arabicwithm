@@ -72,9 +72,11 @@ export default function BookEditDialog({
 
   useEffect(() => {
     if (!open) return
-    setError(null)
-    setLoaded(false)
     let active = true
+    queueMicrotask(() => {
+      if (!active) return
+      setError(null)
+      setLoaded(false)
 
     if (isNew) {
       setDraftCoverId(crypto.randomUUID())
@@ -115,8 +117,9 @@ export default function BookEditDialog({
         setCompleted(row.is_completed !== false)
         setCoverCrop(row.cover_crop)
       })
-      .catch((e: unknown) => { if (active) setError("Unable to load book details. Close this dialog and reload the page.") })
+      .catch(() => { if (active) setError("Unable to load book details. Close this dialog and reload the page.") })
       .finally(() => { if (active) setLoading(false) })
+    })
     return () => { active = false }
   }, [open, bookId, isNew])
 

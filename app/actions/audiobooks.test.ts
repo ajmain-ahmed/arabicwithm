@@ -9,14 +9,15 @@ vi.mock('@/app/lib/verifyAudioObject',()=>({verifyAudioObject:mocks.verify}))
 vi.mock('@/app/lib/imageVariants',()=>({syncImageVariants:vi.fn()}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate,updateTag:vi.fn(),unstable_cache:(fn:unknown)=>fn}))
 import {uploadAudiobookAudio,removeAudiobookAudio} from './storage'
-import {deleteChapterAudioForAdmin,fetchChapterAudioForAdmin,fetchPublishedChapterAudio,requestChapterAudio,requestChapterAudioResult,saveAudioProgress,saveChapterAudioForAdmin} from './audiobooks'
+import {deleteChapterAudioForAdmin,fetchChapterAudioForAdmin,fetchPublishedChapterAudio,requestChapterAudio,requestChapterAudioResult,saveAudioProgress,saveChapterAudioForAdmin,saveChapterAudioTimingsForAdmin} from './audiobooks'
 const chapter='11111111-1111-4111-8111-111111111111'
-let row:Record<string,unknown>|null,events:string[]
+let row:Record<string,unknown>|null,events:string[],chapterContent:unknown
 beforeEach(()=>{
- vi.resetAllMocks();vi.stubEnv('SUPABASE_URL','https://example.supabase.co');mocks.verify.mockResolvedValue(undefined);mocks.bucket.mockResolvedValue({data:{public:false},error:null});events=[];row=null;mocks.guard.mockResolvedValue(undefined);mocks.entitlement.mockResolvedValue(undefined);mocks.user.mockResolvedValue('listener');mocks.list.mockResolvedValue({data:[{name:'audio.mp3'}],error:null});mocks.remove.mockImplementation(async()=>{events.push('remove-file');return {error:null}});mocks.sign.mockResolvedValue({data:{signedUrl:'https://example.test/scoped-playback'},error:null})
+ vi.resetAllMocks();vi.stubEnv('SUPABASE_URL','https://example.supabase.co');mocks.verify.mockResolvedValue(undefined);mocks.bucket.mockResolvedValue({data:{public:false},error:null});events=[];row=null;chapterContent=[{tokens:[{arabic:'جُمْلَةٌ'}],translation:'A sentence.'}];mocks.guard.mockResolvedValue(undefined);mocks.entitlement.mockResolvedValue(undefined);mocks.user.mockResolvedValue('listener');mocks.list.mockResolvedValue({data:[{name:'audio.mp3'}],error:null});mocks.remove.mockImplementation(async()=>{events.push('remove-file');return {error:null}});mocks.sign.mockResolvedValue({data:{signedUrl:'https://example.test/scoped-playback'},error:null})
  mocks.from.mockImplementation((table:string)=>{
-  const value={then:(resolve:(value:unknown)=>unknown)=>Promise.resolve({data:table==='book_chapter_audio'?(row?[row]:[]):[],error:null}).then(resolve),select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn(async()=>({data:table==='book_chapter_audio'?row:table==='chapters'?{id:chapter,slug:'chapter',book_id:'book',is_published:true}:table==='books'?{slug:'book'}:null,error:null})),
+  const value={then:(resolve:(value:unknown)=>unknown)=>Promise.resolve({data:table==='book_chapter_audio'?(row?[row]:[]):[],error:null}).then(resolve),select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn(async()=>({data:table==='book_chapter_audio'?row:table==='chapters'?{id:chapter,slug:'chapter',book_id:'book',is_published:true,content:chapterContent}:table==='books'?{slug:'book'}:null,error:null})),
    upsert:vi.fn(async(data:Record<string,unknown>)=>{row={id:'audio',...data};events.push('persist-reference');return {error:null}}),
+   update:vi.fn((data:Record<string,unknown>)=>{row={...(row??{}),...data};const builder={eq:vi.fn().mockReturnThis(),then:(resolve:(value:unknown)=>unknown)=>Promise.resolve({error:null}).then(resolve)};return builder}),
    delete:vi.fn(()=>{const builder={eq:vi.fn().mockReturnThis(),then:(resolve:(value:unknown)=>unknown)=>{row=null;events.push('remove-reference');return Promise.resolve({error:null}).then(resolve)}};return builder})}
   return value
  })
@@ -80,6 +81,22 @@ describe('existing chapter audio persistence and permissions',()=>{
   await saveChapterAudioForAdmin({chapterId:chapter,language:'en',sourceType:'external_url',externalUrl:'https://audio.example.com/file.mp3',isPublished:true})
   expect(await requestChapterAudio(chapter,'en')).toEqual(expect.objectContaining({url:'https://audio.example.com/file.mp3',expiresIn:0}))
   expect(mocks.remove).not.toHaveBeenCalled()
+ })
+ it('saves validated timings and returns them only while the chapter content matches',async()=>{
+  row={chapter_id:chapter,language:'ar',source_type:'supabase_storage',storage_path:chapter+'/audio.mp3',storage_bucket:'audiobooks',is_published:true}
+  const draft={durationMs:5000,segments:[{blockIndex:0,startMs:100,endMs:900}]}
+  const timings=await saveChapterAudioTimingsForAdmin({chapterId:chapter,language:'ar',draft})
+  expect(row?.timing_data).toEqual(timings);expect(row?.duration_seconds).toBe(5)
+  expect(await fetchPublishedChapterAudio(chapter)).toEqual(expect.objectContaining({timings}))
+  expect(await requestChapterAudio(chapter)).toEqual(expect.objectContaining({timings}))
+  chapterContent=[{tokens:[{arabic:'مُتَغَيِّرَةٌ'}],translation:'Changed.'}]
+  expect(await fetchPublishedChapterAudio(chapter)).toEqual(expect.objectContaining({timings:null}))
+  expect(await requestChapterAudio(chapter)).toEqual(expect.objectContaining({timings:null}))
+ })
+ it('clears timings when the underlying audio source changes',async()=>{
+  row={chapter_id:chapter,language:'ar',source_type:'supabase_storage',storage_path:chapter+'/old.mp3',storage_bucket:'audiobooks',is_published:true,timing_data:{version:1}}
+  await saveChapterAudioForAdmin({chapterId:chapter,language:'ar',sourceType:'supabase_storage',storagePath:chapter+'/new.mp3',storageBucket:'audiobooks',isPublished:true})
+  expect(row?.timing_data).toBeNull()
  })
 
 })

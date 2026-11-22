@@ -13,6 +13,8 @@ import { verifyAudioObject } from '@/app/lib/verifyAudioObject'
 import { getAudiobookPlaybackUrl, normalizeAudiobookSource, sourceFromAudioRecord } from '@/app/lib/audiobookSource'
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
 import { isBookReleased, isChapterReleased, releasedBookIds } from '@/app/lib/bookRelease'
+import { chapterAudioTimingDraftSchema, parseChapterAudioTimings, type ChapterAudioTimings } from '@/app/lib/chapterAudioTimings'
+import { createChapterAudioTimings, timingsForChapterContent } from '@/app/lib/chapterAudioTimings.server'
 
 export type AudioSourceType = 'supabase_storage' | 'youtube' | 'external_url'
 export interface ChapterAudioSummary {
@@ -20,6 +22,7 @@ export interface ChapterAudioSummary {
   language: AudioLanguage
   durationSeconds: number | null
   narrator: string | null
+  timings?: ChapterAudioTimings | null
 }
 export interface AdminChapterAudio extends ChapterAudioSummary {
   sourceType: AudioSourceType
@@ -28,10 +31,11 @@ export interface AdminChapterAudio extends ChapterAudioSummary {
   externalUrl?: string | null
   externalVideoId: string | null
   isPublished: boolean
+  timingData: ChapterAudioTimings | null
 }
 export type ChapterAudioPlayback =
-  | { sourceType: 'supabase_storage'; url: string; expiresIn: number; positionSeconds: number }
-  | { sourceType: 'youtube'; videoId: string; positionSeconds: number }
+  | { sourceType: 'supabase_storage'; url: string; expiresIn: number; positionSeconds: number; timings: ChapterAudioTimings | null }
+  | { sourceType: 'youtube'; videoId: string; positionSeconds: number; timings: ChapterAudioTimings | null }
 
 const audioInput = z.object({
   chapterId: z.string().uuid(),
@@ -53,6 +57,12 @@ const audioInput = z.object({
   if (value.sourceType === 'supabase_storage' && (!value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Choose one uploaded audio file.' })
   if (value.sourceType === 'external_url' && (!value.externalUrl || value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Enter one HTTPS audio URL.' })
   if (value.sourceType === 'youtube' && (!value.externalVideoId || value.storagePath)) context.addIssue({ code: 'custom', message: 'Enter one valid YouTube URL or video ID.' })
+})
+
+const timingInput = z.object({
+  chapterId: z.string().uuid(),
+  language: z.enum(['ar', 'en']).default('ar'),
+  draft: chapterAudioTimingDraftSchema,
 })
 
 function summary(row: Record<string, unknown>): ChapterAudioSummary {
@@ -119,14 +129,25 @@ export const fetchPublishedAudioForBook = unstable_cache(async (bookId: string):
   return audio.map(summary)
 }, ['audiobooks', 'published', 'book', 'v2'], { revalidate: 3600, tags: ['books-public'] })
 
-/* Library-level "has audiobook" flags for the books catalogue. */
-export const fetchBookIdsWithPublishedAudio = unstable_cache(async (bookIds: string[]): Promise<string[]> => {
-  if (bookIds.length === 0) return []
+/* Library-level narration languages for cover badges and audio filtering. */
+export const fetchPublishedAudioLanguagesForBooks = unstable_cache(async (bookIds: string[]): Promise<Record<string, AudioLanguage[]>> => {
+  if (bookIds.length === 0) return {}
   const { chapters, audio } = await readAudioForBooks(bookIds)
-  const audioChapters = new Set(audio.map((row) => String(row.chapter_id)))
-  return Array.from(new Set(
-    (chapters ?? []).filter((chapter) => audioChapters.has(String(chapter.id))).map((chapter) => String(chapter.book_id))
-  ))
+  const bookByChapter = new Map(chapters.map(chapter => [String(chapter.id), String(chapter.book_id)]))
+  const languages = new Map<string, Set<AudioLanguage>>()
+  for (const row of audio) {
+    const bookId = bookByChapter.get(String(row.chapter_id))
+    const language = row.language === 'en' ? 'en' : 'ar'
+    if (!bookId) continue
+    const set = languages.get(bookId) ?? new Set<AudioLanguage>()
+    set.add(language)
+    languages.set(bookId, set)
+  }
+  return Object.fromEntries([...languages].map(([bookId, set]) => [bookId, (['ar', 'en'] as const).filter(language => set.has(language))]))
+}, ['audiobooks', 'published', 'library', 'languages-v1'], { revalidate: 3600, tags: ['books-public'] })
+
+export const fetchBookIdsWithPublishedAudio = unstable_cache(async (bookIds: string[]): Promise<string[]> => {
+  return Object.keys(await fetchPublishedAudioLanguagesForBooks(bookIds))
 }, ['audiobooks', 'published', 'library', 'v2'], { revalidate: 3600, tags: ['books-public'] })
 
 /* One query for both languages — the chapter page probes 'ar' and 'en'
@@ -138,9 +159,14 @@ export async function fetchPublishedChapterAudioForChapter(chapterId: string): P
   if (isMissingDatabaseFeature(error)) return { ar: null, en: null }
   if (error) throw new Error('Unable to load audiobook availability.')
   const rows = ((data ?? []) as Record<string, unknown>[]).filter(hasPlayableSource)
+  let content: unknown
+  if (rows.some(row => row.timing_data)) {
+    const { data: chapter } = await serviceClient.from('chapters').select('content').eq('id', chapterId).maybeSingle()
+    content = chapter?.content
+  }
   const pick = (language: AudioLanguage) => {
     const row = rows.find((candidate) => (candidate.language ?? 'ar') === language)
-    return row ? summary(row) : null
+    return row ? { ...summary(row), timings: row.timing_data ? timingsForChapterContent(row.timing_data, content) : null } : null
   }
   return { ar: pick('ar'), en: pick('en') }
 }
@@ -163,9 +189,14 @@ export async function requestChapterAudio(chapterId: string, language: AudioLang
   const progress = positions?.find(row => (row.language ?? 'ar') === language)
   if (error || !data) throw new Error('This audiobook chapter is not available.')
   const positionSeconds = Number(progress?.position_seconds ?? 0)
-  if (data.source_type === 'youtube' && data.external_video_id) return { sourceType: 'youtube', videoId: data.external_video_id, positionSeconds }
+  let timings: ChapterAudioTimings | null = null
+  if (data.timing_data) {
+    const { data: chapter } = await serviceClient.from('chapters').select('content').eq('id', chapterId).maybeSingle()
+    timings = timingsForChapterContent(data.timing_data, chapter?.content)
+  }
+  if (data.source_type === 'youtube' && data.external_video_id) return { sourceType: 'youtube', videoId: data.external_video_id, positionSeconds, timings }
   const playback = await getAudiobookPlaybackUrl(sourceFromAudioRecord(data, process.env.SUPABASE_URL!), serviceClient.storage)
-  return { sourceType: 'supabase_storage', ...playback, positionSeconds }
+  return { sourceType: 'supabase_storage', ...playback, positionSeconds, timings }
 }
 
 async function requireChapterAudioAccess(chapterId: string): Promise<void> {
@@ -210,7 +241,7 @@ async function readChapterAudio(chapterId: string, language: AudioLanguage): Pro
   if (error) throw new Error(error.message)
   const data = sources?.find(row => (row.language ?? 'ar') === language)
   if (!data) return null
-  return { ...summary(data as Record<string, unknown>), sourceType: data.source_type, storagePath: data.storage_path, storageBucket: data.storage_bucket, externalUrl: data.external_url, externalVideoId: data.external_video_id, isPublished: data.is_published ?? (language === 'ar') }
+  return { ...summary(data as Record<string, unknown>), sourceType: data.source_type, storagePath: data.storage_path, storageBucket: data.storage_bucket, externalUrl: data.external_url, externalVideoId: data.external_video_id, isPublished: data.is_published ?? (language === 'ar'), timingData: parseChapterAudioTimings(data.timing_data) }
 }
 
 export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>): Promise<void> {
@@ -226,7 +257,9 @@ export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>
     value.sourceType = normalized.externalUrl ? 'external_url' : 'supabase_storage'
     if (value.storagePath) await verifyAudioObject(value.storagePath, value.storageBucket!)
   }
-  const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, storage_bucket: value.storageBucket, external_url: value.externalUrl, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
+  const previous = await readChapterAudio(value.chapterId, value.language)
+  const sourceChanged = previous && (previous.sourceType !== value.sourceType || previous.storagePath !== value.storagePath || previous.storageBucket !== value.storageBucket || previous.externalUrl !== value.externalUrl || previous.externalVideoId !== value.externalVideoId)
+  const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, storage_bucket: value.storageBucket, external_url: value.externalUrl, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, ...(sourceChanged ? { timing_data: null } : {}), updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
   if (error) throw new Error(/PGRST204|42703|42P10/.test(error.code ?? '') ? 'Audiobook schema is out of date. Apply the audiobook_sources migration before saving audio.' : `Unable to save audiobook: ${error.message}`)
   const persisted = await readChapterAudio(value.chapterId, value.language)
   if (!persisted || persisted.sourceType !== value.sourceType || persisted.storagePath !== value.storagePath || persisted.storageBucket !== value.storageBucket || persisted.externalUrl !== value.externalUrl || persisted.externalVideoId !== value.externalVideoId || persisted.narrator !== value.narrator || persisted.durationSeconds !== value.durationSeconds || persisted.isPublished !== value.isPublished) {
@@ -246,6 +279,24 @@ export async function saveChapterAudioResult(input: z.input<typeof audioInput>):
     console.error('[chapter audio] Save failed:', message)
     return { ok: false, error: message }
   }
+}
+
+export async function saveChapterAudioTimingsForAdmin(input: z.input<typeof timingInput>): Promise<ChapterAudioTimings> {
+  await guardAdmin()
+  const value = timingInput.parse(input)
+  const { data: chapter, error: chapterError } = await serviceClient.from('chapters').select('content').eq('id', value.chapterId).maybeSingle()
+  if (chapterError || !chapter) throw new Error('Unable to load this chapter for timing validation.')
+  const timings = createChapterAudioTimings(chapter.content, value.draft)
+  const { error } = await serviceClient.from('book_chapter_audio').update({
+    timing_data: timings,
+    duration_seconds: Math.max(1, Math.round(timings.durationMs / 1000)),
+    updated_at: new Date().toISOString(),
+  }).eq('chapter_id', value.chapterId).eq('language', value.language)
+  if (error) throw new Error(`Unable to save audiobook timings: ${error.message}`)
+  const persisted = await readChapterAudio(value.chapterId, value.language)
+  if (!persisted || persisted.timingData?.contentHash !== timings.contentHash || persisted.durationSeconds !== Math.max(1, Math.round(timings.durationMs / 1000))) throw new Error('The database did not confirm the saved audiobook timings.')
+  await revalidateChapterAudio(value.chapterId)
+  return timings
 }
 
 export async function deleteChapterAudioForAdmin(chapterId: string, language: AudioLanguage = 'ar'): Promise<void> {

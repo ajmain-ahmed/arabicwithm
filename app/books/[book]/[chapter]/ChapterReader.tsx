@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode, type CSSProperties } from 'react'
-import { Box, Button, ButtonGroup, Divider, Paper, Typography, useMediaQuery } from '@mui/material'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type CSSProperties } from 'react'
+import { Box, Button, ButtonGroup, Paper, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight, Settings } from '@mui/icons-material'
 import { HtmlTooltip, MobileDefinitionSheet, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
@@ -11,6 +11,7 @@ import { dispatchWordLookup } from '@/app/lib/activity'
 import { paginateParagraphs,readerPageForBlock,READER_BLOCKS_PER_PAGE,DESKTOP_READER_BLOCKS_PER_PAGE } from '@/app/lib/readingPagination'
 import { setBookInMyList } from '@/app/lib/bookMyList'
 import { useReadingProgressStore } from '@/store/readingProgressStore'
+import { usePlayerStore } from '@/store/playerStore'
 import {
   DEFAULT_BOOK_READER_FONT,
   DEFAULT_BOOK_READER_LANGUAGE,
@@ -24,8 +25,10 @@ import {
 import {useContentPageTop} from '@/app/lib/useContentPageTop'
 import ChapterNavigation from './ChapterNavigation'
 import BookReaderSettingsDialog from './BookReaderSettingsDialog'
-import ChapterAudioPlayer from './ChapterAudioPlayer'
+import ChapterAudioPlayer, { type ChapterAudioSeekRequest } from './ChapterAudioPlayer'
+import TranscriptBlock from '@/app/components/transcript/TranscriptBlock'
 import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
+import { chapterAudioBlockAtTime, chapterAudioSegmentForPage, type ChapterAudioTimings } from '@/app/lib/chapterAudioTimings'
 import type { ChapterAudioSummary } from '@/app/actions/audiobooks'
 
 type ReaderView = 'lines' | 'book'
@@ -126,19 +129,6 @@ function subscribeToReaderLanguage(onStoreChange: () => void) {
   return () => {
     window.removeEventListener('storage', handleStorage)
     window.removeEventListener(READER_LANGUAGE_CHANGE_EVENT, onStoreChange)
-  }
-}
-
-let wordHelpFallback = true
-function getWordHelp() {
-  try { return window.localStorage.getItem('awm-book-word-help') !== 'false' } catch { return wordHelpFallback }
-}
-function subscribeToWordHelp(callback: () => void) {
-  window.addEventListener('storage', callback)
-  window.addEventListener('awm-book-word-help-change', callback)
-  return () => {
-    window.removeEventListener('storage', callback)
-    window.removeEventListener('awm-book-word-help-change', callback)
   }
 }
 
@@ -268,6 +258,8 @@ export default function ChapterReader({
   audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
+  const audioRate = usePlayerStore(state => state.audiobookRate)
+  const setAudioRate = usePlayerStore(state => state.setAudiobookRate)
   useEffect(() => {
     if (!adminPreview && user?.id) void setBookInMyList(user.id, bookSlug, true).catch(error => console.error('Unable to save started book:', error))
   }, [user?.id, bookSlug, adminPreview])
@@ -289,12 +281,7 @@ export default function ChapterReader({
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [closeDefinition])
-  const wordHelp = useSyncExternalStore(subscribeToWordHelp, getWordHelp, () => true)
-  const toggleWordHelp = (enabled: boolean) => {
-    wordHelpFallback = enabled
-    try { window.localStorage.setItem('awm-book-word-help', String(enabled)) } catch { /* Keep the preference for this session. */ }
-    window.dispatchEvent(new Event('awm-book-word-help-change'))
-  }
+  const wordHelp = true
   const [settingsOpen, setSettingsOpen] = useState(false)
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines' as ReaderView)
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
@@ -312,10 +299,22 @@ export default function ChapterReader({
   const incoming=`${chapterSlug}:${initialPage}:${initialBlock}`
   const initialOffset=()=>Math.min(Math.max(0,initialBlock??pageStarts[Math.min(Math.max(1,initialPage??1),totalPages)-1]??0),Math.max(0,sourceLength-1))
   const [position,setPosition]=useState(()=>({incoming,block:initialOffset()}))
+  const [activeAudioBlock,setActiveAudioBlock]=useState<number|null>(null)
+  const [audioSeek,setAudioSeek]=useState<ChapterAudioSeekRequest|null>(null)
+  const audioTimingsRef=useRef<ChapterAudioTimings|null>(null)
   if(position.incoming!==incoming)setPosition({incoming,block:initialOffset()})
   const page=readerPageForBlock(pageStarts,position.block)
   const visibleParagraphs=pages[page-1]??[]
   const {ref:contentRef,requestScroll}=useContentPageTop(`${chapterSlug}:${page}`,true)
+  const followAudio=useCallback((seconds:number,timings:ChapterAudioTimings|null)=>{
+    audioTimingsRef.current=timings
+    const block=chapterAudioBlockAtTime(timings,seconds)
+    setActiveAudioBlock(block)
+    if(block===null||block===position.block)return
+    const nextPage=readerPageForBlock(pageStarts,block)
+    if(nextPage!==page)requestScroll()
+    setPosition({incoming,block})
+  },[incoming,page,pageStarts,position.block,requestScroll])
   const trackProgress = useReadingProgressStore((state) => state.track)
   useEffect(() => {
     if (user) useReadingProgressStore.getState().hydrateFromMetadata(user.user_metadata)
@@ -335,11 +334,14 @@ export default function ChapterReader({
   useEffect(() => () => { if (!adminPreview) void useReadingProgressStore.getState().flush() }, [bookSlug, chapterSlug, adminPreview])
   const goToPage=useCallback((next:number)=>{
     const target=Math.min(Math.max(1,Math.trunc(next)||1),totalPages)
-    setPosition({incoming,block:pageStarts[target-1]??0})
+    const block=pageStarts[target-1]??0
+    const segment=chapterAudioSegmentForPage(audioTimingsRef.current,pageStarts,target,sourceLength)
+    if(segment)setAudioSeek(current=>({revision:(current?.revision??0)+1,seconds:segment.startMs/1000}))
+    setPosition({incoming,block})
     const url=new URL(window.location.href)
     if(/^#sentence-/.test(url.hash)){url.hash='';window.history.replaceState(window.history.state,'',url)}
     closeDefinition();requestScroll()
-  },[totalPages,pageStarts,incoming,requestScroll,closeDefinition])
+  },[totalPages,pageStarts,sourceLength,incoming,requestScroll,closeDefinition])
   useEffect(()=>{
     const onKeyDown=(event:KeyboardEvent)=>{
       if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return
@@ -412,14 +414,19 @@ export default function ChapterReader({
     }
   }
 
-  const selectedAudio = audio.find(item => item.language === language)
+  const selectedAudio = audio.find(item => item.language === language) ?? audio[0]
+  const audioStartByBlock=useMemo(()=>new Map((selectedAudio?.timings?.segments??[]).map(segment=>[segment.blockIndex,segment.startMs/1000])),[selectedAudio?.timings])
+  const seekAudioToBlock=useCallback((blockIndex:number)=>{
+    const seconds=audioStartByBlock.get(blockIndex)
+    if(seconds===undefined)return
+    setAudioSeek(current=>({revision:(current?.revision??0)+1,seconds}))
+  },[audioStartByBlock])
   const renderReader = ({ button, player }: { button: ReactNode; player: ReactNode }) => (
     <>
       {/* The settings dialog deliberately lives in ChapterReader's own return
-          (outside this render-prop subtree): the audio player swaps its
-          internal wrapper when the current language has no audio, and a dialog
-          mounted inside that subtree would unmount/remount (blink) on every
-          language switch. */}
+          (outside this render-prop subtree): a dialog mounted inside the audio
+          player's changing subtree would unmount/remount (blink) when narration
+          becomes unavailable or the reader language changes. */}
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
       <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f', backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23d4a843' fill-opacity='.08'/%3E%3C/svg%3E")` }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
@@ -473,31 +480,33 @@ export default function ChapterReader({
               {paragraph.map((block, blockIndex) => {
                 const sentenceIndex = blockIndexByBlock.get(block) ?? blockIndex
                 return (
-                <Box
+                <TranscriptBlock
                   key={sentenceIndex}
                   id={`sentence-${sentenceIndex}`}
-                  data-reader-block={sentenceIndex}
-                  sx={{ position: 'relative', py: 2.5, scrollMarginTop: '96px' }}
+                  blockIndex={sentenceIndex}
+                  active={activeAudioBlock===sentenceIndex}
+                  timestamp={audioStartByBlock.get(sentenceIndex)}
+                  onTimestampClick={audioStartByBlock.has(sentenceIndex)?()=>seekAudioToBlock(sentenceIndex):undefined}
+                  scrollMarginTop="96px"
                 >
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       {language === 'ar' ? (
                         <>
-                          <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
+                          <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 2.05, color: 'var(--awm-bark)', textAlign: 'right' }}>
                             <ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} />
                           </Typography>
-                          {block.translation && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>{block.translation}</Typography>}
+                          {block.translation && <Typography sx={{ mt: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>{block.translation}</Typography>}
                         </>
                       ) : (
                         <>
                           <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 18 * textScale, md: 20 * textScale }, lineHeight: 1.75 }}>{block.translation}</Typography>
-                          <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></Typography>
+                          <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 2, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></Typography>
                         </>
                       )}
                     </Box>
                   </Box>
-                  {blockIndex < paragraph.length - 1 && <Divider sx={{ mt: 3, borderColor: 'rgba(44,26,14,0.07)' }} />}
-                </Box>
+                </TranscriptBlock>
                 )
               })}
             </Box>
@@ -510,8 +519,8 @@ export default function ChapterReader({
             {visibleParagraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {language === 'ar'
-                  ? paragraph.map((block, blockIndex) => <span key={blockIndex} id={`sentence-${blockIndexByBlock.get(block)}`} data-reader-block={blockIndexByBlock.get(block)}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></span>)
-                  : paragraph.map((block,index)=><span key={index} id={`sentence-${blockIndexByBlock.get(block)}`} data-reader-block={blockIndexByBlock.get(block)}>{index>0?' ':''}{block.translation}</span>)}
+                  ? paragraph.map((block, blockIndex) => <span key={blockIndex} id={`sentence-${blockIndexByBlock.get(block)}`} data-reader-block={blockIndexByBlock.get(block)} style={{backgroundColor:activeAudioBlock===blockIndexByBlock.get(block)?'rgba(184,134,11,0.18)':'transparent'}}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></span>)
+                  : paragraph.map((block,index)=><span key={index} id={`sentence-${blockIndexByBlock.get(block)}`} data-reader-block={blockIndexByBlock.get(block)} style={{backgroundColor:activeAudioBlock===blockIndexByBlock.get(block)?'rgba(184,134,11,0.18)':'transparent'}}>{index>0?' ':''}{block.translation}</span>)}
               </Box>
             ))}
           </Box>
@@ -566,8 +575,6 @@ export default function ChapterReader({
       structured={structuredPages !== undefined}
       open={settingsOpen}
       onClose={() => setSettingsOpen(false)}
-      wordHelp={wordHelp}
-      onWordHelpChange={toggleWordHelp}
       readerFont={readerFont}
       onReaderFontChange={selectReaderFont}
       textScale={textScale}
@@ -576,6 +583,13 @@ export default function ChapterReader({
       onViewChange={selectView}
       language={language}
       onLanguageChange={selectLanguage}
+      audioRate={audioRate}
+      onAudioRateChange={setAudioRate}
+      onRestartAudio={() => {
+        setAudioSeek(current=>({revision:(current?.revision??0)+1,seconds:0}))
+        setSettingsOpen(false)
+      }}
+      hasAudio={audio.length > 0}
     />
     <ChapterAudioPlayer
       /* Keyed by chapter only: the narration-language switch happens inside
@@ -584,8 +598,12 @@ export default function ChapterReader({
       audio={selectedAudio ?? null}
       chapterTitle={chapterTitle}
       audioLanguages={audio.map(item => item.language)}
-      language={language}
+      language={selectedAudio?.language ?? language}
       onLanguageChange={selectLanguage}
+      onPositionChange={followAudio}
+      seekRequest={audioSeek}
+      pageStarts={pageStarts}
+      blockCount={sourceLength}
       render={renderReader}
     />
   </>

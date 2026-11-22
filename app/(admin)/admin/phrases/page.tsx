@@ -62,7 +62,7 @@ export default function PhrasesAdminPage() {
   }, [])
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => { void load() })
   }, [load])
 
   const updateField = useCallback(
@@ -414,10 +414,11 @@ interface DialogFieldProps {
 
 function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditing, readOnly }: DialogFieldProps) {
   const [localValue, setLocalValue] = useState(value)
-
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value)
+  if (value !== previousValue) {
+    setPreviousValue(value)
     setLocalValue(value)
-  }, [value])
+  }
 
   const canEdit = !readOnly && isEditing
 
@@ -494,10 +495,11 @@ interface EditableCellProps {
 
 function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing }: EditableCellProps) {
   const [localValue, setLocalValue] = useState(value)
-
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value)
+  if (value !== previousValue) {
+    setPreviousValue(value)
     setLocalValue(value)
-  }, [value])
+  }
 
   if (!isEditing) {
     return (

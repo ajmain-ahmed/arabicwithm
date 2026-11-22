@@ -1,6 +1,6 @@
 'use client'
 
-import { ImageOutlined, AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
+import { ImageOutlined, AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SearchOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Box,
     Button,
@@ -145,6 +145,7 @@ export default function MobileDrawer({
                         const Icon = primaryIcons[label]
                         return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(NAV_ROUTES[label]) }
                     }),
+                    { label: 'Search', icon: <SearchOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/search') },
                     ...managementItems,
                     { label: 'Contact Us', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-contact-dialog')) } },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-support-dialog')) } },
