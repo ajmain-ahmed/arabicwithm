@@ -5,6 +5,11 @@ import { boundedFetch, withDataDeadline } from '@/app/lib/boundedFetch'
 /** Refresh auth cookies before Server Components inspect the session. */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
+  // Public startup must reach the browser even when an existing session's
+  // refresh/verification stalls. The browser restores it independently, and
+  // Server Actions and protected routes still verify identity server-side.
+  if ((request.method === 'GET' || request.method === 'HEAD') &&
+      ['/', '/site.webmanifest', '/startup-recovery.js', '/startup-check'].includes(request.nextUrl.pathname)) return response
   const featuredAdmin = request.nextUrl.pathname === '/admin/featured' || request.nextUrl.pathname.startsWith('/admin/featured/')
   const denyFeatured = () => {
     const redirect = NextResponse.redirect(new URL('/', request.url))

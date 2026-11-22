@@ -1,6 +1,6 @@
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
-import {expect,it} from 'vitest'
+import {expect,it,vi} from 'vitest'
 import {renderToStaticMarkup} from 'react-dom/server'
 import FeaturedHero from './FeaturedHero'
 for(const slug of ['arc','bb','mov','cotp','dbz','hxh','misc'])it(`keeps the ${slug} artwork, image link, and episode links on the same show`,()=>{
@@ -26,4 +26,15 @@ it('uses responsive artwork and leaves unselected carousel images unmounted',()=
  expect(image.getAttribute('sizes')).toContain('100vw')
  const deferred=document.createElement('div');deferred.innerHTML=renderToStaticMarkup(<FeaturedHero show={show} featuredImage="https://storage.test/featured/arc.avif" loadImage={false} episodeCount={1}/>)
  expect(deferred.querySelector('img')).toBeNull()
+})
+
+it('recovers artwork that failed before hydration attached its error listener', async () => {
+ const complete=vi.spyOn(HTMLImageElement.prototype,'complete','get').mockReturnValue(true)
+ const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host)
+ try {
+  await act(async()=>root.render(<FeaturedHero show={{id:'arc',slug:'arc',title:'Arcane',cover:'/cover.webp',level:'B1',episodeCount:1}} featuredImage="https://storage.test/featured/arc.avif" episodeCount={1}/>))
+  expect(host.querySelector('img')?.getAttribute('src')).toBe('/cover.webp')
+  expect(host.querySelector('img')?.dataset.fallback).toBe('true')
+  expect(host.querySelector('img')?.hasAttribute('srcset')).toBe(false)
+ } finally { await act(async()=>root.unmount());host.remove();complete.mockRestore() }
 })

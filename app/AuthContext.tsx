@@ -5,6 +5,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { useRouter } from 'next/navigation'
 import type { Session, User } from '@supabase/supabase-js'
 import { AccountAccessProvider } from '@/app/AccountAccessContext'
+import { startupMark } from '@/app/lib/startupTrace'
+
+startupMark('react-start')
 
 /* The browser client (supabase-js, ~240KB) is dynamically imported so
    anonymous visitors never download it. The SSR cookie session is checked
@@ -44,6 +47,7 @@ const AuthContext = createContext<AuthContextValue>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  startupMark('hydration-start')
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -74,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   },[router])
 
   useEffect(() => {
+    startupMark('auth-start')
     let active = true
     /* Implicit-flow email links (confirmation, password reset) return the
        session in the URL hash. The shared browser client runs PKCE
@@ -89,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Anonymous: no session can exist, so skip downloading supabase-js
       // and subscribing entirely. The microtask keeps setState out of the
       // synchronous effect body (react-hooks/set-state-in-effect).
-      queueMicrotask(() => { if (active) setLoading(false) })
+      queueMicrotask(() => { if (active) { startupMark('auth-complete'); setLoading(false) } })
       const onSessionEstablished = () => setSessionEstablished(true)
       window.addEventListener('awm-session-established', onSessionEstablished, { once: true })
       return () => {
@@ -103,9 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let identity: string | null = null
     let subscription: { unsubscribe: () => void } | null = null
 
-    const watchdog=window.setTimeout(()=>{if(active&&!initialized){setError('Unable to restore your session. Please reload the page.');setLoading(false)}},20000)
+    const watchdog=window.setTimeout(()=>{if(active&&!initialized){startupMark('auth-error');setError('Unable to restore your session. Please reload the page.');setLoading(false)}},20000)
     import('@/app/lib/supabase/client').then(({ supabase }) => {
       if (!active) return
+      startupMark('auth-client-loaded')
 
       if (hasHashSession) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search)
@@ -120,10 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Grab the current session on mount
+      startupMark('auth-session-read')
       supabase.auth.getSession()
         .then(({ data: { session } }: { data: { session: Session | null } }) => {
           // Only apply getSession result if onAuthStateChange hasn't already fired
           if (active && !stateChanged) {
+            startupMark('auth-complete')
             initialized = true
             identity = session?.user.id ?? null
             setError('')
@@ -134,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch((err: unknown) => {
+          startupMark('auth-error')
           console.error('Auth session error:', err)
           if (active && !stateChanged) {
             window.clearTimeout(watchdog)
@@ -145,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Listen for auth state changes (sign in, sign out, token refresh)
       subscription = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
         if (!active) return
+        startupMark('auth-complete')
         const nextIdentity = session?.user.id ?? null
         const identityChanged = nextIdentity !== identity
         // Restoring the initial cookie session is hydration, not a new login.
@@ -166,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (shouldRefresh && _event === 'SIGNED_IN'&&refreshedToken.current!==session?.access_token){refreshedToken.current=session?.access_token??null;router.refresh()}
       }).data.subscription
     }).catch((error: unknown) => {
+      startupMark('auth-error')
       console.error('Unable to load the auth client:', error)
       if(active){window.clearTimeout(watchdog);setError('Unable to load your session. Please reload the page.');setLoading(false)}
     })

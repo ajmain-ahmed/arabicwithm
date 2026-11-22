@@ -7,6 +7,8 @@ import {
   jost,
 } from "@/app/lib/fonts"
 import "./globals.css"
+import "./fonts/reading.css"
+import { startupRecoveryScript } from '@/app/lib/startupRecoveryScript'
 import ThemeProvider from "./components/ThemeProvider"
 import { AuthProvider } from "./AuthContext"
 import SiteShell from "./components/SiteShell"
@@ -79,7 +81,7 @@ export default function RootLayout({
             needs the Apple form when opening a saved Home Screen bookmark. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* Independent of the app bundle so a failed deployment chunk has a recovery UI. */}
-        <script src="/startup-recovery.js" defer />
+        <script dangerouslySetInnerHTML={{ __html: startupRecoveryScript }} />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#046154" />
         <Script id="awm-gtm-init" strategy="lazyOnload">{`
           window.dataLayer = window.dataLayer || [];

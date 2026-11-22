@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./fonts/reading.css";
 
 :root {
   --awm-mobile-bottom-clearance: calc(104px + env(safe-area-inset-bottom));

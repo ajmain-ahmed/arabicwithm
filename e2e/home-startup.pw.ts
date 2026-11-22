@@ -122,11 +122,47 @@ test('standalone-style launch, storage denial, resume, offline and chunk recover
   await page.reload(); await featured(page)
   restoringFromOffline = false
   await test.info().attach('injected-offline-fetch-errors', { body: JSON.stringify(offlineErrors), contentType: 'application/json' })
+  const recovered = page.waitForEvent('framenavigated', { predicate: frame => frame === page.mainFrame() })
+  await page.evaluate(() => window.dispatchEvent(new ErrorEvent('error', { message: 'ChunkLoadError: Loading chunk failed' })))
+  await recovered
+  await featured(page)
+  await page.waitForFunction(() => document.documentElement.dataset.awmHydrated === 'true')
+  // A second failure keeps a usable Reload control and cannot auto-loop.
   await page.evaluate(() => window.dispatchEvent(new ErrorEvent('error', { message: 'ChunkLoadError: Loading chunk failed' })))
   await expect(page.locator('#awm-startup-recovery')).toContainText('update could not load')
   await page.locator('#awm-startup-recovery button').click(); await featured(page)
   await expect(page.locator('#awm-startup-recovery')).toHaveCount(0)
   expect(errors).toEqual([])
+})
+
+test('an obsolete first module recovers automatically while retaining the signed-in session', async ({ page, context }) => {
+  await account(context)
+  let injected = 0
+  await page.route('**/_next/static/**/*.js', route => {
+    if (!injected && route.request().resourceType() === 'script') {
+      injected++
+      return route.fulfill({ status: 404, contentType: 'text/plain', body: 'Obsolete deployment chunk fixture' })
+    }
+    return route.continue()
+  })
+  await page.goto('/', { waitUntil: 'commit' })
+  try {
+    await expect(page.locator('html')).toHaveAttribute('data-awm-hydrated', 'true', { timeout: 25000 })
+  } catch (error) {
+    const diagnostics = await page.evaluate(() => ({ url: location.href,
+      trace: (window as Window & { __awmStartupTrace?: unknown }).__awmStartupTrace,
+      recovery: document.querySelector('#awm-startup-recovery')?.textContent,
+      scripts: [...document.scripts].map(script => script.src).filter(Boolean),
+      resources: performance.getEntriesByType('resource').map(entry => ({ name: entry.name, type: (entry as PerformanceResourceTiming).initiatorType })),
+    }))
+    await test.info().attach('entry-recovery-state', { body: JSON.stringify(diagnostics), contentType: 'application/json' })
+    throw error
+  }
+  await featured(page)
+  await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+  await expect(page.locator('.MuiDrawer-paper')).toBeVisible()
+  expect(injected).toBe(1)
+  expect((await context.cookies()).some(cookie => cookie.name === 'sb-localhost-auth-token')).toBe(true)
 })
 
 test('expired session refresh and background resume keep Featured public', async ({ page, context }) => {
@@ -169,4 +205,16 @@ test('a pending Admin role check does not block public Featured or show Admin', 
   await expect(drawer.getByRole('button', { name: 'Admin', exact: true })).toHaveCount(0)
   await page.keyboard.press('Escape')
   await featured(page)
+})
+
+test('session verification cannot delay the first public Homepage byte', async ({ page, context, request }) => {
+  await account(context)
+  await request.post(`${backend}/fixture/reliability`, { data: { rules: [{ path: '/auth/v1/user', delay: 12000, remaining: -1 }] } })
+  const started = Date.now()
+  await page.goto('/', { waitUntil: 'commit' })
+  expect(Date.now() - started).toBeLessThan(2500)
+  await featured(page)
+  await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+  await expect(page.locator('.MuiDrawer-paper')).toBeVisible()
+  await expect(page.locator('.MuiDrawer-paper').getByRole('button', { name: 'Admin', exact: true })).toHaveCount(0)
 })
