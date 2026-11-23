@@ -8,11 +8,11 @@ vi.mock('next/navigation', async () => {
   const navigate = (url: string) => { window.history.pushState(null, '', url); window.dispatchEvent(new PopStateEvent('popstate')) }
   return { useRouter: () => ({ push: navigate, replace: navigate }), usePathname: () => '/profile/user', useSearchParams: () => new URLSearchParams(useSyncExternalStore(subscribe, () => window.location.search, () => '')) }
 })
-const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(),status:vi.fn(),renew:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
+const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(),status:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
 vi.mock('@/app/actions/appLaunch',()=>({appLaunchPreference:vi.fn(async()=>false),setAppLaunchPreference:vi.fn(async()=>({ok:true,message:'Saved'}))}))
 vi.mock('@/app/actions/profilePresets',()=>({listProfilePresets:mocks.listPresets}))
 vi.mock('@/app/actions/profiles', () => ({ updateProfile:mocks.saveProfile, checkUsernameAvailability: vi.fn() }))
-vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: mocks.status, managePremium: vi.fn(), startPremiumCheckout: vi.fn(), setPremiumRenewal: mocks.renew }))
+vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: mocks.status, managePremium: vi.fn(), startPremiumCheckout: vi.fn() }))
 vi.mock('@/app/actions/feedback', () => ({ submitFeedback: vi.fn() }))
 vi.mock('@/app/actions/support', () => ({ startSupportCheckout: vi.fn() }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ PremiumSection: () => null, default: ({open}:{open:boolean}) => open ? <div data-upgrade-popup>AWM+ information</div> : null }))
@@ -113,20 +113,12 @@ it('shows the app reminder only on the signed-in viewer own profile',async()=>{
  expect(host.querySelector('#download-app')).toBeNull()
 })
 
-it('shows a spinner while renewing and immediately renders the confirmed renewal state', async () => {
-  const cancelled = { premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: true, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: false, startedAt: '2026-01-01T00:00:00.000Z' }
-  mocks.status.mockResolvedValue(cancelled)
-  let resolve!: (value: typeof cancelled) => void
-  mocks.renew.mockImplementation(() => new Promise<typeof cancelled>(done => { resolve = done }))
+it('keeps Manage AWM+ without in-product auto-renew controls', async () => {
+  mocks.status.mockResolvedValue({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: false, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: false, startedAt: '2026-01-01T00:00:00.000Z' })
   await act(async () => root.render(<ProfileView profile={profile(true)} />))
   await clickText('AWM+')
-  expect(host.textContent).toContain('Turn auto-renew back on')
-  await clickText('Turn auto-renew back on')
-  expect(host.textContent).toContain('Updating…')
-  expect(host.querySelector('button .MuiCircularProgress-root')).not.toBeNull()
-  await act(async () => resolve({ ...cancelled, cancelAtPeriodEnd: false }))
-  expect(host.textContent).toContain('Renews on')
-  expect(host.textContent).not.toContain('Cancellation scheduled')
+  expect(host.textContent).toContain('Manage AWM+')
+  expect(host.textContent).not.toContain('Turn off auto-renew')
   expect(host.textContent).not.toContain('Turn auto-renew back on')
 })
 

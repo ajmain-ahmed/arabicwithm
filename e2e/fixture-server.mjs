@@ -80,6 +80,7 @@ const tables = {
   featured_show_config: [],
   book_audio_progress: [],
   youtube_transcripts: [],
+  user_video_library: [],
   transcript_groups: [{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English',parent_id:null}],
   for_you_candidates: [],
   admin_manual_transcripts: [],
@@ -127,6 +128,10 @@ if(process.env.AWM_TEST_AUDIO_TIMING==='1'){
  tables.book_chapter_audio=tables.book_chapter_audio.filter(row=>row.language==='ar')
  const canonical=value=>Array.isArray(value)?`[${value.map(canonical).join(',')}]`:value&&typeof value==='object'?`{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`:JSON.stringify(value)??'null'
  tables.book_chapter_audio.find(row=>row.language==='ar').timing_data={version:1,contentHash:createHash('sha256').update(canonical(content)).digest('hex'),durationMs:60000,segments:content.map((_,blockIndex)=>({blockIndex,startMs:blockIndex*2000,endMs:blockIndex*2000+1500}))}
+ if(process.env.AWM_TEST_BILINGUAL==='1'){
+  const arabicAudio=tables.book_chapter_audio.find(row=>row.language==='ar')
+  tables.book_chapter_audio.push({...arabicAudio,language:'en',storage_path:'fixture/en/chapter.wav'})
+ }
  tables.book_audio_progress.push({user_id:ids.premium,chapter_id:chapterId,language:'ar',position_seconds:25,completed:false})
 }
 // Optional larger catalogue exercises viewport-gated covers and pagination.
@@ -194,6 +199,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/youtube/v3/videos'){
+    const id=url.searchParams.get('id')
+    return json(res,{items:[{id,snippet:{title:'Fixture Arabic video',channelTitle:'Fixture channel'},contentDetails:{duration:'PT5M',contentRating:{ytRating:'ytUnspecified'}},status:{privacyStatus:'public',uploadStatus:'processed',liveBroadcastContent:'none'}}]})
+  }
   if(url.pathname==='/fixture/listen-discovery'){
     tables.book_chapter_audio=[]
     tables.book_audio_progress=[]
@@ -295,11 +304,20 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     return json(res,{})
   }
+  if(url.pathname==='/fixture/video-import-ready'){
+    const row=tables.youtube_transcripts.find(row=>row.id===body.id)
+    if(!row)return json(res,{message:'Import not found'},404)
+    const paragraph={tokens:[{pos:'interjection',arabic:'مَرْحَبًا',english:'hello',headword:null,entry_type:'word',transliteration:'marḥaban'}],timestamp:'00:00',translation:'Hello.',paragraph:1}
+    Object.assign(row,{status:'ready',translation_status:'ready',quality_notes:['Sentence timestamps are AI estimates.'],canonical_transcript:[paragraph],updated_at:new Date().toISOString()})
+    tables.transcript_segments=tables.transcript_segments.filter(segment=>segment.transcript_id!==row.id)
+    tables.transcript_segments.push({id:900001,transcript_id:row.id,position:0,original_text:'مَرْحَبًا',english_text:'Hello.',start_seconds:0,end_seconds:2,canonical_paragraph:paragraph})
+    return json(res,{id:row.id})
+  }
   if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog,spotlight:spotlightRequests})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if(url.pathname==='/fixture/import-failure'){failImportAfter=body.after??null;return json(res,{})}
-  if(url.pathname==='/fixture/reset-overhaul'){failImportAfter=null;formDrafts.clear();importJobs.clear();handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;tables.transcript_groups.length=0;tables.admin_manual_transcripts.length=0;tables.transcript_segments.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/reset-overhaul'){failImportAfter=null;formDrafts.clear();importJobs.clear();handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;tables.user_video_library.length=0;tables.transcript_groups.length=0;tables.admin_manual_transcripts.length=0;tables.transcript_segments.length=0;return json(res,{})}
   if(url.pathname==='/fixture/word-search'){
     const words=['\u0643\u062a\u0627\u0628','\u0645\u062f\u0631\u0633\u0629','\u062c\u0645\u064a\u0644','\u0633\u0631\u064a\u0639','\u0637\u0639\u0627\u0645','\u0643\u0628\u064a\u0631','\u0635\u063a\u064a\u0631','\u0637\u0631\u064a\u0642','\u0645\u062f\u064a\u0646\u0629','\u0639\u0644\u0645']
     tables.episodes.forEach(episode=>{episode.transcript=[{timestamp:'0:00',tokens:words.map((arabic,i)=>({arabic,lemma:arabic,headword:arabic,english:`Meaning ${i}`,pos:'noun',cefr:'a1'})),translation:'Stored fixture example.'}]})
@@ -625,6 +643,16 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       return json(res,{role:body.p_role,manual:body.p_premium,premium:effective(body.p_target)})
     }
     if(rpc==='website_for_you_usage'){const unlimited=effective(body.p_user_id);if(!unlimited)allowanceReports.set(body.p_lease,Math.max(allowanceReports.get(body.p_lease)??0,body.p_total_ms));return json(res,{unlimited,remainingMs:unlimited?null:Math.max(0,allowanceBudget-[...allowanceReports.values()].reduce((a,b)=>a+b,0)),busy:false,day:'2026-10-26'})}
+    if(rpc==='register_gemini_youtube_transcript'){
+      if(!body.p_user)return json(res,{message:'Sign in to import a video.'},401)
+      let row=tables.youtube_transcripts.find(row=>row.youtube_id===body.p_youtube_id)
+      if(!row){
+        row={id:randomUUID(),youtube_id:body.p_youtube_id,canonical_url:`https://www.youtube.com/watch?v=${body.p_youtube_id}`,title:'Fixture Arabic video',channel:'Fixture channel',thumbnail:'',duration_seconds:null,provider:'gemini',status:'queued',translation_status:'unavailable',searchable:false,explore_published:false,created_at:new Date().toISOString(),updated_at:new Date().toISOString(),error_code:null,quality_notes:[],source_origin:'user_import',created_by:body.p_user,source_url:body.p_source_url,raw_transcript:{source_language:'ar'},canonical_transcript:null}
+        tables.youtube_transcripts.push(row)
+      }
+      if(!tables.user_video_library.some(link=>link.user_id===body.p_user&&link.transcript_id===row.id))tables.user_video_library.push({user_id:body.p_user,transcript_id:row.id,added_at:new Date().toISOString()})
+      return json(res,row.id)
+    }
     if(rpc==='account_has_premium')return json(res,effective(body.p_user_id))
     if(rpc==='admin_set_manual_premium'){
       if(body.p_actor!==ids.admin)return json(res,{message:'Forbidden'},403)
@@ -670,6 +698,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(table==='public_profiles'&&profileDelay)await new Promise(resolve=>setTimeout(resolve,profileDelay))
     tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='user_video_library'&&req.method==='DELETE'){
+        tables.user_video_library=tables.user_video_library.filter(row=>![...url.searchParams].filter(([,value])=>value.startsWith('eq.')).every(([key,value])=>String(row[key])===value.slice(3)))
+        return json(res,null)
+      }
       if(table==='youtube_transcripts'&&req.method==='PATCH'){
         if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
         const row=tables.youtube_transcripts.find(row=>[...url.searchParams].every(([key,value])=>!value.startsWith('eq.')||String(row[key])===value.slice(3)))
@@ -762,6 +794,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if (filter.startsWith('lte.')) rows = rows.filter(row => Number(row[key]) <= Number(filter.slice(4)))
     }
     if(table==='youtube_transcripts'&&url.searchParams.get('select')?.includes('source_language:raw_transcript->>source_language'))rows=rows.map(row=>({...row,source_language:row.raw_transcript?.source_language??null}))
+    if(table==='user_video_library')rows=rows.map(row=>({...row,youtube_transcripts:tables.youtube_transcripts.find(video=>video.id===row.transcript_id)??null}))
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     if(url.searchParams.has('offset')||url.searchParams.has('limit'))rows=rows.slice(Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('offset')??0)+Number(url.searchParams.get('limit')??rows.length))
@@ -915,7 +948,7 @@ if(process.env.AWM_TEST_CHAPTER_PUBLICATION==='1'){
 
 
 backend.listen(backendPort, '127.0.0.1', () => {
-  const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NEXT_PUBLIC_TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '', NODE_EXTRA_CA_CERTS: certificate }
+  const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NEXT_PUBLIC_TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '', YOUTUBE_DATA_API_KEY: 'fixture-youtube-key', YOUTUBE_DATA_API_BASE_URL: backendUrl, NODE_EXTRA_CA_CERTS: certificate }
   let next
   const finish=code=>{backend.close();process.exit(code??0)}
   const serve=()=>{

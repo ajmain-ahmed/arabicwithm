@@ -6,13 +6,13 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowForwardIos, CalendarMonthOutlined, CheckCircleOutlined,
   ChevronRight, DiamondOutlined, EmailOutlined, FavoriteRounded,
-  AutorenewRounded, CreditCardOutlined, LocalFireDepartmentRounded,
+CreditCardOutlined, LocalFireDepartmentRounded,
   LockOutlined, LogoutOutlined, PersonOutlined,
   SettingsOutlined, ShieldOutlined, SupportOutlined,
 } from '@mui/icons-material'
 import { Alert, Box, Button, CircularProgress, Container, TextField, Typography } from '@mui/material'
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
-import { fetchPremiumStatus, managePremium, setPremiumRenewal, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
+import { fetchPremiumStatus, managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
 import ContactDialog from '@/app/components/ContactDialog'
@@ -272,7 +272,6 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
       setBusy(false)
     }
   }
-  const [renewalBusy, setRenewalBusy] = useState(false)
   const [cardBusy, setCardBusy] = useState(false)
   /* Deep link: land directly on the portal's update-payment-method screen
      (the dunning case), not the generic portal home. */
@@ -285,21 +284,6 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
       setCardBusy(false)
     }
   }
-  /* In-product auto-renew toggle: applies cancel_at_period_end directly (the
-     portal flow has shown users confirmations that did not persist), then the
-     returned server state updates the UI immediately — the webhook keeps the
-     DB in sync either way. */
-  const setRenewal = async (renew: boolean) => {
-    setRenewalBusy(true); setError('')
-    try {
-      setStatus(await setPremiumRenewal(renew))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update auto-renew. Please try again.')
-    } finally {
-      setRenewalBusy(false)
-    }
-  }
-
   const premium = status?.premium ?? false
   const manageable = status?.manageable ?? false
   /* Whole months since the subscription began, counting the current one. */
@@ -363,17 +347,10 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
           </Box>
         ) : (
           <>
-            {/* Stacked (full-width, equal size) on mobile; side by side on
-               desktop. Both carry icons for scannability. */}
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%' }}>
               <Button onClick={() => void cta()} disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="contained" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ ...GOLD_BUTTON, width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
                 {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
               </Button>
-              {premium && manageable && status?.cancelAtPeriodEnd && (
-                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} loading={renewalBusy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="outlined" startIcon={<AutorenewRounded sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
-                  {renewalBusy ? 'Updating…' : 'Turn auto-renew back on'}
-                </Button>
-              )}
             </Box>
             {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd) ? (
               <>

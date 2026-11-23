@@ -414,6 +414,9 @@ export default function ChapterReader({
     }
   }
 
+  const [audioMode,setAudioMode] = useState<'single'|'bilingual'>('single')
+  const canBilingual = view === 'lines' && audio.length > 1 && audio.every(item => item.timings)
+  const effectiveAudioMode = canBilingual ? audioMode : 'single'
   const selectedAudio = audio.find(item => item.language === language) ?? audio[0]
   const audioStartByBlock=useMemo(()=>new Map((selectedAudio?.timings?.segments??[]).map(segment=>[segment.blockIndex,segment.startMs/1000])),[selectedAudio?.timings])
   const seekAudioToBlock=useCallback((blockIndex:number)=>{
@@ -585,11 +588,11 @@ export default function ChapterReader({
       onLanguageChange={selectLanguage}
       audioRate={audioRate}
       onAudioRateChange={setAudioRate}
-      onRestartAudio={() => {
-        setAudioSeek(current=>({revision:(current?.revision??0)+1,seconds:0}))
-        setSettingsOpen(false)
-      }}
       hasAudio={audio.length > 0}
+      audioLanguages={audio.map(item => item.language)}
+      audioMode={effectiveAudioMode}
+      onAudioModeChange={setAudioMode}
+      canBilingual={canBilingual}
     />
     <ChapterAudioPlayer
       /* Keyed by chapter only: the narration-language switch happens inside
@@ -597,9 +600,8 @@ export default function ChapterReader({
       key={audio[0]?.chapterId ?? 'no-audio'}
       audio={selectedAudio ?? null}
       chapterTitle={chapterTitle}
-      audioLanguages={audio.map(item => item.language)}
-      language={selectedAudio?.language ?? language}
-      onLanguageChange={selectLanguage}
+      bilingual={effectiveAudioMode === 'bilingual'}
+      bilingualAudio={{ arabic: audio.find(item => item.language === 'ar')!, english: audio.find(item => item.language === 'en')! }}
       onPositionChange={followAudio}
       seekRequest={audioSeek}
       pageStarts={pageStarts}

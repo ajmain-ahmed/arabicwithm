@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { Alert, Box, Button, ButtonGroup, CircularProgress, Collapse, IconButton, Menu, MenuItem, Paper, Slider, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Collapse, IconButton, Menu, MenuItem, Paper, Slider, Typography } from '@mui/material'
 import { PauseRounded, PlayArrowRounded, RefreshRounded, VolumeUp } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import { chapterAudioPageMarkers, type ChapterAudioTimings } from '@/app/lib/chapterAudioTimings'
@@ -11,6 +11,7 @@ import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
 import { usePlayerStore } from '@/store/playerStore'
 import { useAudiobookStore } from '@/store/audiobookStore'
+import BilingualAudioPlayer from './BilingualAudioPlayer'
 
 type VideoControls = { play: () => void; pause: () => void; seek: (seconds: number) => void }
 
@@ -52,11 +53,8 @@ interface Props {
   label?: string
   render?: (layout: AudioLayout) => ReactNode
   dedicated?: boolean
-  /* Available narration languages + the active narration language; drives the
-     language pills in the inline (non-dedicated) control panel. */
-  audioLanguages?: Array<'ar' | 'en'>
-  language?: 'ar' | 'en'
-  onLanguageChange?: (language: 'ar' | 'en') => void
+  bilingual?: boolean
+  bilingualAudio?: { arabic: ChapterAudioSummary; english: ChapterAudioSummary }
   onPositionChange?: (seconds: number, timings: ChapterAudioTimings | null) => void
   seekRequest?: ChapterAudioSeekRequest | null
   pageStarts?: number[]
@@ -85,7 +83,7 @@ const CONTROL_BUTTON_SX = {
 } as const
 
 /** One media element owned by the reader; presentation never owns playback. */
-export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated, audioLanguages, language, onLanguageChange, onPositionChange, seekRequest, pageStarts, blockCount }: Props) {
+export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated, bilingual, bilingualAudio, onPositionChange, seekRequest, pageStarts, blockCount }: Props) {
   const { user, loading: authLoading } = useAuth()
   const authKey = user?.id ?? 'signed-out'
   /* Expanded lives here, above the AudioSession remount boundary. The inline
@@ -95,11 +93,12 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play 
      included. Dedicated Listen controls do not emit that reader event, so
      their session key also includes language to replace the old source. */
   const [expanded, setExpanded] = useState(false)
+  if (bilingual && bilingualAudio) return <BilingualAudioPlayer arabic={bilingualAudio.arabic} english={bilingualAudio.english} render={render} onPositionChange={onPositionChange} seekRequest={seekRequest} pageStarts={pageStarts} blockCount={blockCount} preferredLanguage={audio?.language ?? 'ar'} />
   if (!audio) return render ? render({ button: null, player: null }) : null
-  return <AudioSession key={`${authKey}:${audio.chapterId}${dedicated ? `:${audio.language}` : ''}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} onPositionChange={onPositionChange} seekRequest={seekRequest} pageStarts={pageStarts} blockCount={blockCount} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
+  return <AudioSession key={`${authKey}:${audio.chapterId}${dedicated ? `:${audio.language}` : ''}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} onPositionChange={onPositionChange} seekRequest={seekRequest} pageStarts={pageStarts} blockCount={blockCount} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
 }
 
-function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, onPositionChange, seekRequest, pageStarts, blockCount, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
+function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositionChange, seekRequest, pageStarts, blockCount, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
   const rate = usePlayerStore(state => state.audiobookRate)
   const setRate = usePlayerStore(state => state.setAudiobookRate)
   const cachePlayback = useAudiobookStore(state => state.cachePlayback)
@@ -398,22 +397,6 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
           {pageMarkers.length === 0 && <Typography sx={{ order: { xs: 7, md: 5 }, ml: { xs: 'auto', md: 0 }, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, minWidth: { xs: 68, md: 84 }, height: { xs: 32, md: 36 }, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             {formatTime(position)} / {formatTime(duration)}
           </Typography>}
-          {audioLanguages && audioLanguages.length > 1 && onLanguageChange && (
-            <ButtonGroup size="small" aria-label="Audio language" sx={{ order: { xs: 1, md: 6 }, ml: 'auto', '& .MuiButton-root': { minWidth: 0, px: { xs: 1, md: 1.75 }, py: { xs: 0.3, md: 0.75 }, fontSize: { xs: 11, md: 13.5 }, lineHeight: 1.2, textTransform: 'none', whiteSpace: 'nowrap' } }}>
-              {audioLanguages.map(value => (
-                <Button
-                  key={value}
-                  onClick={() => onLanguageChange(value)}
-                  aria-pressed={language === value}
-                  aria-label={value === 'ar' ? 'Arabic audio' : 'English audio'}
-                  variant={language === value ? 'contained' : 'outlined'}
-                  sx={{ color: language === value ? '#fff' : 'inherit', bgcolor: language === value ? '#b8860b' : 'transparent', borderColor: 'rgba(184,134,11,0.5)' }}
-                >
-                  {value === 'ar' ? 'العربية' : 'English'}
-                </Button>
-              ))}
-            </ButtonGroup>
-          )}
           {error && (
             <Box sx={{ flexBasis: '100%', minWidth: 0 }}>
               <Alert severity="info" sx={{ py: 0, alignItems: 'center' }} action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>

@@ -1,7 +1,7 @@
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
-const mocks=vi.hoisted(()=>({request:vi.fn(),save:vi.fn(),youtube:vi.fn(),selectLanguage:vi.fn(),loading:false,user:{id:'listener'} as {id:string}|null}))
+const mocks=vi.hoisted(()=>({request:vi.fn(),save:vi.fn(),youtube:vi.fn(),loading:false,user:{id:'listener'} as {id:string}|null}))
 vi.mock('@/app/actions/audiobooks',()=>({requestChapterAudioResult:mocks.request,saveAudioProgress:mocks.save}))
 vi.mock('@/app/components/PremiumPrompt',()=>({default:({open}:{open:boolean})=>open?<aside role="dialog">Upgrade to AWM+</aside>:null}))
 vi.mock('@/app/AuthContext',()=>({useAuth:()=>({user:mocks.user,loading:mocks.loading})}))
@@ -27,8 +27,8 @@ it('waits for account restoration before allowing a playback request',async()=>{
  await openAndPlay()
  expect(mocks.request).toHaveBeenCalledOnce()
 })
-it('reveals playback and language controls when the Audio trigger is pressed',async()=>{
- await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" audioLanguages={['ar','en']} language="en" onLanguageChange={mocks.selectLanguage}/>))
+it('reveals playback controls without narration language pills when the Audio trigger is pressed',async()=>{
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"  />))
  const trigger=host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!
  expect(trigger.getAttribute('aria-expanded')).toBe('false')
  expect(host.querySelector('[aria-label="Forward 10 seconds"]')).toBeNull()
@@ -36,8 +36,7 @@ it('reveals playback and language controls when the Audio trigger is pressed',as
  await openPanel()
  expect(trigger.getAttribute('aria-expanded')).toBe('true')
  expect(host.textContent).toContain('0:00 / 0:15')
- await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="Arabic audio"]')!.click())
- expect(mocks.selectLanguage).toHaveBeenCalledWith('ar')
+ expect(host.querySelector('[aria-label="Arabic audio"]')).toBeNull()
 })
 it('does not fetch or autoplay private audio when the reader opens',async()=>{await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>));expect(host.textContent).toContain('Audio');expect(mocks.request).not.toHaveBeenCalled();expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();expect(document.querySelector('audio')).toBeNull()})
 it('starts one inline player after pressing play in the expanded panel',async()=>{await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>));await openAndPlay();expect(mocks.request).toHaveBeenCalledWith(audio.chapterId,'en');const element=document.querySelector('audio')!;expect(element.src).toBe('https://example.test/private');expect(document.querySelector('[role=dialog]')).toBeNull();expect(element.controls).toBe(false);expect(element.autoplay).toBe(false);Object.defineProperty(element,'duration',{value:15});await act(async()=>element.dispatchEvent(new Event('loadedmetadata')));expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();await act(async()=>element.dispatchEvent(new Event('pause')));expect(mocks.save).toHaveBeenCalledWith(audio.chapterId,3,false,'en','listener')})
@@ -120,17 +119,17 @@ it('invalidates an outstanding URL request on language selection',async()=>{
 })
 it('keeps the control panel open when the narration language changes',async()=>{
  const arabicAudio={...audio,language:'ar' as const}
- await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" audioLanguages={['ar','en']} language="en" onLanguageChange={mocks.selectLanguage}/>))
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"  />))
  await openPanel()
  expect(host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!.getAttribute('aria-expanded')).toBe('true')
- await act(async()=>root.render(<ChapterAudioPlayer audio={arabicAudio} chapterTitle="Chapter" audioLanguages={['ar','en']} language="ar" onLanguageChange={mocks.selectLanguage}/>))
+ await act(async()=>root.render(<ChapterAudioPlayer audio={arabicAudio} chapterTitle="Chapter"  />))
  expect(host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!.getAttribute('aria-expanded')).toBe('true')
 })
 it('reuses the same DOM when the narration language changes',async()=>{
  const arabicAudio={...audio,language:'ar' as const,durationSeconds:20}
- await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" audioLanguages={['ar','en']} language="en" onLanguageChange={mocks.selectLanguage}/>))
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"  />))
  const stable=host.querySelector('[data-reader-audio-trigger]')!.parentElement!
- await act(async()=>root.render(<ChapterAudioPlayer audio={arabicAudio} chapterTitle="Chapter" audioLanguages={['ar','en']} language="ar" onLanguageChange={mocks.selectLanguage}/>))
+ await act(async()=>root.render(<ChapterAudioPlayer audio={arabicAudio} chapterTitle="Chapter"  />))
  expect(host.querySelector('[data-reader-audio-trigger]')!.parentElement).toBe(stable)
  expect(host.textContent).toContain('0:00 / 0:20')
 })

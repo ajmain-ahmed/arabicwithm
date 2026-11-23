@@ -19,7 +19,6 @@ const mocks = vi.hoisted(() => {
     from: vi.fn(() => query),
     maybeSingle,
     upsert,
-    update: vi.fn(),
     rateLimit: vi.fn(() => ({ ok: true, retryAfterSeconds: 0 })),
     pricesRetrieve: vi.fn(),
     customersRetrieve: vi.fn(),
@@ -40,7 +39,7 @@ vi.mock('@/app/lib/accountPremium', () => ({ accountHasPremium: mocks.premium })
 vi.mock('@/app/lib/durableRateLimit', () => ({ durableRateLimit: async () => mocks.rateLimit() }))
 vi.mock('@/app/lib/billing', () => ({
   stripeClient: vi.fn(() => ({
-    subscriptions: { update: mocks.update, list: mocks.subscriptionsList },
+    subscriptions: { list: mocks.subscriptionsList },
     prices: { retrieve: mocks.pricesRetrieve },
     customers: { retrieve: mocks.customersRetrieve, create: mocks.customersCreate },
     checkout: { sessions: { list: mocks.sessionsList, create: mocks.sessionsCreate } },
@@ -50,7 +49,7 @@ vi.mock('@/app/lib/billing', () => ({
   premiumPriceId: vi.fn(() => 'price_test'),
 }))
 
-import { fetchPremiumStatus, managePremium, setPremiumRenewal, startPremiumCheckout } from './premium'
+import { fetchPremiumStatus, managePremium, startPremiumCheckout } from './premium'
 
 describe('fetchPremiumStatus', () => {
   beforeEach(() => {
@@ -192,63 +191,5 @@ describe('managePremium', () => {
     mocks.rateLimit.mockReturnValue({ ok: false, retryAfterSeconds: 42 })
     await expect(managePremium()).rejects.toThrow('Too many attempts')
     expect(mocks.portalCreate).not.toHaveBeenCalled()
-  })
-})
-
-describe('setPremiumRenewal', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mocks.rateLimit.mockReturnValue({ ok: true, retryAfterSeconds: 0 })
-    mocks.access.mockResolvedValue({ userId: 'member-id', admin: false })
-    mocks.premium.mockResolvedValue(true)
-    mocks.maybeSingle.mockResolvedValue({ data: { customer_id: 'cus-x', subscription_id: 'sub-x' }, error: null })
-    mocks.subscriptionsList.mockResolvedValue({ data: [{ id: 'sub-x', status: 'active' }] })
-    mocks.update.mockResolvedValue({})
-  })
-
-  it('turns auto-renew off and immediately returns Stripe’s confirmed cancellation state', async () => {
-    mocks.update.mockResolvedValue({ cancel_at_period_end: true, cancel_at: 2999 })
-    const status = await setPremiumRenewal(false)
-    expect(mocks.update).toHaveBeenCalledWith('sub-x', { cancel_at_period_end: true })
-    expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: true, paymentIssue: false })
-  })
-
-  it('turns auto-renew back on by clearing BOTH signals and immediately returns the confirmed state', async () => {
-    mocks.maybeSingle.mockResolvedValue({ data: { customer_id: 'cus-x', subscription_id: 'sub-x', status: 'active', cancel_at_period_end: true, current_period_end: '2999-01-01T00:00:00.000Z' }, error: null })
-    mocks.update.mockResolvedValue({ cancel_at_period_end: false, cancel_at: null })
-    const status = await setPremiumRenewal(true)
-    expect(mocks.update).toHaveBeenNthCalledWith(1, 'sub-x', { cancel_at_period_end: false })
-    expect(mocks.update).toHaveBeenNthCalledWith(2, 'sub-x', { cancel_at: '' })
-    expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: false })
-  })
-
-  it('targets the live Stripe subscription, not a stale row id', async () => {
-    mocks.maybeSingle.mockResolvedValue({ data: { customer_id: 'cus-x', subscription_id: 'sub-old' }, error: null })
-    mocks.subscriptionsList.mockResolvedValue({ data: [{ id: 'sub-old', status: 'canceled' }, { id: 'sub-new', status: 'active' }] })
-    await setPremiumRenewal(false)
-    expect(mocks.update).toHaveBeenCalledWith('sub-new', { cancel_at_period_end: true })
-  })
-
-  it('reports when the customer has no live subscription', async () => {
-    mocks.subscriptionsList.mockResolvedValue({ data: [{ id: 'sub-x', status: 'canceled' }] })
-    await expect(setPremiumRenewal(false)).rejects.toThrow('no longer active')
-    expect(mocks.update).not.toHaveBeenCalled()
-  })
-
-  it('rejects when no billing account exists', async () => {
-    mocks.maybeSingle.mockResolvedValue({ data: null, error: null })
-    await expect(setPremiumRenewal(false)).rejects.toThrow('No billing account found')
-    expect(mocks.update).not.toHaveBeenCalled()
-  })
-
-  it('maps a vanished subscription to a friendly error', async () => {
-    mocks.update.mockRejectedValue(Object.assign(new Error('No such subscription'), { code: 'resource_missing' }))
-    await expect(setPremiumRenewal(false)).rejects.toThrow('no longer active')
-  })
-
-  it('blocks admins, who have no Stripe subscription', async () => {
-    mocks.access.mockResolvedValue({ userId: 'admin-id', admin: true })
-    await expect(setPremiumRenewal(false)).rejects.toThrow('administrator access')
-    expect(mocks.update).not.toHaveBeenCalled()
   })
 })
