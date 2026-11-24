@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import LearningSignInGate from '@/app/components/LearningSignInGate'
+import { boundedRead } from '@/app/lib/readRecovery'
 import InfoOutlined from '@mui/icons-material/InfoOutlined'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { initialPractice, practiceReducer } from '@/app/lib/memorySession'
@@ -46,14 +47,14 @@ function subscribeToDirection(onChange: () => void): () => void {
   }
 }
 
-export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string }) {
+export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string; embedded?: boolean }) {
   const { user, loading } = useAuth()
   if (loading) return <MemoryPageLoading />
   if (!user) return <LearningSignInGate activity="Memory" />
   return <MemorySession key={`${user?.id ?? 'guest'}:${props.library.selectedShowId ?? ''}:${props.library.selectedEpisodeId ?? ''}`} {...props} />
 }
 
-function MemorySession({ library, loadError }: { library: MemoryLibrary; loadError?: string }) {
+function MemorySession({ library, loadError, embedded = false }: { library: MemoryLibrary; loadError?: string; embedded?: boolean }) {
   const router = useRouter()
   const { user, loading } = useAuth()
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
@@ -89,7 +90,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     let active = true
     const load = () => {
       const version = reviewVersion.current, request = ++progressRequest.current
-      void loadMemoryProgress().then(result => {
+      void boundedRead(loadMemoryProgress(), 10000).then(result => {
         if (!result.ok) throw new Error(result.error)
         const progress = result.data
         if (!active || version !== reviewVersion.current || request !== progressRequest.current || busyRef.current) return
@@ -168,7 +169,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     setSelectedCardCount(count)
     dispatch({type:'select',cards:library.cards.slice(0, Math.min(count, library.cards.length))})
   }
-  const restart = async () => {
+  const restart = useCallback(async () => {
     if (loading || busyRef.current || navigating || (Boolean(user) && !ready)) return
     if (!user) { window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}})); return }
     if (limited && !pendingStart.current) { setUpgrade(true); return }
@@ -188,7 +189,13 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       pendingStart.current=null; submitted.current.clear(); dispatch({type:'begin',session:state})
     } catch { if (mounted.current) setSaveError('Unable to start your session. Please try again.') }
     finally { busyRef.current = false; if (mounted.current) setSaving(false) }
-  }
+  }, [loading, navigating, user, ready, limited, library.cards, selectedCardCount, direction])
+  const autoStarted = useRef(false)
+  useEffect(() => {
+    if (!embedded || !ready || loading || !user || started || limited || autoStarted.current) return
+    const timer = setTimeout(() => { autoStarted.current = true; void restart() }, 0)
+    return () => clearTimeout(timer)
+  }, [embedded, ready, loading, user, started, limited, restart])
   const requestNewCards = () => {
     if (busyRef.current || navigating || loading) return
     const params = new URLSearchParams({ new: '1', deck: crypto.randomUUID() })
@@ -206,8 +213,10 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const answer = card ? (direction === 'english' ? card.english : card.arabic) : ''
   const promptIsArabic = direction === 'english'
 
+  if (embedded && (limited || upgrade)) return <Alert severity="info">You have used today&apos;s free Memory session. <Button href="/memory">Memory options</Button></Alert>
+
   return (
-    <Box component="div" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 } }}>
+    <Box component="div" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: embedded ? 0 : { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 }, ...(embedded ? { minHeight: 0, pb: 0, '& > .MuiContainer-root': { p: 0 }, '& h1': { fontSize: 24 } } : {}) }}>
       <Container maxWidth="md" sx={{ pt: activePractice ? {xs:1.5,md:2} : { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><PsychologyOutlined /></Box>

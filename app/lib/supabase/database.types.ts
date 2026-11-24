@@ -267,6 +267,7 @@ export interface Database {
           english: string
           cefr: string
           notes: string | null
+          word_glosses: Json
         }
         Insert: {
           id?: number
@@ -275,6 +276,7 @@ export interface Database {
           english: string
           cefr: string
           notes?: string | null
+          word_glosses?: Json
         }
         Update: {
           id?: number
@@ -283,6 +285,7 @@ export interface Database {
           english?: string
           cefr?: string
           notes?: string | null
+          word_glosses?: Json
         }
         Relationships: []
       }

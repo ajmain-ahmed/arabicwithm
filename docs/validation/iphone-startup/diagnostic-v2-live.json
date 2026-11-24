@@ -1,0 +1,69 @@
+{
+  "release": "8baf233230590d1a876c4e9e729371bcfb60f7b1",
+  "results": [
+    {
+      "host": "www.arabicwithm.com",
+      "path": "/",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "cache": "private, no-store",
+      "redirected": false,
+      "ms": 1195,
+      "inlineRecovery": true
+    },
+    {
+      "host": "www.arabicwithm.com",
+      "path": "/startup-check",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "cache": "private, no-store",
+      "redirected": false,
+      "ms": 67,
+      "diagnosticV2": true,
+      "safeMetadata": true
+    },
+    {
+      "host": "www.arabicwithm.com",
+      "path": "/startup-check?plain=1",
+      "status": 200,
+      "mime": "text/plain; charset=utf-8",
+      "cache": "private, no-store",
+      "redirected": false,
+      "ms": 51,
+      "diagnosticV2": true,
+      "safeMetadata": true
+    },
+    {
+      "host": "arabicwithm.com",
+      "path": "/",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "cache": "private, no-store",
+      "redirected": false,
+      "ms": 623,
+      "inlineRecovery": true
+    },
+    {
+      "host": "arabicwithm.com",
+      "path": "/startup-check",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "cache": "private, no-store",
+      "redirected": false,
+      "ms": 50,
+      "diagnosticV2": true,
+      "safeMetadata": true
+    },
+    {
+      "host": "arabicwithm.com",
+      "path": "/startup-check?plain=1",
+      "status": 200,
+      "mime": "text/plain; charset=utf-8",
+      "cache": "private, no-store",
+      "redirected": false,
+      "ms": 46,
+      "diagnosticV2": true,
+      "safeMetadata": true
+    }
+  ]
+}

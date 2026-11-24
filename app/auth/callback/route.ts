@@ -1,8 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+import { authReturnPath } from '@/app/lib/authReturnPath'
+import { boundedFetch } from '@/app/lib/boundedFetch'
 
-const ALLOWED_DESTINATIONS = new Set(['/', '/reset-password', '/memory', '/grammar', '/explore'])
+const redirectHeaders = { 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer' }
 
 /* Email links (confirm signup, magic link, recovery, email change) carry
    token_hash + type; OAuth carries code. Both become a session below. */
@@ -13,11 +15,7 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const tokenHash = requestUrl.searchParams.get('token_hash')
   const otpType = requestUrl.searchParams.get('type')
-  const requestedDestination = requestUrl.searchParams.get('next') ?? '/'
-  const candidate = requestedDestination.startsWith('/') ? new URL(requestedDestination, requestUrl.origin) : null
-  const destination = candidate && candidate.origin === requestUrl.origin && ALLOWED_DESTINATIONS.has(candidate.pathname)
-    ? candidate.pathname + candidate.search
-    : '/'
+  const destination = authReturnPath(requestUrl.searchParams.get('next'), requestUrl.origin)
 
   const hasTokenHash = Boolean(tokenHash) && EMAIL_OTP_TYPES.has(String(otpType))
   if (!code && !hasTokenHash) {
@@ -32,8 +30,9 @@ export async function GET(request: NextRequest) {
     return authErrorResponse(requestUrl, destination)
   }
 
-  const response = NextResponse.redirect(new URL(destination, requestUrl.origin))
+  const response = NextResponse.redirect(new URL(destination, requestUrl.origin), { headers: redirectHeaders })
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    global: { fetch: boundedFetch },
     cookies: {
       getAll() {
         return request.cookies.getAll()
@@ -60,8 +59,10 @@ export async function GET(request: NextRequest) {
 
 function authErrorResponse(requestUrl: URL, destination: string) {
   if (destination === '/reset-password') {
-    return NextResponse.redirect(new URL('/reset-password?error=invalid_link', requestUrl.origin))
+    return NextResponse.redirect(new URL('/reset-password?error=invalid_link', requestUrl.origin), { headers: redirectHeaders })
   }
 
-  return NextResponse.redirect(new URL('/?auth=error', requestUrl.origin))
+  return NextResponse.redirect(new URL('/?auth=error', requestUrl.origin), { headers: redirectHeaders })
 }
+
+export function HEAD() { return new Response(null, { status: 204, headers: redirectHeaders }) }

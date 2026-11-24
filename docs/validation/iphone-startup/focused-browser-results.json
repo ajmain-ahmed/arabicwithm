@@ -1,0 +1,433 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.home-startup.config.ts",
+      "--project",
+      "webkit",
+      "--project",
+      "chrome",
+      "--grep",
+      "obsolete first module|first public Homepage byte"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.home-startup.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/home-startup.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/home-startup.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/home-startup.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "edge",
+        "name": "edge",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/home-startup.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/iphone-startup/focused-browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "home-startup.pw.ts",
+      "file": "home-startup.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "an obsolete first module recovers automatically while retaining the signed-in session",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 380,
+                  "error": {
+                    "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n",
+                    "stack": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17",
+                    "location": {
+                      "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                      "column": 4377,
+                      "line": 1
+                    }
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 4377,
+                        "line": 1
+                      },
+                      "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T13:13:21.895Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-an-obso-47696-ining-the-signed-in-session-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-an-obso-47696-ining-the-signed-in-session-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-an-obso-47696-ining-the-signed-in-session-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                    "column": 4377,
+                    "line": 1
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "022d42af36b2f2f8e8ef-488c5b610c2bc3a59698",
+          "file": "home-startup.pw.ts",
+          "line": 138,
+          "column": 1
+        },
+        {
+          "title": "session verification cannot delay the first public Homepage byte",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 238,
+                  "error": {
+                    "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n",
+                    "stack": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17",
+                    "location": {
+                      "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                      "column": 4377,
+                      "line": 1
+                    }
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 4377,
+                        "line": 1
+                      },
+                      "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T13:13:23.014Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-session-f72e2--first-public-Homepage-byte-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-session-f72e2--first-public-Homepage-byte-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-session-f72e2--first-public-Homepage-byte-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                    "column": 4377,
+                    "line": 1
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "022d42af36b2f2f8e8ef-24e7b740d73cabaf3a27",
+          "file": "home-startup.pw.ts",
+          "line": 199,
+          "column": 1
+        },
+        {
+          "title": "an obsolete first module recovers automatically while retaining the signed-in session",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 603,
+                  "error": {
+                    "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n",
+                    "stack": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17",
+                    "location": {
+                      "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                      "column": 4377,
+                      "line": 1
+                    }
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 4377,
+                        "line": 1
+                      },
+                      "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T13:13:23.725Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-an-obso-47696-ining-the-signed-in-session-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-an-obso-47696-ining-the-signed-in-session-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-an-obso-47696-ining-the-signed-in-session-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                    "column": 4377,
+                    "line": 1
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "022d42af36b2f2f8e8ef-a8b0c9b3a0d0251e69c3",
+          "file": "home-startup.pw.ts",
+          "line": 138,
+          "column": 1
+        },
+        {
+          "title": "session verification cannot delay the first public Homepage byte",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 530,
+                  "error": {
+                    "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n",
+                    "stack": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17",
+                    "location": {
+                      "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                      "column": 4377,
+                      "line": 1
+                    }
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 4377,
+                        "line": 1
+                      },
+                      "message": "AggregateError: apiRequestContext.post: connect ECONNREFUSED ::1:4377\nconnect ECONNREFUSED 127.0.0.1:4377\nCall log:\n\u001b[2m  - → POST https://localhost:4377/fixture/reliability\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.63.0 (x64; windows 10.0) node/24.19\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 38\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:4377\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\home-startup.pw.ts:28:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-21T13:13:25.380Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-session-f72e2--first-public-Homepage-byte-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-session-f72e2--first-public-Homepage-byte-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\home-startup.pw.ts-session-f72e2--first-public-Homepage-byte-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                    "column": 4377,
+                    "line": 1
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "022d42af36b2f2f8e8ef-81a1854e5486155565b9",
+          "file": "home-startup.pw.ts",
+          "line": 199,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-21T13:13:21.333Z",
+    "duration": 4909.323,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}

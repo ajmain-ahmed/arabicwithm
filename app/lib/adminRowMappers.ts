@@ -82,5 +82,6 @@ export function mapPhraseRow(row: Record<string, unknown>): PhraseRow {
     english: String(row.english),
     cefr: String(row.cefr ?? ''),
     notes: row.notes ? String(row.notes) : null,
+    word_glosses: Array.isArray(row.word_glosses) ? row.word_glosses as { arabic: string; english: string }[] : [],
   }
 }

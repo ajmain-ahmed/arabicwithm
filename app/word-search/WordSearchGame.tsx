@@ -12,6 +12,7 @@ import { calculateWordSearchAccuracy, formatWordSearchDuration, shouldCompleteWo
 import WordSearchClues from './WordSearchClues'
 import WordSearchDifficultySelector from './WordSearchDifficultySelector'
 import { useAuth } from '@/app/AuthContext'
+import { boundedRead } from '@/app/lib/readRecovery'
 
 function cellKey(cell: PuzzleCell): string {
   return `${cell.row}:${cell.col}`
@@ -25,14 +26,14 @@ interface DragSelection {
 
 interface CompletionSummary extends WordSearchCompletionStats, WordSearchCompletionResult {}
 
-export default function WordSearchGame({ initialSource, initialPuzzle }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null }) {
+export default function WordSearchGame({ initialSource, initialPuzzle, embedded = false }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null; embedded?: boolean }) {
   const router = useRouter()
   const { user } = useAuth()
   const [source, setSource] = useState(initialSource)
   const [puzzle, setPuzzle] = useState(initialPuzzle)
-  const [selectedDifficulty, setSelectedDifficulty] = useState<WordSearchDifficulty>('regular')
-  const [activeDifficulty, setActiveDifficulty] = useState<WordSearchDifficulty>('regular')
-  const [started, setStarted] = useState(false)
+  const [selectedDifficulty, setSelectedDifficulty] = useState<WordSearchDifficulty>(initialPuzzle?.difficulty ?? 'regular')
+  const [activeDifficulty, setActiveDifficulty] = useState<WordSearchDifficulty>(initialPuzzle?.difficulty ?? 'regular')
+  const [started, setStarted] = useState(embedded && Boolean(initialPuzzle))
   const [found, setFound] = useState<Set<string>>(() => new Set())
   const [drag, setDrag] = useState<DragSelection | null>(null)
   const [invalidCells, setInvalidCells] = useState<Set<string>>(() => new Set())
@@ -142,7 +143,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
       let nextSource = source
       let nextPuzzle = nextSource ? puzzleFor(nextSource, selectedDifficulty) : null
       if (!nextSource || !nextPuzzle) {
-        nextSource = await fetchPuzzleVocabulary(undefined, config.minimumWords)
+        nextSource = await boundedRead(fetchPuzzleVocabulary(undefined, config.minimumWords), 10000)
         nextPuzzle = nextSource ? puzzleFor(nextSource, selectedDifficulty) : null
       }
       if (!nextSource || !nextPuzzle) {
@@ -164,7 +165,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     setCompletion(null)
     try {
       const config = WORD_SEARCH_DIFFICULTIES[selectedDifficulty]
-      const nextSource = await fetchPuzzleVocabulary(source ? `${source.type}:${source.id}` : undefined, config.minimumWords)
+      const nextSource = await boundedRead(fetchPuzzleVocabulary(source ? `${source.type}:${source.id}` : undefined, config.minimumWords), 10000)
       if (!nextSource) {
         setMessage('Not enough reliable vocabulary is available for a new puzzle yet.')
         return
@@ -267,7 +268,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const accuracy = completion ? calculateWordSearchAccuracy(completion.wordsFound, completion.mistakes) : 0
 
   return (
-    <WordSearchShell source={source} controls={controls}>
+    <WordSearchShell source={source} controls={controls} embedded={embedded}>
       {message && <Alert severity={complete ? 'success' : 'info'} sx={{ mb: 2 }}>{message}</Alert>}
       {completionError && (
         <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" disabled={savingCompletion} onClick={() => pendingCompletion && void saveCompletion(pendingCompletion)}>Retry save</Button>}>

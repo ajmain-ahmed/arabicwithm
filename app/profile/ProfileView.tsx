@@ -1,6 +1,7 @@
 'use client'
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
+import { boundedRead } from '@/app/lib/readRecovery'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -243,7 +244,7 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
     if (!profile.own) return
     let active = true
     const refresh = () => {
-      void fetchPremiumStatus()
+      void boundedRead(fetchPremiumStatus(), 8000)
         .then(value => { if (active) { setStatus(value); setError('') } })
         .catch(() => { if (active) setError('Unable to confirm your AWM+ status. Please try again.') })
         .finally(() => { if (active) setStatusLoading(false) })
@@ -525,6 +526,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
   return (
     <>
       <style>{CSS}</style>
+      {!!profile.warnings?.length && <Alert severity="info" sx={{ mx: 2, mt: 2 }}>{profile.warnings.join(' ')} Your profile is still available. Refresh to retry.</Alert>}
       {/* body */}
       <Box sx={{ background: 'var(--awm-cream-light)', minHeight: 'calc(100dvh - var(--awm-navbar-height))', transition: 'background-color 180ms ease', pb: { xs: 9, md: 0 } }}>
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>

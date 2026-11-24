@@ -795,6 +795,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     if(table==='youtube_transcripts'&&url.searchParams.get('select')?.includes('source_language:raw_transcript->>source_language'))rows=rows.map(row=>({...row,source_language:row.raw_transcript?.source_language??null}))
     if(table==='user_video_library')rows=rows.map(row=>({...row,youtube_transcripts:tables.youtube_transcripts.find(video=>video.id===row.transcript_id)??null}))
+    if (table === 'phrases' && process.env.AWM_TEST_PHRASE_PAGINATION === '1' && url.searchParams.has('or')) {
+      const filters = [...url.searchParams.get('or').matchAll(/([a-z_]+)\.(imatch|ilike)\.("(?:\\.|[^"\\])*")/g)]
+      rows = rows.filter(row => filters.some(([, field, operator, value]) => {
+        const pattern = JSON.parse(value)
+        return operator === 'imatch' ? new RegExp(pattern, 'iu').test(row[field] ?? '')
+          : String(row[field] ?? '').toLowerCase().includes(pattern.slice(1, -1).replace(/\\(.)/g, '$1').toLowerCase())
+      }))
+    }
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     if(url.searchParams.has('offset')||url.searchParams.has('limit'))rows=rows.slice(Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('offset')??0)+Number(url.searchParams.get('limit')??rows.length))
@@ -969,3 +977,9 @@ backend.listen(backendPort, '127.0.0.1', () => {
 })
 
 if(process.env.AWM_TEST_DAILY_PHRASE==='1')tables.phrases=[{id:71,phrase_ar_di:'إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ',english:'We belong to God and to Him we return.',word_glosses:[{arabic:'إِنَّا',english:'indeed we'},{arabic:'لِلَّهِ',english:'belong to God'},{arabic:'وَإِنَّا',english:'and indeed we'},{arabic:'إِلَيْهِ',english:'to Him'},{arabic:'رَاجِعُونَ',english:'return'}]}]
+if (process.env.AWM_TEST_PHRASE_PAGINATION === '1') tables.phrases = Array.from({ length: 2501 }, (_, index) => ({
+  id: index + 1, phrase_ar_di: 'عَلَى الْفَوْرِ', phrase_tr: 'ʿalā l-fawr',
+  english: index >= 2493 ? `Unique ${['webkit', 'chrome', 'firefox', 'edge'][Math.floor((index - 2493) / 2)]} ${(index - 2493) % 2 ? 1440 : 390} expression` : `Reusable expression number ${index + 1}`,
+  cefr: 'B1', notes: 'Synthetic pagination fixture', word_glosses: [{ arabic: 'عَلَى', english: 'on' }, { arabic: 'الْفَوْرِ', english: 'the instant' }],
+}))
+if (process.env.AWM_TEST_LEARN_PROFILE === '1') for (const episode of tables.episodes) episode.transcript = [{ timestamp: '0:00', translation: 'A book, a pen, the sun, the sea, a house and a flower.', tokens: ['كِتَابٌ','قَلَمٌ','شَمْسٌ','بَحْرٌ','بَيْتٌ','وَرْدٌ'].map((arabic, index) => ({ arabic, english: ['book','pen','sun','sea','house','flower'][index], pos: 'noun', cefr: 'A1', headword: arabic })) }]

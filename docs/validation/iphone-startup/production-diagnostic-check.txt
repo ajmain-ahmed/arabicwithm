@@ -1,0 +1,22 @@
+HTML received: diagnostic v1
+Inline JavaScript: running
+Browser: Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1
+Session storage: available; local startup recording enabled
+Local storage: readable
+Online: true
+Web Locks: true
+Service-worker controller: none
+Service-worker registrations: []
+/startup-recovery.js: HTTP 200, text/javascript; charset=utf-8, 31ms
+Current recovery script: present
+/: HTTP 200, text/html; charset=utf-8, 683ms
+Homepage HTML bytes: 239199
+Current inline bootstrap: present
+/_next/static/css/D6hGN8GS.css: HTTP 200, text/css, 29ms
+/_next/static/chunks/0rhbok0s.js: HTTP 200, text/javascript, 37ms
+/_next/static/chunks/1QuWOstI.js: HTTP 200, text/javascript, 52ms
+/_next/static/chunks/DJsGoHlj.js: HTTP 200, text/javascript, 52ms
+/_next/static/css/DM3_Ww8Z.css: HTTP 200, text/css, 53ms
+/_next/static/chunks/B1b49RVE.js: HTTP 200, text/javascript, 53ms
+/_next/static/chunks/NenezzD-.js: HTTP 200, text/javascript, 316ms
+Checks finished. Try Homepage, then return here and copy results if it stays white.

@@ -16,6 +16,7 @@ export default function PhraseOfTheDay({ phrase }: { phrase: DailyPhrase | null 
         color: 'var(--awm-bark)',
         border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)',
         overflowWrap: 'anywhere',
+        textAlign: 'center',
       }}
     >
       <Typography
@@ -38,7 +39,7 @@ export default function PhraseOfTheDay({ phrase }: { phrase: DailyPhrase | null 
           sx={{
             display: 'flex',
             flexWrap: 'wrap',
-            justifyContent: 'flex-start',
+            justifyContent: 'center',
             gap: '12px 18px',
             mt: 1,
           }}

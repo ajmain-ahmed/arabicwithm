@@ -14,6 +14,8 @@ import { revalidatePath } from 'next/cache'
 import { getAuthClient } from '@/app/lib/supabase/server'
 import {existingProfileImage} from '@/app/lib/profilePresets'
 import {verifyProfilePreset} from '@/app/lib/profilePresetStorage'
+import { boundedRead } from '@/app/lib/readRecovery'
+import { parseLearningActivity } from '@/app/lib/activity'
 
 const profileInputSchema = z.object({
   displayName: z.string().trim().min(1).max(60),
@@ -78,6 +80,11 @@ export async function checkUsernameAvailability(input: string): Promise<boolean>
 }
 
 export async function fetchPublicProfile(identifier: string) {
+  const warnings: string[] = []
+  async function optional<T>(label: string, operation: PromiseLike<T>, fallback: T): Promise<T> {
+    try { return await boundedRead(operation, 4000) }
+    catch { warnings.push(`${label} is temporarily unavailable.`); return fallback }
+  }
   let id = identifier
   if (!z.string().uuid().safeParse(id).success) {
     const username = usernameSchema.safeParse(identifier)
@@ -95,30 +102,43 @@ export async function fetchPublicProfile(identifier: string) {
     .select('display_name, is_public, share_reading')
     .eq('user_id', id)
     .maybeSingle()
-  if (error) throw new Error('Unable to load profile.')
+  if (error) {
+    if (!own) throw new Error('Unable to load profile.')
+    warnings.push('Profile preferences are temporarily unavailable.')
+  }
   if (!own && !profile?.is_public) return null
-  const { data: publicIdentity, error: handleError } = await serviceClient.from('leaderboard_public_profiles').select('handle').eq('user_id', id).maybeSingle()
-  if (handleError) throw new Error('Unable to load username.')
+  const publicIdentity = await optional('Username', (async () => {
+    const result = await serviceClient.from('leaderboard_public_profiles').select('handle').eq('user_id', id).maybeSingle()
+    if (result.error) throw new Error('Username unavailable')
+    return result.data
+  })(), null)
 
   const [account, activity] = await Promise.all([
     serviceClient.auth.admin.getUserById(id),
-    serviceClient.from('learning_profiles').select('legacy_active_seconds, tracked_active_seconds, weekly_goal_seconds').eq('user_id', id).maybeSingle(),
+    optional('Learning statistics', (async () => {
+      const result = await serviceClient.from('learning_profiles').select('legacy_active_seconds, tracked_active_seconds, weekly_goal_seconds').eq('user_id', id).maybeSingle()
+      if (result.error) throw new Error('Statistics unavailable')
+      return result.data
+    })(), null),
   ])
-  if (account.error || activity.error) throw new Error('Unable to load profile statistics.')
+  if (account.error) throw new Error('Unable to load profile. Please retry.')
   const user = account.data.user
   if (!user) return null
-  const learning = await loadLearningSnapshot(id, user.user_metadata, activity.data)
+  const metadata = user.user_metadata && typeof user.user_metadata === 'object' ? user.user_metadata : {}
+  const [learning, premium, books] = await Promise.all([
+    optional('Learning statistics', loadLearningSnapshot(id, metadata, activity), parseLearningActivity(metadata)),
+    optional('Membership badge', accountHasPremium(id), false),
+    optional('Reading shelf', own || profile?.share_reading ? fetchBooksForPublic() : Promise.resolve([]), []),
+  ])
   const { streak } = summarizeLearningDashboard(learning)
-  const progress = parseReadingList(user.user_metadata.book_progress)
-  const premium = await accountHasPremium(id)
-  const avatar = existingProfileImage(user.user_metadata.avatar_url)
-  const banner = existingProfileImage(user.user_metadata.banner_url)
-  const books = own || profile?.share_reading ? await fetchBooksForPublic() : []
+  const progress = parseReadingList(metadata.book_progress)
+  const avatar = existingProfileImage(metadata.avatar_url)
+  const banner = existingProfileImage(metadata.banner_url)
   const shelf = await Promise.all(
     books
       .filter((book) => progress[book.slug]?.chapterSlug && !progress[book.slug]?.hiddenFromList)
       .map(async (book) => {
-        const chapters = await fetchChaptersForBookPublic(book.id)
+        const chapters = await optional('Reading shelf', fetchChaptersForBookPublic(book.id), [])
         const index = chapters.findIndex((chapter) => chapter.slug === progress[book.slug].chapterSlug)
         if (index < 0) return null
         return {
@@ -139,18 +159,19 @@ export async function fetchPublicProfile(identifier: string) {
   return {
     id,
     own,
-    displayName: profile?.display_name ?? String(user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split('@')[0] ?? 'Arabic learner'),
+    displayName: profile?.display_name ?? String(metadata.full_name ?? metadata.name ?? 'Arabic learner'),
     username: publicIdentity?.handle ?? null,
     isPublic: profile?.is_public ?? false,
     shareReading: profile?.share_reading ?? false,
-    joined: user.created_at.slice(0, 10),
+    joined: typeof user.created_at === 'string' ? user.created_at.slice(0, 10) : '',
     avatar,
     banner,
-    avatarCrop: normalizeThumbnailCrop(user.user_metadata.avatar_crop),
+    avatarCrop: normalizeThumbnailCrop(metadata.avatar_crop),
     premium,
     summary: { streak },
     shelf: shelf.filter((book) => book !== null),
+    warnings: [...new Set(warnings)],
   }
 }
 
-export type PublicProfile = NonNullable<Awaited<ReturnType<typeof fetchPublicProfile>>>
+export type PublicProfile = Omit<NonNullable<Awaited<ReturnType<typeof fetchPublicProfile>>>, 'warnings'> & { warnings?: string[] }

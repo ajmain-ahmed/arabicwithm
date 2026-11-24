@@ -14,7 +14,7 @@ export default function ProfileHeader({name,username,joined,avatar,banner,avatar
   <Box data-profile-identity sx={{px:{xs:2,sm:3,md:4},pt:'calc(var(--profile-avatar-size) / 2 + 24px)',pb:3,textAlign:'left',overflowWrap:'anywhere'}}>
    <Typography sx={{fontFamily:'var(--font-heading)',fontSize:{xs:24,sm:28},fontWeight:600,color:'var(--awm-bark)',lineHeight:1.2}}>{name}</Typography>
    {username&&<Typography sx={{fontSize:14,color:'var(--awm-muted)',mt:.5}}>@{username}</Typography>}
-   <Typography sx={{fontSize:14,color:'var(--awm-muted)',mt:.5}}>Learning since {joined}</Typography>
+   {joined&&<Typography sx={{fontSize:14,color:'var(--awm-muted)',mt:.5}}>Learning since {joined}</Typography>}
   </Box>
  </Box>
 }

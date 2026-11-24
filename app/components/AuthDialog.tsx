@@ -217,30 +217,8 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
     resetAndClose('success', 'Password reset link sent — check your inbox.')
   }
 
-  // Add this to your existing useState declarations (around line 40)
-  const [googleLoading, setGoogleLoading] = useState(false)
-
-  // Update the handleGoogleSignIn function (around line 127)
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname + window.location.search)}` },
-      })
-      if (error) {
-        showSnackbar('error', error.message)
-        setGoogleLoading(false)
-      }
-      // Note: On success, page redirects, so no need to setLoading(false)
-    } catch {
-      showSnackbar('error', 'Failed to sign in with Google')
-      setGoogleLoading(false)
-    }
-  }
-
   const handleSubmit = () => {
-    if (loading || googleLoading) return
+    if (loading) return
     if (!formData.email) { showSnackbar('warning', 'Please enter your email.'); return }
     if (!forgotPassword && !formData.password) { showSnackbar('warning', 'Please enter your password.'); return }
     if (turnstileEnabled && !captchaToken) { showSnackbar('warning', 'Please complete the security check.'); return }
@@ -533,10 +511,9 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                 </Divider>
 
                 <Button
-                  loading={googleLoading}  // ← Add this prop
-                  loadingPosition="start"   // ← Optional: keeps icon in place while loading
-                  disabled={loading || googleLoading}  // ← Disable while any auth is in progres
-                  onClick={handleGoogleSignIn}
+                  component="a"
+                  href={`/auth/google?next=${encodeURIComponent(typeof window === 'undefined' ? '/' : window.location.pathname + window.location.search)}`}
+                  disabled={loading}
                   variant="outlined"
                   fullWidth
                   startIcon={<Google sx={{ fontSize: 18 }} />}

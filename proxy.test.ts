@@ -30,7 +30,7 @@ it('uses bounded auth requests before rendering a route', async () => {
   expect(auth.create).toHaveBeenCalledWith('https://example.supabase.co', 'fixture-key', expect.objectContaining({ global: { fetch: boundedFetch } }))
   expect(auth.getUser).toHaveBeenCalledOnce()
 })
-it.each(['/', '/site.webmanifest', '/startup-recovery.js', '/startup-check'])('does not wait for session restoration before public startup HTML/assets at %s', async path => {
+it.each(['/', '/site.webmanifest', '/startup-recovery.js', '/startup-check', '/auth/google', '/auth/callback', '/auth/confirm'])('does not wait for session restoration before public startup HTML/assets at %s', async path => {
   auth.getUser.mockImplementation(() => new Promise(() => {}))
   const outcome = await Promise.race([
     proxy(requestWithAuthCookie(path)).then(response => response.status),

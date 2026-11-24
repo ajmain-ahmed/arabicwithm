@@ -3,7 +3,7 @@
 import { boundedRead } from '@/app/lib/readRecovery'
 
 import AwmPageError from '@/app/components/AwmPageError'
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useRef } from "react"
 import {
   Box,
   Typography,
@@ -24,10 +24,11 @@ import {
   useTheme,
   useMediaQuery,
   CircularProgress,
+  TablePagination,
 } from "@mui/material"
 import { Edit, Check, Launch, Close } from "@mui/icons-material"
 import {
-  fetchAllPhrasesForAdmin,
+  fetchPhrasePageForAdmin,
   updatePhrase,
   type PhraseRow,
 } from "@/app/actions/admin"
@@ -40,6 +41,11 @@ export default function PhrasesAdminPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
 
   const [phrases, setPhrases] = useState<PhraseRow[]>([])
+  const [page, setPage] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [search, setSearch] = useState('')
+  const [query, setQuery] = useState('')
+  const request = useRef(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingRowId, setEditingRowId] = useState<number | null>(null)
@@ -49,20 +55,32 @@ export default function PhrasesAdminPage() {
   const [dialogEditing, setDialogEditing] = useState(false)
 
   const load = useCallback(async () => {
+    const sequence = ++request.current
     setLoading(true)
     setError(null)
     try {
-      const data = await boundedRead(fetchAllPhrasesForAdmin())
-      setPhrases(data)
+      const data = await boundedRead(fetchPhrasePageForAdmin({ page, search: query }))
+      if (sequence !== request.current) return
+      setPhrases(data.phrases)
+      setTotal(data.total)
+      setDialogPhrase(current => current ? data.phrases.find(phrase => phrase.id === current.id) ?? current : null)
     } catch (e: unknown) {
+      if (sequence !== request.current) return
       setError(errorMessage(e) ?? "Failed to load phrases")
     } finally {
-      setLoading(false)
+      if (sequence === request.current) setLoading(false)
     }
-  }, [])
+  }, [page, query])
 
   useEffect(() => {
-    queueMicrotask(() => { void load() })
+    const timer = setTimeout(() => { setPage(0); setQuery(search.trim()) }, 250)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    const activeRequest = request
+    const timer = setTimeout(() => void load(), 0)
+    return () => { clearTimeout(timer); activeRequest.current++ }
   }, [load])
 
   const updateField = useCallback(
@@ -75,6 +93,7 @@ export default function PhrasesAdminPage() {
 
       try {
         await updatePhrase(id, { [field]: value })
+        setDialogPhrase(current => current?.id === id ? { ...current, [field]: value } : current)
         await load()
       } catch (e: unknown) {
         setError(errorMessage(e) ?? `Failed to update ${field}`)
@@ -143,6 +162,7 @@ export default function PhrasesAdminPage() {
             <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
               {phrase.english || "—"}
             </Typography>
+            <Typography sx={{ color: 'var(--awm-muted)', mt: 0.5 }}>{phrase.cefr} · {phrase.phrase_tr}</Typography>
           </Box>
           <IconButton
             size="small"
@@ -166,13 +186,18 @@ export default function PhrasesAdminPage() {
           Phrases
         </Typography>
         <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
-          {loading ? "Loading…" : `${phrases.length.toLocaleString()} phrase${phrases.length === 1 ? "" : "s"}`}
+          {loading ? "Loading…" : `${total.toLocaleString()} phrase${total === 1 ? "" : "s"}`}
         </Typography>
       </Box>
+
+      <TextField label="Search phrases" value={search} onChange={event => setSearch(event.target.value)} size="small" fullWidth sx={{ mb: 2 }} />
 
       {error && (
         <AwmPageError error={error}/>
       )}
+
+      <TablePagination component="div" count={total} page={page} rowsPerPage={50} rowsPerPageOptions={[50]}
+        onPageChange={(_, next) => { setEditingRowId(null); setPage(next) }} />
 
       {error ? null : loading ? (
         <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
@@ -255,8 +280,10 @@ export default function PhrasesAdminPage() {
                         />
                       </TableCell>
                       <TableCell sx={{ ...bodyCellSx, width: 60, px: 1 }}>
+                        <IconButton size="small" aria-label="View phrase details" onClick={() => openDialog(phrase)}><Launch sx={{ fontSize: '1.1rem' }} /></IconButton>
                         <IconButton
                           size="small"
+                          aria-label={isEditing ? 'Finish editing phrase' : 'Edit phrase'}
                           onClick={() => toggleEditRow(phrase.id)}
                           sx={{ color: isEditing ? "#b8860b" : "#7a6e65" }}
                         >
@@ -328,7 +355,7 @@ function PhraseDialog({ phrase, isEditing, onClose, onToggleEdit, onUpdate, savi
       >
         Phrase details
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <IconButton size="small" onClick={onToggleEdit} sx={{ color: isEditing ? "#b8860b" : "#7a6e65" }}>
+          <IconButton size="small" aria-label={isEditing ? 'Finish editing phrase' : 'Edit phrase'} onClick={onToggleEdit} sx={{ color: isEditing ? "#b8860b" : "#7a6e65" }}>
             {isEditing ? <Check sx={{ fontSize: "1.2rem" }} /> : <Edit sx={{ fontSize: "1.2rem" }} />}
           </IconButton>
           <IconButton onClick={onClose} size="small" sx={{ color: "#7a6e65" }}>
@@ -377,6 +404,15 @@ function PhraseDialog({ phrase, isEditing, onClose, onToggleEdit, onUpdate, savi
             saving={saving[`${phrase.id}-notes`]}
             onBlur={(value) => onUpdate("notes", value)}
           />
+          {!!phrase.word_glosses?.length && <Box>
+            <Typography component="h3" sx={{ fontWeight: 600 }}>Word glosses</Typography>
+            <Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {phrase.word_glosses.map((word, index) => <Box key={index} sx={{ textAlign: 'center' }}>
+                <Typography lang="ar">{word.arabic}</Typography>
+                <Typography dir="ltr">{word.english}</Typography>
+              </Box>)}
+            </Box>
+          </Box>}
         </Box>
       </DialogContent>
 
@@ -413,12 +449,8 @@ interface DialogFieldProps {
 }
 
 function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditing, readOnly }: DialogFieldProps) {
-  const [localValue, setLocalValue] = useState(value)
-  const [previousValue, setPreviousValue] = useState(value)
-  if (value !== previousValue) {
-    setPreviousValue(value)
-    setLocalValue(value)
-  }
+  const [draft, setDraft] = useState({ source: value, value })
+  const localValue = draft.source === value ? draft.value : value
 
   const canEdit = !readOnly && isEditing
 
@@ -430,7 +462,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
       {canEdit ? (
         <TextField
           value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
+          onChange={(e) => setDraft({ source: value, value: e.target.value })}
           onBlur={() => onBlur?.(localValue)}
           size="small"
           fullWidth
@@ -494,12 +526,8 @@ interface EditableCellProps {
 }
 
 function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing }: EditableCellProps) {
-  const [localValue, setLocalValue] = useState(value)
-  const [previousValue, setPreviousValue] = useState(value)
-  if (value !== previousValue) {
-    setPreviousValue(value)
-    setLocalValue(value)
-  }
+  const [draft, setDraft] = useState({ source: value, value })
+  const localValue = draft.source === value ? draft.value : value
 
   if (!isEditing) {
     return (
@@ -522,7 +550,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing }: E
   return (
     <TextField
       value={localValue}
-      onChange={(e) => setLocalValue(e.target.value)}
+      onChange={(e) => setDraft({ source: value, value: e.target.value })}
       onBlur={() => onBlur(localValue)}
       size="small"
       fullWidth

@@ -98,6 +98,7 @@ try {
     const result = { base, engine, width, mode, scenario, staleInjected, stages, interactive, navigationError, errors, failed, responses, requests, ...metrics }
     if (process.env.AWM_STARTUP_FLOWS === '1' && interactive) {
       result.flows = []
+      const populatedEpisode = await page.locator('main a[href^="/cartoons/"]').evaluateAll(links => links.map(link => link.getAttribute('href')).find(href => new URL(href, location.href).pathname.split('/').filter(Boolean).length === 3))
       async function visit(name, path) {
         const response = await page.goto(new URL(path, base).href, { waitUntil: 'domcontentloaded' })
         await page.locator('main:visible').first().waitFor()
@@ -108,7 +109,7 @@ try {
         await visit('Watch', '/cartoons')
         await visit('Shows', '/cartoons?view=shows')
         await page.locator('main a[href^="/cartoons/"]').first().waitFor({ timeout: 15000 })
-        const show = await page.locator('main a[href^="/cartoons/"]').evaluateAll(links => links.map(link => link.getAttribute('href')).find(href => new URL(href, location.href).pathname.split('/').filter(Boolean).length === 2))
+        const show = populatedEpisode ? new URL(populatedEpisode, base).pathname.split('/').slice(0,-1).join('/') : await page.locator('main a[href^="/cartoons/"]').evaluateAll(links => links.map(link => link.getAttribute('href')).find(href => new URL(href, location.href).pathname.split('/').filter(Boolean).length === 2))
         if (!show) throw new Error('No Show link found')
         await visit('Show', show)
         await page.locator('main a[href^="/cartoons/"]').first().waitFor({ timeout: 15000 })

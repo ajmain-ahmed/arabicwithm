@@ -1,0 +1,21 @@
+{
+  "started": "2026-11-21T13:18:41.882Z",
+  "qualification": "Retained Windows WebKit document with standalone flag; not a physical installed iPhone app.",
+  "oldScripts": [
+    "https://arabicwithm.com/_next/static/chunks/DJsGoHlj.js",
+    "https://arabicwithm.com/_next/static/chunks/1QuWOstI.js",
+    "https://arabicwithm.com/_next/static/chunks/0rhbok0s.js",
+    "https://arabicwithm.com/_next/static/chunks/B1b49RVE.js",
+    "https://arabicwithm.com/startup-recovery.js",
+    "https://arabicwithm.com/_next/static/chunks/Cmd9SU5j.js",
+    "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2"
+  ],
+  "error": "Release was not verified before the probe deadline",
+  "failures": [
+    {
+      "url": "https://arabicwithm.com/_next/static/css/notonaskharabic/NotoNaskhArabic-Variable.woff2",
+      "error": "Load request cancelled"
+    }
+  ],
+  "finished": "2026-11-21T13:38:43.967Z"
+}

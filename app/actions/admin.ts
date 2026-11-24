@@ -1008,6 +1008,30 @@ export type PhraseRow = {
   english: string
   cefr: string
   notes: string | null
+  word_glosses?: { arabic: string; english: string }[]
+}
+
+export async function fetchPhrasePageForAdmin(input: { page?: number; search?: string } = {}): Promise<{ phrases: PhraseRow[]; total: number }> {
+  await guardAdmin()
+  const { page, search } = z.object({
+    page: z.number().int().min(0).max(100000).default(0),
+    search: z.string().trim().max(200).default(''),
+  }).strict().parse(input)
+  let query = serviceClient.from('phrases')
+    .select('id,phrase_ar_di,phrase_tr,english,cefr,notes,word_glosses', { count: 'exact' })
+  // Quote PostgREST filter values; escape LIKE wildcards so search stays literal.
+  if (search) {
+    const pattern = JSON.stringify(`%${search.replace(/[\\%_]/g, '\\$&')}%`)
+    const arabicSearch = search.normalize('NFKC').replace(/[\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed\u0640]/gu, '')
+    const arabicPattern = JSON.stringify([...arabicSearch].map(character =>
+      character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+      (/[\u0621-\u064a]/u.test(character) ? '[\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed\u0640]*' : ''),
+    ).join(''))
+    query = query.or([`phrase_ar_di.imatch.${arabicPattern}`, ...['phrase_tr', 'english', 'cefr'].map(field => `${field}.ilike.${pattern}`)].join(','))
+  }
+  const { data, error, count } = await query.order('id').range(page * 50, page * 50 + 49)
+  if (error) throw new Error('Unable to load the Phrase Library.')
+  return { phrases: (data ?? []).map(mapPhraseRow), total: count ?? 0 }
 }
 
 export async function fetchAllPhrasesForAdmin(): Promise<PhraseRow[]> {

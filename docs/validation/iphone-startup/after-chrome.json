@@ -1,0 +1,2847 @@
+[
+  {
+    "base": "https://arabicwithm.com",
+    "engine": "chrome",
+    "width": 390,
+    "mode": "tab",
+    "scenario": "normal",
+    "staleInjected": false,
+    "stages": [
+      {
+        "name": "HTML commit",
+        "elapsed": 511
+      },
+      {
+        "name": "Featured shell visible",
+        "elapsed": 643
+      },
+      {
+        "name": "Featured content visible",
+        "elapsed": 986
+      },
+      {
+        "name": "Menu interactive",
+        "elapsed": 1916
+      }
+    ],
+    "interactive": 1910.3999999999069,
+    "navigationError": null,
+    "errors": [],
+    "failed": [],
+    "responses": [
+      {
+        "url": "https://arabicwithm.com/",
+        "status": 200,
+        "contentType": "text/html; charset=utf-8",
+        "cache": "private, no-store"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CNUH6qot.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/css/D6hGN8GS.css",
+        "status": 200,
+        "contentType": "text/css",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/css/DM3_Ww8Z.css",
+        "status": 200,
+        "contentType": "text/css",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/Jost-Variable.CvM2jvhu.woff2",
+        "status": 200,
+        "contentType": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/BalooBhaijaan2-Variable-latin.DiY4RXbb.woff2",
+        "status": 200,
+        "contentType": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/NunitoSans-Variable-latin.CpFvVibi.woff2",
+        "status": 200,
+        "contentType": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/homepage/awm-logo.png",
+        "status": 200,
+        "contentType": "image/png",
+        "cache": "public, max-age=0, must-revalidate",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Be3ov0Qt.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CdfH4hdO.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DJsGoHlj.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/K6rVWlcA.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BIPgsmuP.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Duy0hcLW.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BezSYqq0.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/VwyNaErL.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BC4nnsGB.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BD9xBr_h.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bwk6dEWo.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DxUpx7Qu.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DAvXxB8t.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/AekSaEc-.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/9i_6v4eg.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dowk6Yqs.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C5LwDWC4.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/jS6NOBin.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DBV_0ZXN.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BnSgf6FY.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CcvOTNTJ.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/hRHQ_NE2.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BZRYL45X.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CDQAViSZ.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CjmB8q9t.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CveizKjI.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D_LqgQ2E.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DA0u98cr.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CTEpsaXd.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DTA98ukr.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CB-r5K2-.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/1NMFZ6k1.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CpJqR3_-.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BVJIZ3jC.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DsmAidYS.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/upHxt98h.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BAXLqSyN.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CzVBIYe8.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DSVLWLfZ.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dh5XGIRr.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DReg-CVV.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BwpEcSsy.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CByZCI14.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B6-Fpxi8.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B77tFZQ3.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CUWEnyb4.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CbJ17bYY.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D52uC9_K.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DCgY54aS.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DS09Vmi5.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqWajigm.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/hV1sUeSf.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BKH20Xdc.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dp1bK1i8.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C-VxD3Gl.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CtZHKxmT.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C42gzDA2.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bt9IjErz.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/wBkzi7PX.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/fQP9WKnW.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/nWTweXNi.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/KLgzP_mV.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BmAwbdU7.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DkKRvxBd.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DHDaDy_8.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DIgigJb9.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/ByQTWrHc.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DkEDXh1Q.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/pqC-KUaH.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BS4mj-FW.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CJmCTDIL.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqyUFmro.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/N8qYwzpb.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/cEx67TkY.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C15h1821.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D4jOpZ4Q.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BgDe49mV.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CGMR6R08.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B1kO6wVG.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B1b49RVE.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/onNf2Th8.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bzwutf_2.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/t3TnuM85.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bd-JRjQ_.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C9TLfuAS.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/scMDlTfc.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Byq3XCjA.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/0rhbok0s.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/1QuWOstI.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BNgHtPgZ.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DawuyM7t.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/TLU8mOJY.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DQwlTKDl.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DIRokRPC.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BWlctzrx.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BZWlHBh1.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CbvqQ9Bv.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a5e01bee0d6251a5",
+        "status": 302,
+        "cache": "max-age=300, stale-if-error=10800, stale-while-revalidate=10800, public"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/variants/featured/arc-1600.avif?v=2026-11-11T16%3A56%3A47.213%2B00%3A00",
+        "status": 200,
+        "contentType": "image/avif",
+        "cache": "public, max-age=86400",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CwtLp4z9.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BYr1IjF_.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/t5WGcFlZ.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DrV8eWvp.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Czuea_Iy.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DfkBjvPv.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DRUHHgwo.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqBChbD0.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C7G6dXBG.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BS1Fxn7A.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CyP3WBUX.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/7gGXzX7N.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CIhAMf6z.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CTjDBfoK.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/cdn-cgi/challenge-platform/h/b/scripts/jsd/f8df4d4a0cd6/main.js?ray=a5e01bee0d6251a5",
+        "status": 200,
+        "contentType": "application/javascript; charset=UTF-8",
+        "cache": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.svg",
+        "status": 200,
+        "contentType": "image/svg+xml",
+        "cache": "public, max-age=0, must-revalidate",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/f8df4d4a0cd6/0.5573085445558607:1795263950:9mdL_jy5RD9yygPP-2FI2-6AqRzlqeVjxYzl-YhaHIE/a5e01bee0d6251a5",
+        "status": 200,
+        "contentType": "text/plain; charset=UTF-8"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/NotoNaskhArabic-Variable.6GYD_0Ja.woff2",
+        "status": 200,
+        "contentType": "font/woff2",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/homepage/vegeta.avif",
+        "status": 200,
+        "contentType": "image/avif",
+        "cache": "public, max-age=0, must-revalidate",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.svg",
+        "status": 200,
+        "contentType": "image/svg+xml",
+        "cache": "public, max-age=0, must-revalidate",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/AsoCpK-z.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/sSlbbExW.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D1lhgyS4.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D6iLMN3-.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CplzRyvj.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DYgEW1av.js",
+        "status": 200,
+        "contentType": "text/javascript",
+        "cache": "public, max-age=31536000, immutable",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2",
+        "status": 200,
+        "contentType": "application/javascript; charset=UTF-8",
+        "cache": "private, max-age=900"
+      },
+      {
+        "url": "https://region1.google-analytics.com/g/collect?v=2&tid=G-PT7YH1RF99&gtm=45He6bh1v9285314595za208zd9285314595xf1&_p=1795268457339&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1705282966.1795268458&frm=0&ngs=1&pscdl=noapi&rcb=15&sr=390x844&uaa=arm&uab=64&uafvl=Chromium%3B158.0.8127.36%7CNot.A%252FBrand%3B24.0.0.0%7CGoogle%2520Chrome%3B158.0.8127.36&uam=&uamb=1&uap=iOS&uapv=15_0&uaw=0&ul=en-gb&_s=1&tag_exp=115938465~115938468~120385423~120469145~120469153~121049589~121246026~121246034~123785232&sid=1795268457&sct=1&seg=0&dl=https%3A%2F%2Farabicwithm.com%2F&dt=ArabicWithM%20%E2%80%94%20Learn%20Arabic%20with%20Cartoons&en=page_view&_fv=1&_nsi=1&_ss=1&tfd=1214",
+        "status": 204,
+        "contentType": "text/plain",
+        "cache": "no-cache, no-store, must-revalidate"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/bat-1.webp",
+        "status": 200,
+        "contentType": "image/webp",
+        "cache": "public, max-age=86400",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/avt-2.webp",
+        "status": 200,
+        "contentType": "image/webp",
+        "cache": "public, max-age=86400",
+        "cfCache": "HIT"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/nar-3.webp",
+        "status": 200,
+        "contentType": "image/webp",
+        "cache": "public, max-age=86400",
+        "cfCache": "HIT"
+      }
+    ],
+    "requests": [
+      {
+        "url": "https://arabicwithm.com/",
+        "method": "GET",
+        "type": "document"
+      },
+      {
+        "url": "https://arabicwithm.com/homepage/awm-logo.png",
+        "method": "GET",
+        "type": "image"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/Jost-Variable.CvM2jvhu.woff2",
+        "method": "GET",
+        "type": "font"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/BalooBhaijaan2-Variable-latin.DiY4RXbb.woff2",
+        "method": "GET",
+        "type": "font"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/NunitoSans-Variable-latin.CpFvVibi.woff2",
+        "method": "GET",
+        "type": "font"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/css/D6hGN8GS.css",
+        "method": "GET",
+        "type": "stylesheet"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/css/DM3_Ww8Z.css",
+        "method": "GET",
+        "type": "stylesheet"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CNUH6qot.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DJsGoHlj.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/1QuWOstI.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/0rhbok0s.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B1b49RVE.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CB-r5K2-.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D_LqgQ2E.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Be3ov0Qt.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CcvOTNTJ.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B6-Fpxi8.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BZRYL45X.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bwk6dEWo.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BAXLqSyN.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/cEx67TkY.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/fQP9WKnW.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D4jOpZ4Q.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CdfH4hdO.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/VwyNaErL.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BezSYqq0.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CjmB8q9t.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Duy0hcLW.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/K6rVWlcA.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/pqC-KUaH.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dowk6Yqs.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BIPgsmuP.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/9i_6v4eg.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DReg-CVV.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/1NMFZ6k1.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bt9IjErz.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BmAwbdU7.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B77tFZQ3.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/nWTweXNi.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DAvXxB8t.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/t3TnuM85.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dh5XGIRr.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqyUFmro.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BC4nnsGB.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DA0u98cr.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Byq3XCjA.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DxUpx7Qu.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BD9xBr_h.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DCgY54aS.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/upHxt98h.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BS4mj-FW.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/AekSaEc-.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CDQAViSZ.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CveizKjI.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/KLgzP_mV.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/jS6NOBin.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CpJqR3_-.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BnSgf6FY.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CtZHKxmT.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DBV_0ZXN.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CUWEnyb4.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CTEpsaXd.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C5LwDWC4.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/ByQTWrHc.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DIgigJb9.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CzVBIYe8.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CbJ17bYY.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BVJIZ3jC.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DsmAidYS.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/scMDlTfc.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/hRHQ_NE2.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CByZCI14.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BKH20Xdc.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C-VxD3Gl.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/wBkzi7PX.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BwpEcSsy.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DkEDXh1Q.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DS09Vmi5.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DTA98ukr.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DSVLWLfZ.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CJmCTDIL.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C15h1821.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D52uC9_K.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C42gzDA2.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqWajigm.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dp1bK1i8.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/hV1sUeSf.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bd-JRjQ_.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/N8qYwzpb.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DkKRvxBd.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bzwutf_2.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C9TLfuAS.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B1kO6wVG.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DHDaDy_8.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BgDe49mV.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/onNf2Th8.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CGMR6R08.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/variants/featured/arc-1600.avif?v=2026-11-11T16%3A56%3A47.213%2B00%3A00",
+        "method": "GET",
+        "type": "image"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BYr1IjF_.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BNgHtPgZ.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DawuyM7t.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/TLU8mOJY.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/t5WGcFlZ.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CbvqQ9Bv.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DQwlTKDl.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BWlctzrx.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqBChbD0.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/7gGXzX7N.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DIRokRPC.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DfkBjvPv.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CIhAMf6z.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C7G6dXBG.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CwtLp4z9.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CTjDBfoK.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Czuea_Iy.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BZWlHBh1.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DRUHHgwo.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CyP3WBUX.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DrV8eWvp.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BS1Fxn7A.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a5e01bee0d6251a5",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/cdn-cgi/challenge-platform/h/b/scripts/jsd/f8df4d4a0cd6/main.js?ray=a5e01bee0d6251a5",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.svg",
+        "method": "GET",
+        "type": "other"
+      },
+      {
+        "url": "https://arabicwithm.com/cdn-cgi/challenge-platform/h/b/jsd/oneshot/f8df4d4a0cd6/0.5573085445558607:1795263950:9mdL_jy5RD9yygPP-2FI2-6AqRzlqeVjxYzl-YhaHIE/a5e01bee0d6251a5",
+        "method": "POST",
+        "type": "xhr"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/NotoNaskhArabic-Variable.6GYD_0Ja.woff2",
+        "method": "GET",
+        "type": "font"
+      },
+      {
+        "url": "https://arabicwithm.com/homepage/vegeta.avif",
+        "method": "GET",
+        "type": "image"
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.svg",
+        "method": "GET",
+        "type": "other"
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D1lhgyS4.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/AsoCpK-z.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D6iLMN3-.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/sSlbbExW.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CplzRyvj.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DYgEW1av.js",
+        "method": "GET",
+        "type": "script"
+      },
+      {
+        "url": "https://region1.google-analytics.com/g/collect?v=2&tid=G-PT7YH1RF99&gtm=45He6bh1v9285314595za208zd9285314595xf1&_p=1795268457339&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1705282966.1795268458&frm=0&ngs=1&pscdl=noapi&rcb=15&sr=390x844&uaa=arm&uab=64&uafvl=Chromium%3B158.0.8127.36%7CNot.A%252FBrand%3B24.0.0.0%7CGoogle%2520Chrome%3B158.0.8127.36&uam=&uamb=1&uap=iOS&uapv=15_0&uaw=0&ul=en-gb&_s=1&tag_exp=115938465~115938468~120385423~120469145~120469153~121049589~121246026~121246034~123785232&sid=1795268457&sct=1&seg=0&dl=https%3A%2F%2Farabicwithm.com%2F&dt=ArabicWithM%20%E2%80%94%20Learn%20Arabic%20with%20Cartoons&en=page_view&_fv=1&_nsi=1&_ss=1&tfd=1214",
+        "method": "POST",
+        "type": "fetch"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/avt-2.webp",
+        "method": "GET",
+        "type": "image"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/nar-3.webp",
+        "method": "GET",
+        "type": "image"
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/bat-1.webp",
+        "method": "GET",
+        "type": "image"
+      }
+    ],
+    "url": "https://arabicwithm.com/",
+    "readyState": "complete",
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "body": "ArabicWithM\nLearn Arabic through cartoons and books\nFeatured Show 1 of 3: Arcane\n\nFEATURED\n\nArcane\nPlay\nEpisodes\nFeatured Show 1 of 3: Arcane\n\nFEATURED\n\nBreaking Bad\nPlay\nEpisodes\nFeatured Show 1 of 3: Arcane\n\nFEATURED\n\nInvincible\nPlay\nEpisodes\nLatest Episodes\n\nAVATAR\n\nAang and The Guru\n\nB1\n\nNARUTO\n\nThe Only One Who Failed\n\nA2\n\nBATMAN: THE ANIMATED SERIES\n\nIt's all just chance.\n\nB1\n\nAVATAR\n\nRoku's Advice\n\nB1\n\nMISCELLANEOUS\n\nO Fat One!\n\nB2\n\nARCANE\n\nVi and Vander Disagree\n\nB1\n\nDRAGON BALL Z\n\nDon't Touch My Bulma!\n\nB1\n\nARCANE\n\nViolet Leaves Jinx\n\nA2\n\nCOMPANIONS OF THE PROPHET\n\nFleeing Persecution\n\nB2\n\nMISCELLANEOUS\n\nHaikyu Pilot\n\nB1\n\nTHE OMAR SERIES\n\nUmar's Conversion to Islam\n\nB1\n\nPRISON BREAK\n\nMichael Meets Sara\n\nB1\nFor You Spotlight\nWatch More\n→\nShows\n\nPrison Break\n\nB1\n\nBatman: The Animated Series\n\nB2\n\nTeenage Mutant Ninja Turtles\n\nA2-B1\n\nIn Your Name, O Allah\n\nB2-C1\n\nIslamic Stories\n\nB1-B2\n\nInvincible\n\nB1-B2\n\nBreaking Bad\n\nB2\n\nAvatar\n\nB1\n\nCompanions of the Prophet\n\nB1-B2\n\nMiscellaneou",
+    "ttfb": 498.89999999990687,
+    "htmlEnd": 642.7000000001863,
+    "domContentLoaded": 677.5,
+    "firstPaint": 788,
+    "hydration": 874,
+    "hydrated": "true",
+    "commits": [
+      873.7000000001863,
+      883.3999999999069,
+      893.2999999998137,
+      917.1000000000931,
+      931,
+      945.8999999999069,
+      954.1000000000931,
+      965.5,
+      979.2999999998137,
+      979.7999999998137,
+      1017.2999999998137,
+      1020.7999999998137,
+      1040,
+      1040.2000000001863,
+      1049.2999999998137,
+      1061.8999999999069,
+      1065.3999999999069,
+      1138.2000000001863,
+      1449.7000000001863,
+      1467.1000000000931,
+      1467.8999999999069,
+      1479,
+      1829.7000000001863,
+      1830.3999999999069,
+      1830.7999999998137,
+      1916.5,
+      1917.6000000000931,
+      1918.1000000000931,
+      2125.2999999998137,
+      2125.7999999998137
+    ],
+    "longTasks": [
+      {
+        "start": 739.5,
+        "duration": 58
+      }
+    ],
+    "milestones": [
+      {
+        "name": "hydrated-event",
+        "time": 874.1000000000931
+      }
+    ],
+    "resources": [
+      {
+        "url": "https://arabicwithm.com/homepage/awm-logo.png",
+        "type": "link",
+        "start": 504.79999999981374,
+        "duration": 72,
+        "bytes": 18306,
+        "decodedBytes": 18006
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/Jost-Variable.CvM2jvhu.woff2",
+        "type": "link",
+        "start": 505.10000000009313,
+        "duration": 44.10000000009313,
+        "bytes": 50992,
+        "decodedBytes": 50692
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/BalooBhaijaan2-Variable-latin.DiY4RXbb.woff2",
+        "type": "link",
+        "start": 505.10000000009313,
+        "duration": 49.89999999990687,
+        "bytes": 41164,
+        "decodedBytes": 40864
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/NunitoSans-Variable-latin.CpFvVibi.woff2",
+        "type": "link",
+        "start": 505.20000000018626,
+        "duration": 56.299999999813735,
+        "bytes": 98856,
+        "decodedBytes": 98556
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/css/D6hGN8GS.css",
+        "type": "link",
+        "start": 509.70000000018626,
+        "duration": 47.39999999990687,
+        "bytes": 1321,
+        "decodedBytes": 2352
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/css/DM3_Ww8Z.css",
+        "type": "link",
+        "start": 509.79999999981374,
+        "duration": 47.700000000186265,
+        "bytes": 5671,
+        "decodedBytes": 24403
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CNUH6qot.js",
+        "type": "other",
+        "start": 509.89999999990687,
+        "duration": 33.60000000009313,
+        "bytes": 28492,
+        "decodedBytes": 94626
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DJsGoHlj.js",
+        "type": "script",
+        "start": 509.89999999990687,
+        "duration": 69.70000000018626,
+        "bytes": 852,
+        "decodedBytes": 940
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/1QuWOstI.js",
+        "type": "script",
+        "start": 509.89999999990687,
+        "duration": 107.5,
+        "bytes": 70089,
+        "decodedBytes": 219274
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/0rhbok0s.js",
+        "type": "script",
+        "start": 510,
+        "duration": 92.89999999990687,
+        "bytes": 47971,
+        "decodedBytes": 152216
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D_LqgQ2E.js",
+        "type": "other",
+        "start": 510.10000000009313,
+        "duration": 95.29999999981374,
+        "bytes": 532,
+        "decodedBytes": 335
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CB-r5K2-.js",
+        "type": "other",
+        "start": 510.10000000009313,
+        "duration": 95.60000000009313,
+        "bytes": 1276,
+        "decodedBytes": 8422
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B1b49RVE.js",
+        "type": "script",
+        "start": 510.10000000009313,
+        "duration": 103.29999999981374,
+        "bytes": 9031,
+        "decodedBytes": 25447
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Be3ov0Qt.js",
+        "type": "other",
+        "start": 510.20000000018626,
+        "duration": 69.09999999962747,
+        "bytes": 1116,
+        "decodedBytes": 1502
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CcvOTNTJ.js",
+        "type": "other",
+        "start": 510.20000000018626,
+        "duration": 75.1999999997206,
+        "bytes": 6649,
+        "decodedBytes": 15812
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B6-Fpxi8.js",
+        "type": "other",
+        "start": 510.20000000018626,
+        "duration": 96.89999999990687,
+        "bytes": 25703,
+        "decodedBytes": 69023
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bwk6dEWo.js",
+        "type": "other",
+        "start": 510.29999999981374,
+        "duration": 74.90000000037253,
+        "bytes": 508,
+        "decodedBytes": 291
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BZRYL45X.js",
+        "type": "other",
+        "start": 510.29999999981374,
+        "duration": 91.40000000037253,
+        "bytes": 7087,
+        "decodedBytes": 18157
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BAXLqSyN.js",
+        "type": "other",
+        "start": 510.29999999981374,
+        "duration": 97.10000000009313,
+        "bytes": 485,
+        "decodedBytes": 242
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/fQP9WKnW.js",
+        "type": "other",
+        "start": 510.29999999981374,
+        "duration": 100.70000000018626,
+        "bytes": 5972,
+        "decodedBytes": 14263
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/cEx67TkY.js",
+        "type": "other",
+        "start": 510.29999999981374,
+        "duration": 111.70000000018626,
+        "bytes": 2245,
+        "decodedBytes": 4447
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CdfH4hdO.js",
+        "type": "other",
+        "start": 510.39999999990687,
+        "duration": 71,
+        "bytes": 415,
+        "decodedBytes": 116
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/VwyNaErL.js",
+        "type": "other",
+        "start": 510.39999999990687,
+        "duration": 72.20000000018626,
+        "bytes": 775,
+        "decodedBytes": 905
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D4jOpZ4Q.js",
+        "type": "other",
+        "start": 510.39999999990687,
+        "duration": 111.70000000018626,
+        "bytes": 2129,
+        "decodedBytes": 4468
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BezSYqq0.js",
+        "type": "other",
+        "start": 510.5,
+        "duration": 86.20000000018626,
+        "bytes": 817,
+        "decodedBytes": 852
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CjmB8q9t.js",
+        "type": "other",
+        "start": 510.5,
+        "duration": 91.60000000009313,
+        "bytes": 2225,
+        "decodedBytes": 4613
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/K6rVWlcA.js",
+        "type": "other",
+        "start": 510.60000000009313,
+        "duration": 75.39999999990687,
+        "bytes": 486,
+        "decodedBytes": 239
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Duy0hcLW.js",
+        "type": "other",
+        "start": 510.60000000009313,
+        "duration": 78.5,
+        "bytes": 1273,
+        "decodedBytes": 2029
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dowk6Yqs.js",
+        "type": "other",
+        "start": 510.60000000009313,
+        "duration": 89.60000000009313,
+        "bytes": 717,
+        "decodedBytes": 701
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/pqC-KUaH.js",
+        "type": "other",
+        "start": 510.60000000009313,
+        "duration": 107.1999999997206,
+        "bytes": 5764,
+        "decodedBytes": 13751
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BIPgsmuP.js",
+        "type": "other",
+        "start": 510.70000000018626,
+        "duration": 73.29999999981374,
+        "bytes": 3046,
+        "decodedBytes": 8839
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/9i_6v4eg.js",
+        "type": "other",
+        "start": 510.70000000018626,
+        "duration": 80.1999999997206,
+        "bytes": 458,
+        "decodedBytes": 205
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DReg-CVV.js",
+        "type": "other",
+        "start": 510.79999999981374,
+        "duration": 99.20000000018626,
+        "bytes": 1740,
+        "decodedBytes": 3460
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/1NMFZ6k1.js",
+        "type": "other",
+        "start": 510.89999999990687,
+        "duration": 94.8000000002794,
+        "bytes": 361,
+        "decodedBytes": 52
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B77tFZQ3.js",
+        "type": "other",
+        "start": 510.89999999990687,
+        "duration": 99.5,
+        "bytes": 486,
+        "decodedBytes": 249
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bt9IjErz.js",
+        "type": "other",
+        "start": 510.89999999990687,
+        "duration": 102.89999999990687,
+        "bytes": 459,
+        "decodedBytes": 218
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BmAwbdU7.js",
+        "type": "other",
+        "start": 510.89999999990687,
+        "duration": 104.70000000018626,
+        "bytes": 1216,
+        "decodedBytes": 2103
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DAvXxB8t.js",
+        "type": "other",
+        "start": 511,
+        "duration": 83.60000000009313,
+        "bytes": 1407,
+        "decodedBytes": 2390
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dh5XGIRr.js",
+        "type": "other",
+        "start": 511,
+        "duration": 98.89999999990687,
+        "bytes": 1260,
+        "decodedBytes": 2076
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/nWTweXNi.js",
+        "type": "other",
+        "start": 511,
+        "duration": 102.89999999990687,
+        "bytes": 443,
+        "decodedBytes": 197
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqyUFmro.js",
+        "type": "other",
+        "start": 511,
+        "duration": 107.70000000018626,
+        "bytes": 1727,
+        "decodedBytes": 3203
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/t3TnuM85.js",
+        "type": "other",
+        "start": 511,
+        "duration": 111.5,
+        "bytes": 3790,
+        "decodedBytes": 13966
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BC4nnsGB.js",
+        "type": "other",
+        "start": 511.10000000009313,
+        "duration": 81.29999999981374,
+        "bytes": 569,
+        "decodedBytes": 369
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DA0u98cr.js",
+        "type": "other",
+        "start": 511.10000000009313,
+        "duration": 92.10000000009313,
+        "bytes": 633,
+        "decodedBytes": 472
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BD9xBr_h.js",
+        "type": "other",
+        "start": 511.20000000018626,
+        "duration": 81.1999999997206,
+        "bytes": 1091,
+        "decodedBytes": 1748
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DxUpx7Qu.js",
+        "type": "other",
+        "start": 511.20000000018626,
+        "duration": 79.5,
+        "bytes": 2445,
+        "decodedBytes": 5052
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DCgY54aS.js",
+        "type": "other",
+        "start": 511.20000000018626,
+        "duration": 99.5,
+        "bytes": 1811,
+        "decodedBytes": 3583
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Byq3XCjA.js",
+        "type": "other",
+        "start": 511.20000000018626,
+        "duration": 104.6999999997206,
+        "bytes": 17454,
+        "decodedBytes": 49123
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/AekSaEc-.js",
+        "type": "other",
+        "start": 511.29999999981374,
+        "duration": 85.3000000002794,
+        "bytes": 3602,
+        "decodedBytes": 9115
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/upHxt98h.js",
+        "type": "other",
+        "start": 511.29999999981374,
+        "duration": 94.60000000009313,
+        "bytes": 1501,
+        "decodedBytes": 2533
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BS4mj-FW.js",
+        "type": "other",
+        "start": 511.29999999981374,
+        "duration": 107.3000000002794,
+        "bytes": 1903,
+        "decodedBytes": 4459
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CDQAViSZ.js",
+        "type": "other",
+        "start": 511.39999999990687,
+        "duration": 90.39999999990687,
+        "bytes": 2717,
+        "decodedBytes": 6141
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/jS6NOBin.js",
+        "type": "other",
+        "start": 511.5,
+        "duration": 84.89999999990687,
+        "bytes": 4779,
+        "decodedBytes": 11002
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BnSgf6FY.js",
+        "type": "other",
+        "start": 511.5,
+        "duration": 85.10000000009313,
+        "bytes": 537,
+        "decodedBytes": 330
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CveizKjI.js",
+        "type": "other",
+        "start": 511.5,
+        "duration": 93.79999999981374,
+        "bytes": 1223,
+        "decodedBytes": 1964
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CpJqR3_-.js",
+        "type": "other",
+        "start": 511.5,
+        "duration": 94.10000000009313,
+        "bytes": 9080,
+        "decodedBytes": 22940
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CtZHKxmT.js",
+        "type": "other",
+        "start": 511.5,
+        "duration": 102.20000000018626,
+        "bytes": 1165,
+        "decodedBytes": 1595
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/KLgzP_mV.js",
+        "type": "other",
+        "start": 511.5,
+        "duration": 102.5,
+        "bytes": 991,
+        "decodedBytes": 1437
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DBV_0ZXN.js",
+        "type": "other",
+        "start": 511.60000000009313,
+        "duration": 82.6999999997206,
+        "bytes": 1420,
+        "decodedBytes": 2465
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CUWEnyb4.js",
+        "type": "other",
+        "start": 511.60000000009313,
+        "duration": 98.6999999997206,
+        "bytes": 880,
+        "decodedBytes": 973
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C5LwDWC4.js",
+        "type": "other",
+        "start": 511.70000000018626,
+        "duration": 82.5,
+        "bytes": 2509,
+        "decodedBytes": 5844
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CTEpsaXd.js",
+        "type": "other",
+        "start": 511.70000000018626,
+        "duration": 93.79999999981374,
+        "bytes": 4139,
+        "decodedBytes": 7905
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DIgigJb9.js",
+        "type": "other",
+        "start": 511.70000000018626,
+        "duration": 106.39999999990687,
+        "bytes": 467,
+        "decodedBytes": 232
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/ByQTWrHc.js",
+        "type": "other",
+        "start": 511.70000000018626,
+        "duration": 106.5,
+        "bytes": 726,
+        "decodedBytes": 646
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BVJIZ3jC.js",
+        "type": "other",
+        "start": 511.79999999981374,
+        "duration": 95.60000000009313,
+        "bytes": 510,
+        "decodedBytes": 293
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CzVBIYe8.js",
+        "type": "other",
+        "start": 511.79999999981374,
+        "duration": 95.70000000018626,
+        "bytes": 2313,
+        "decodedBytes": 3727
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CbJ17bYY.js",
+        "type": "other",
+        "start": 511.79999999981374,
+        "duration": 98.70000000018626,
+        "bytes": 1359,
+        "decodedBytes": 2061
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DsmAidYS.js",
+        "type": "other",
+        "start": 511.89999999990687,
+        "duration": 95.3000000002794,
+        "bytes": 2209,
+        "decodedBytes": 4363
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/scMDlTfc.js",
+        "type": "other",
+        "start": 511.89999999990687,
+        "duration": 107.10000000009313,
+        "bytes": 8015,
+        "decodedBytes": 24056
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/hRHQ_NE2.js",
+        "type": "other",
+        "start": 512,
+        "duration": 88,
+        "bytes": 5551,
+        "decodedBytes": 14057
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CByZCI14.js",
+        "type": "other",
+        "start": 512,
+        "duration": 98.20000000018626,
+        "bytes": 3222,
+        "decodedBytes": 6590
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BKH20Xdc.js",
+        "type": "other",
+        "start": 512,
+        "duration": 98.79999999981374,
+        "bytes": 2401,
+        "decodedBytes": 4689
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C-VxD3Gl.js",
+        "type": "other",
+        "start": 512,
+        "duration": 101.5,
+        "bytes": 2211,
+        "decodedBytes": 4227
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BwpEcSsy.js",
+        "type": "other",
+        "start": 512.1000000000931,
+        "duration": 98,
+        "bytes": 506,
+        "decodedBytes": 288
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/wBkzi7PX.js",
+        "type": "other",
+        "start": 512.1000000000931,
+        "duration": 101.6999999997206,
+        "bytes": 566,
+        "decodedBytes": 350
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DkEDXh1Q.js",
+        "type": "other",
+        "start": 512.1000000000931,
+        "duration": 106.29999999981374,
+        "bytes": 912,
+        "decodedBytes": 1225
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DTA98ukr.js",
+        "type": "other",
+        "start": 512.2000000001863,
+        "duration": 93.39999999990687,
+        "bytes": 1986,
+        "decodedBytes": 4015
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DS09Vmi5.js",
+        "type": "other",
+        "start": 512.2000000001863,
+        "duration": 98.5,
+        "bytes": 487,
+        "decodedBytes": 372
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DSVLWLfZ.js",
+        "type": "other",
+        "start": 512.2999999998137,
+        "duration": 97.8000000002794,
+        "bytes": 512,
+        "decodedBytes": 293
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D52uC9_K.js",
+        "type": "other",
+        "start": 512.2999999998137,
+        "duration": 98.20000000018626,
+        "bytes": 1785,
+        "decodedBytes": 2918
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqWajigm.js",
+        "type": "other",
+        "start": 512.2999999998137,
+        "duration": 98.5,
+        "bytes": 519,
+        "decodedBytes": 279
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C42gzDA2.js",
+        "type": "other",
+        "start": 512.2999999998137,
+        "duration": 101.40000000037253,
+        "bytes": 604,
+        "decodedBytes": 482
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CJmCTDIL.js",
+        "type": "other",
+        "start": 512.2999999998137,
+        "duration": 109.5,
+        "bytes": 492,
+        "decodedBytes": 238
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C15h1821.js",
+        "type": "other",
+        "start": 512.2999999998137,
+        "duration": 109.90000000037253,
+        "bytes": 644,
+        "decodedBytes": 496
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Dp1bK1i8.js",
+        "type": "other",
+        "start": 512.3999999999069,
+        "duration": 101.10000000009313,
+        "bytes": 1574,
+        "decodedBytes": 2800
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/hV1sUeSf.js",
+        "type": "other",
+        "start": 512.5,
+        "duration": 100.60000000009313,
+        "bytes": 568,
+        "decodedBytes": 379
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DkKRvxBd.js",
+        "type": "other",
+        "start": 512.5,
+        "duration": 105.10000000009313,
+        "bytes": 706,
+        "decodedBytes": 666
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/N8qYwzpb.js",
+        "type": "other",
+        "start": 512.5,
+        "duration": 109.39999999990687,
+        "bytes": 662,
+        "decodedBytes": 730
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bzwutf_2.js",
+        "type": "other",
+        "start": 512.5,
+        "duration": 111.10000000009313,
+        "bytes": 408,
+        "decodedBytes": 107
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Bd-JRjQ_.js",
+        "type": "other",
+        "start": 512.5,
+        "duration": 111.20000000018626,
+        "bytes": 727,
+        "decodedBytes": 888
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C9TLfuAS.js",
+        "type": "other",
+        "start": 512.5,
+        "duration": 111.20000000018626,
+        "bytes": 408,
+        "decodedBytes": 107
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DHDaDy_8.js",
+        "type": "other",
+        "start": 512.6000000000931,
+        "duration": 105.29999999981374,
+        "bytes": 599,
+        "decodedBytes": 497
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/B1kO6wVG.js",
+        "type": "other",
+        "start": 512.6000000000931,
+        "duration": 109.79999999981374,
+        "bytes": 4049,
+        "decodedBytes": 9971
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BgDe49mV.js",
+        "type": "other",
+        "start": 512.7000000001863,
+        "duration": 109.59999999962747,
+        "bytes": 462,
+        "decodedBytes": 184
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CGMR6R08.js",
+        "type": "other",
+        "start": 512.7000000001863,
+        "duration": 109.79999999981374,
+        "bytes": 433,
+        "decodedBytes": 148
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/onNf2Th8.js",
+        "type": "other",
+        "start": 512.7000000001863,
+        "duration": 109.89999999990687,
+        "bytes": 860,
+        "decodedBytes": 1003
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/variants/featured/arc-1600.avif?v=2026-11-11T16%3A56%3A47.213%2B00%3A00",
+        "type": "link",
+        "start": 591.7999999998137,
+        "duration": 130.5,
+        "bytes": 0,
+        "decodedBytes": 0
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BYr1IjF_.js",
+        "type": "script",
+        "start": 664.2999999998137,
+        "duration": 23.600000000093132,
+        "bytes": 7449,
+        "decodedBytes": 21273
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BNgHtPgZ.js",
+        "type": "script",
+        "start": 664.3999999999069,
+        "duration": 15.800000000279397,
+        "bytes": 651,
+        "decodedBytes": 538
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DawuyM7t.js",
+        "type": "script",
+        "start": 664.5,
+        "duration": 17,
+        "bytes": 467,
+        "decodedBytes": 194
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/TLU8mOJY.js",
+        "type": "script",
+        "start": 664.5,
+        "duration": 17.100000000093132,
+        "bytes": 940,
+        "decodedBytes": 1108
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DQwlTKDl.js",
+        "type": "script",
+        "start": 664.6000000000931,
+        "duration": 18.699999999720603,
+        "bytes": 549,
+        "decodedBytes": 317
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CbvqQ9Bv.js",
+        "type": "script",
+        "start": 664.6000000000931,
+        "duration": 20.799999999813735,
+        "bytes": 634,
+        "decodedBytes": 475
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/t5WGcFlZ.js",
+        "type": "script",
+        "start": 664.6000000000931,
+        "duration": 23.5,
+        "bytes": 2494,
+        "decodedBytes": 5020
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BWlctzrx.js",
+        "type": "script",
+        "start": 664.7000000001863,
+        "duration": 18.299999999813735,
+        "bytes": 3094,
+        "decodedBytes": 6410
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BqBChbD0.js",
+        "type": "script",
+        "start": 664.7000000001863,
+        "duration": 27.299999999813735,
+        "bytes": 910,
+        "decodedBytes": 1278
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/7gGXzX7N.js",
+        "type": "script",
+        "start": 664.7999999998137,
+        "duration": 25.40000000037253,
+        "bytes": 3203,
+        "decodedBytes": 8252
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DIRokRPC.js",
+        "type": "script",
+        "start": 664.8999999999069,
+        "duration": 18.300000000279397,
+        "bytes": 580,
+        "decodedBytes": 397
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CwtLp4z9.js",
+        "type": "script",
+        "start": 665,
+        "duration": 22.700000000186265,
+        "bytes": 1105,
+        "decodedBytes": 1658
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DfkBjvPv.js",
+        "type": "script",
+        "start": 665,
+        "duration": 25.399999999906868,
+        "bytes": 1328,
+        "decodedBytes": 1853
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/C7G6dXBG.js",
+        "type": "script",
+        "start": 665,
+        "duration": 27.200000000186265,
+        "bytes": 609,
+        "decodedBytes": 456
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CIhAMf6z.js",
+        "type": "script",
+        "start": 665,
+        "duration": 29,
+        "bytes": 14192,
+        "decodedBytes": 40935
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CTjDBfoK.js",
+        "type": "script",
+        "start": 665.1000000000931,
+        "duration": 29.899999999906868,
+        "bytes": 56958,
+        "decodedBytes": 214038
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BZWlHBh1.js",
+        "type": "script",
+        "start": 665.2000000001863,
+        "duration": 18.899999999906868,
+        "bytes": 559,
+        "decodedBytes": 368
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/Czuea_Iy.js",
+        "type": "script",
+        "start": 665.2000000001863,
+        "duration": 24.799999999813735,
+        "bytes": 541,
+        "decodedBytes": 353
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DrV8eWvp.js",
+        "type": "script",
+        "start": 665.2999999998137,
+        "duration": 24.800000000279397,
+        "bytes": 468,
+        "decodedBytes": 338
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DRUHHgwo.js",
+        "type": "script",
+        "start": 665.2999999998137,
+        "duration": 26.600000000093132,
+        "bytes": 514,
+        "decodedBytes": 284
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CyP3WBUX.js",
+        "type": "script",
+        "start": 665.2999999998137,
+        "duration": 28.5,
+        "bytes": 691,
+        "decodedBytes": 602
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/BS1Fxn7A.js",
+        "type": "script",
+        "start": 665.3999999999069,
+        "duration": 28.200000000186265,
+        "bytes": 408,
+        "decodedBytes": 107
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.svg",
+        "type": "other",
+        "start": 739.2000000001863,
+        "duration": 24.299999999813735,
+        "bytes": 1204,
+        "decodedBytes": 1689
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.ico",
+        "type": "other",
+        "start": 834.7000000001863,
+        "duration": 24.09999999962747,
+        "bytes": 3863,
+        "decodedBytes": 15086
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/media/NotoNaskhArabic-Variable.6GYD_0Ja.woff2",
+        "type": "css",
+        "start": 895.7999999998137,
+        "duration": 41.90000000037253,
+        "bytes": 124036,
+        "decodedBytes": 123736
+      },
+      {
+        "url": "https://arabicwithm.com/homepage/vegeta.avif",
+        "type": "img",
+        "start": 965.8999999999069,
+        "duration": 25.899999999906868,
+        "bytes": 75880,
+        "decodedBytes": 75580
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.svg",
+        "type": "other",
+        "start": 980.2999999998137,
+        "duration": 23.200000000186265,
+        "bytes": 300,
+        "decodedBytes": 1689
+      },
+      {
+        "url": "https://arabicwithm.com/favicon.ico",
+        "type": "other",
+        "start": 1005.2000000001863,
+        "duration": 27.199999999720603,
+        "bytes": 300,
+        "decodedBytes": 15086
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2",
+        "type": "script",
+        "start": 1030.7999999998137,
+        "duration": 66.3000000002794,
+        "bytes": 0,
+        "decodedBytes": 0
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D1lhgyS4.js",
+        "type": "script",
+        "start": 1035.2000000001863,
+        "duration": 18.5,
+        "bytes": 5013,
+        "decodedBytes": 14478
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/AsoCpK-z.js",
+        "type": "script",
+        "start": 1035.6000000000931,
+        "duration": 17.600000000093132,
+        "bytes": 512,
+        "decodedBytes": 261
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/D6iLMN3-.js",
+        "type": "script",
+        "start": 1036,
+        "duration": 20.799999999813735,
+        "bytes": 1029,
+        "decodedBytes": 1397
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/sSlbbExW.js",
+        "type": "script",
+        "start": 1036.2999999998137,
+        "duration": 18,
+        "bytes": 2891,
+        "decodedBytes": 6499
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/CplzRyvj.js",
+        "type": "script",
+        "start": 1036.7999999998137,
+        "duration": 19.5,
+        "bytes": 1599,
+        "decodedBytes": 3529
+      },
+      {
+        "url": "https://arabicwithm.com/_next/static/chunks/DYgEW1av.js",
+        "type": "script",
+        "start": 1037.2000000001863,
+        "duration": 22.299999999813735,
+        "bytes": 862,
+        "decodedBytes": 967
+      },
+      {
+        "url": "https://region1.google-analytics.com/g/collect?v=2&tid=G-PT7YH1RF99&gtm=45He6bh1v9285314595za208zd9285314595xf1&_p=1795268457339&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1705282966.1795268458&frm=0&ngs=1&pscdl=noapi&rcb=15&sr=390x844&uaa=arm&uab=64&uafvl=Chromium%3B158.0.8127.36%7CNot.A%252FBrand%3B24.0.0.0%7CGoogle%2520Chrome%3B158.0.8127.36&uam=&uamb=1&uap=iOS&uapv=15_0&uaw=0&ul=en-gb&_s=1&tag_exp=115938465~115938468~120385423~120469145~120469153~121049589~121246026~121246034~123785232&sid=1795268457&sct=1&seg=0&dl=https%3A%2F%2Farabicwithm.com%2F&dt=ArabicWithM%20%E2%80%94%20Learn%20Arabic%20with%20Cartoons&en=page_view&_fv=1&_nsi=1&_ss=1&tfd=1214",
+        "type": "fetch",
+        "start": 1215,
+        "duration": 39.60000000009313,
+        "bytes": 0,
+        "decodedBytes": 0
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/avt-2.webp",
+        "type": "img",
+        "start": 1479.1000000000931,
+        "duration": 74.39999999990687,
+        "bytes": 0,
+        "decodedBytes": 0
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/nar-3.webp",
+        "type": "img",
+        "start": 1479.1000000000931,
+        "duration": 91,
+        "bytes": 0,
+        "decodedBytes": 0
+      },
+      {
+        "url": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/episodes/bat-1.webp",
+        "type": "img",
+        "start": 1479.2000000001863,
+        "duration": 96,
+        "bytes": 0,
+        "decodedBytes": 0
+      }
+    ],
+    "serviceWorker": {
+      "controller": null,
+      "registrations": []
+    },
+    "cacheNames": [],
+    "featured": true,
+    "featuredImages": [
+      {
+        "src": "https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/variants/featured/arc-1600.avif?v=2026-11-11T16%3A56%3A47.213%2B00%3A00",
+        "complete": true,
+        "naturalWidth": 358
+      }
+    ],
+    "oldHero": false,
+    "menuHit": {
+      "usable": true,
+      "top": "<path d=\"M3 18h18v-2H3zm0-5h18v-2H3zm0-7v2h18V6z\"></path>"
+    },
+    "recover": null
+  }
+]
