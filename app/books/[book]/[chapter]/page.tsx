@@ -6,13 +6,15 @@ import {
   fetchBookBySlugPublic,
   fetchChapterForPublic,
   fetchChaptersForBookPublic,
+  fetchChapterForReader,
+  fetchChaptersForBookReader,
 } from '@/app/actions/books'
 import ChapterReader from './ChapterReader'
 import { structuredChapterPages, StructuredChapterDiagnostic } from '@/app/components/books/structured/StructuredChapterRenderer'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
 import { fetchPublishedChapterAudioForChapter, type ChapterAudioSummary } from '@/app/actions/audiobooks'
-import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { getAuthenticatedUserId, getAuthenticatedAccess } from '@/app/actions/auth'
 import { isBookReleased } from '@/app/lib/bookRelease'
 
 export const dynamic = 'force-dynamic'
@@ -45,14 +47,15 @@ export default async function ChapterPage({
   const initialBlock=Number.isInteger(parsedBlock)&&parsedBlock>=0?parsedBlock:undefined
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
-  if (!await isBookReleased(book.id)) redirect(`/books/${encodeURIComponent(book.slug)}`)
+  const admin = Boolean((await getAuthenticatedAccess())?.admin)
+  if (!admin && !await isBookReleased(book.id)) redirect(`/books/${encodeURIComponent(book.slug)}`)
 
   let chapter: Awaited<ReturnType<typeof fetchChapterForPublic>>
   let chapters: Awaited<ReturnType<typeof fetchChaptersForBookPublic>>
   try {
     ;[chapter, chapters] = await Promise.all([
-      fetchChapterForPublic(book.id, chapterSlug),
-      fetchChaptersForBookPublic(book.id),
+      fetchChapterForReader(book.id, chapterSlug),
+      fetchChaptersForBookReader(book.id),
     ])
   } catch (error) {
     console.error('[book-reader] Unable to load chapter data', {
@@ -127,7 +130,13 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
-        <ChapterReader structuredPages={structuredPages} key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
+        {admin && <Box component="nav" aria-label="Admin chapter navigation" sx={{ my: 2 }}>
+          {chapterIndex > 0 && <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapters[chapterIndex - 1].slug)}`}>Previous chapter</Button>}
+          {nextChapter && <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`}>Next chapter</Button>}
+          <Typography component="h2">All Chapters ({chapters.length})</Typography>
+          <ul>{chapters.map(item => <li key={item.id}><Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(item.slug)}`} aria-current={item.id === chapter.id ? 'page' : undefined}>{item.title}</Link></li>)}</ul>
+        </Box>}
+        <ChapterReader adminPreview={admin} structuredPages={structuredPages} key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
 
       </Container>

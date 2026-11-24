@@ -3,7 +3,7 @@
 import { readChapterPublication, chapterPublished } from '@/app/lib/chapterPublicationRead'
 
 import { detectChapterFormat, structuredPageCount, type StructuredChapterResult } from '@/app/lib/structuredChapter'
-import { getAuthenticatedUserId } from "@/app/actions/auth"
+import { getAuthenticatedUserId, getAuthenticatedAccess } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
 import { assertPublicRead } from '@/app/lib/publicRead'
@@ -247,6 +247,17 @@ export async function fetchChaptersForBookPublic(bookId: string): Promise<Public
   const chapters = await fetchChaptersForBookPublicCached(bookId)
   const published = new Set(await releasedChapterIds(chapters.map(chapter=>chapter.id)))
   return chapters.filter(chapter=>published.has(chapter.id))
+}
+
+/** Request-scoped role decision; never cache an Admin response as public data. */
+export async function fetchChaptersForBookReader(bookId: string): Promise<PublicChapter[]> {
+  if ((await getAuthenticatedAccess())?.admin) return fetchChaptersForBookPublicCached(bookId)
+  return fetchChaptersForBookPublic(bookId)
+}
+
+export async function fetchChapterForReader(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
+  if ((await getAuthenticatedAccess())?.admin) return fetchChapterContent(bookId, chapterSlug)
+  return fetchChapterForPublic(bookId, chapterSlug)
 }
 
 export async function fetchChapterCardsForBookPublic(bookId: string): Promise<PublicChapter[]> {
@@ -608,7 +619,7 @@ export const fetchExploreBookChapterPageCounts = unstable_cache(
 export async function fetchChapterForAdminPreview(chapterId: string) {
   const { guardAdmin } = await import('@/app/actions/auth')
   await guardAdmin()
-  const { data, error } = await serviceClient.from('chapters').select('book_id,slug,content,is_published').eq('id', chapterId).maybeSingle()
+  const { data, error } = await serviceClient.from('chapters').select('*').eq('id', chapterId).maybeSingle()
   if (error) throw new Error('Unable to load the chapter preview.')
   if (!data) return null
   const [chapter, chapters, bookRead] = await Promise.all([
@@ -621,5 +632,5 @@ export async function fetchChapterForAdminPreview(chapterId: string) {
   const raw = data.content && typeof data.content === 'object' && !Array.isArray(data.content) ? data.content as Record<string, unknown> : null
   const previewDiagnostic = raw && 'schema_version' in raw && !('sections' in raw)
     ? 'This draft chapter cannot be previewed yet: its structured JSON is missing the sections list.' : null
-  return chapter && book ? { chapter, chapters, book, previewDiagnostic, isPublished:data.is_published === true } : null
+  return chapter && book ? { chapter, chapters, book, previewDiagnostic, isPublished:chapterPublished(data) } : null
 }

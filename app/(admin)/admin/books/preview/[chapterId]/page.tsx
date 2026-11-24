@@ -29,5 +29,6 @@ export default async function ChapterPreview({params,searchParams}:{params:Promi
    {index>0&&<Link href={`/admin/books/preview/${chapters[index-1].id}`}>Previous chapter</Link>}
    {index>=0&&index<chapters.length-1&&<Link href={`/admin/books/preview/${chapters[index+1].id}`}>Next chapter</Link>}
   </Stack>
+  <Box component="nav" aria-label="All Chapters"><Typography component="h2">All Chapters ({chapters.length})</Typography><ul>{chapters.map(item=><li key={item.id}><Link href={`/admin/books/preview/${item.id}`} aria-current={item.id===chapter.id?'page':undefined}>{item.title}</Link></li>)}</ul></Box>
  </Stack>
 }

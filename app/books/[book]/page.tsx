@@ -10,10 +10,13 @@ import BookDetailMetadata from './BookDetailMetadata'
 import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 import BookInProgress from './BookInProgress'
 import { isBookReleased } from '@/app/lib/bookRelease'
+import { getAuthenticatedAccess } from '@/app/actions/auth'
+import { fetchChaptersForBookReader } from '@/app/actions/books'
 import StructuredData from '@/app/components/StructuredData'
 import { absoluteUrl, breadcrumbJsonLd } from '@/app/lib/seo'
 
 export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export async function generateStaticParams() {
   const books = await fetchBooksForPublic()
@@ -40,9 +43,10 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const { book: slug } = await params
   const book = await fetchBookBySlugPublic(slug)
   if (!book) notFound()
-  const completed = await isBookReleased(book.id)
+  const admin = Boolean((await getAuthenticatedAccess())?.admin)
+  const completed = admin || await isBookReleased(book.id)
 
-  const [chapters, audioChapters] = completed ? await Promise.all([fetchChapterCardsForBookPublic(book.id), fetchPublishedAudioForBook(book.id)]) : [[], []]
+  const [chapters, audioChapters] = completed ? await Promise.all([admin ? fetchChaptersForBookReader(book.id) : fetchChapterCardsForBookPublic(book.id), fetchPublishedAudioForBook(book.id)]) : [[], []]
   const audioChapterIds = new Set(audioChapters.map((audio) => audio.chapterId))
 
   const infoFields = (

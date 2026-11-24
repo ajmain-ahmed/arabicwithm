@@ -29,8 +29,8 @@ import { Close, Save, Delete } from "@mui/icons-material"
 import AdminTextField from "./AdminTextField"
 import {
   fetchChapterForAdmin,
-  createChapter,
-  updateChapter,
+  createChapterResult,
+  updateChapterResult,
   deleteChapter,
   type BookRow,
   type ChapterInput,
@@ -206,8 +206,14 @@ export default function ChapterEditDialog({
         if (draft.source === 'youtube' && draft.youtubeId && !normalizeYouTubeId(draft.youtubeId)) throw new Error(`${language === 'ar' ? 'Arabic' : 'English'} YouTube URL or video ID is invalid.`)
       }
       const detailsChanged = chapterBaseline.current !== JSON.stringify([bookId, slug, title, chapterNumber, contentJson, published])
-      if (!savedIdRef.current) savedIdRef.current = await createChapter(input)
-      else if (detailsChanged) await updateChapter(savedIdRef.current, input)
+      if (!savedIdRef.current) {
+        const result = await createChapterResult(input)
+        if (!result.ok) throw new Error(result.error)
+        savedIdRef.current = result.data
+      } else if (detailsChanged) {
+        const result = await updateChapterResult(savedIdRef.current, input)
+        if (!result.ok) throw new Error(result.error)
+      }
       for (const language of ['ar', 'en'] as const) {
         const draft = audio[language]
         if ((draft.file || fingerprint(draft) !== audioBaseline.current[language]) && (draft.exists || draft.file || draft.sourceInput.trim() || draft.youtubeId.trim())) {

@@ -774,27 +774,59 @@ export async function fetchChapterForAdmin(
   }
 }
 
+// Older deployments use only the parent Book gate. Never silently save a draft
+// into a released Book when the database cannot enforce chapter publication.
+async function assertLegacyChapterPublication(bookId: string, published?: boolean): Promise<void> {
+  if (published !== false) return
+  const { data, error } = await serviceClient.from('books').select('is_completed').eq('id', bookId).single()
+  if (error || !data) throw new Error('Unable to verify Book publication. Please reload and retry.')
+  if (data.is_completed !== false) throw new Error('This database does not support chapter drafts in released Books yet. Save the chapter in an in-progress Book, or install the existing chapter-publication migration before saving a draft here.')
+}
+
+function chapterSaveError(error: unknown): string {
+  const failure = error as { code?: string; message?: string }
+  if (failure?.message === 'Forbidden') return 'Administrator access is required to save chapters.'
+  if (failure?.code === '23505') return 'A chapter already uses this slug or chapter number in this Book. Choose another value.'
+  if (failure?.code === '23503') return 'The selected Book no longer exists. Reload the Books list.'
+  if (failure instanceof Error) return failure.message
+  return 'Unable to save the chapter. Please check the fields and try again.'
+}
+
+/** Expected save failures must cross the production Server Action boundary as data. */
+export async function createChapterResult(input: ChapterInput): Promise<ActionResult<string>> {
+  try { return { ok: true, data: await createChapter(input) } }
+  catch (error) { unstable_rethrow(error); console.error('[createChapterResult]', error); return { ok: false, error: chapterSaveError(error) } }
+}
+
+export async function updateChapterResult(id: string, input: Partial<ChapterInput>): Promise<ActionResult<string>> {
+  try { await updateChapter(id, input); return { ok: true, data: id } }
+  catch (error) { unstable_rethrow(error); console.error('[updateChapterResult]', error); return { ok: false, error: chapterSaveError(error) } }
+}
+
 export async function createChapter(input: ChapterInput): Promise<string> {
   await guardAdmin()
   validateBookTokenGrammar(input.content)
   validateAdditionalStructuredChapter(input.content)
 
-  const { data, error } = await serviceClient
+  const { data, error } = await readChapterPublication(async hasPublication => {
+    if (!hasPublication) await assertLegacyChapterPublication(input.book_id, input.is_published ?? false)
+    return serviceClient
     .from("chapters")
     .insert({
       book_id: input.book_id,
       slug: input.slug,
       title: input.title,
       chapter_number: input.chapter_number,
-      is_published: input.is_published === undefined ? false : z.boolean().parse(input.is_published),
+      ...(hasPublication ? { is_published: input.is_published === undefined ? false : z.boolean().parse(input.is_published) } : {}),
       content: (input.content ?? []) as never,
     } as never)
     .select("id")
     .single()
+  })
 
   if (error || !data) {
     console.error("[createChapter] error:", error?.message)
-    throw new Error(error?.message ?? "Failed to create chapter")
+    throw new Error(chapterSaveError(error))
   }
 
   updateTag("books-public")
@@ -823,14 +855,24 @@ export async function updateChapter(
   if (input.content !== undefined) payload.content = input.content
   if (input.is_published !== undefined) payload.is_published = z.boolean().parse(input.is_published)
 
-  const { error } = await serviceClient
-    .from("chapters")
-    .update(payload as never)
-    .eq("id", id)
+  const { error } = await readChapterPublication(async hasPublication => {
+    const compatiblePayload = { ...payload }
+    if (!hasPublication) {
+      let bookId = input.book_id
+      if (!bookId) {
+        const { data, error } = await serviceClient.from('chapters').select('book_id').eq('id', id).single()
+        if (error || !data) throw new Error('Unable to verify chapter publication. Please reload and retry.')
+        bookId = data.book_id
+      }
+      await assertLegacyChapterPublication(bookId!, input.is_published)
+      delete compatiblePayload.is_published
+    }
+    return serviceClient.from('chapters').update(compatiblePayload as never).eq('id', id)
+  })
 
   if (error) {
     console.error("[updateChapter] error:", error.message)
-    throw new Error(error.message)
+    throw new Error(chapterSaveError(error))
   }
 
   updateTag("books-public")

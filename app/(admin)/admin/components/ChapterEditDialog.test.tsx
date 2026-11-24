@@ -2,7 +2,7 @@ import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn(), fetch: vi.fn(), audio: vi.fn(), upload: vi.fn(), persist: vi.fn(), saved: vi.fn(), closed: vi.fn(), resolve: vi.fn(), duration: vi.fn() }))
-vi.mock('@/app/actions/admin', () => ({ createChapter: mocks.create, updateChapter: mocks.update, fetchChapterForAdmin: mocks.fetch, deleteChapter: vi.fn() }))
+vi.mock('@/app/actions/admin', () => ({ createChapterResult: mocks.create, updateChapterResult: mocks.update, fetchChapterForAdmin: mocks.fetch, deleteChapter: vi.fn() }))
 vi.mock('@/app/actions/audiobooks', () => ({ fetchChapterAudioForAdmin: mocks.audio, saveChapterAudioResult: mocks.persist, deleteChapterAudioForAdmin: vi.fn(), resolveAudiobookForAdmin: mocks.resolve }))
 vi.mock('@/app/lib/audioMetadata', () => ({ readAudioDuration: mocks.duration }))
 vi.mock('@/app/lib/uploadChapterAudio', () => ({ uploadChapterAudio: mocks.upload }))
@@ -15,7 +15,7 @@ let host: HTMLDivElement, root: Root
 beforeEach(() => {
   vi.clearAllMocks(); Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
-  mocks.create.mockResolvedValue('new-chapter'); mocks.audio.mockResolvedValue(null)
+  mocks.create.mockResolvedValue({ok:true,data:'new-chapter'}); mocks.update.mockResolvedValue({ok:true,data:'existing-chapter'}); mocks.audio.mockResolvedValue(null)
   mocks.persist.mockResolvedValue({ ok: true })
   mocks.duration.mockResolvedValue(2536)
   mocks.resolve.mockImplementation(async source => ({ ok: true, storagePath: source.replace(/^audiobooks\//, ''), storageBucket: 'audiobooks', externalUrl: null, url: 'https://example.com/audio' }))
@@ -176,4 +176,16 @@ it('loads chapter details during an audio outage without overwriting audio',asyn
  expect(button('Save').disabled).toBe(false)
  await act(async()=>button('Save').click())
  expect(mocks.persist).not.toHaveBeenCalled()
+})
+
+it('keeps chapter JSON in the dialog and displays returned save errors', async () => {
+ await mount()
+ mocks.create.mockResolvedValue({ok:false,error:'A chapter already uses this slug or chapter number in this Book. Choose another value.'})
+ await act(async()=>button('Save').click())
+ expect(document.body.textContent).toContain('A chapter already uses this slug')
+ expect(mocks.closed).not.toHaveBeenCalled()
+ expect(mocks.saved).not.toHaveBeenCalled()
+ mocks.create.mockResolvedValue({ok:true,data:'new-chapter'})
+ await act(async()=>button('Save').click())
+ expect(mocks.closed).toHaveBeenCalledOnce()
 })
