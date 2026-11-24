@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Celebration } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, Paper, Typography } from '@mui/material'
+import { Celebration, Close } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, IconButton, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { fetchLearnPuzzleClient as fetchLearnPuzzle } from '@/app/lib/learnClient'
 import { completeWordSearch, fetchPuzzleVocabulary, type WordSearchCompletionResult } from '@/app/actions/puzzles'
 import WordSearchShell from './WordSearchShell'
 import { generateWordSearch, sameCells, straightLineBetween, WORD_SEARCH_DIFFICULTIES, type PuzzleCell, type PuzzleVocabularySource, type WordSearchDifficulty, type WordSearchPuzzle } from '@/app/lib/transcriptPuzzles'
@@ -143,7 +144,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
       let nextSource = source
       let nextPuzzle = nextSource ? puzzleFor(nextSource, selectedDifficulty) : null
       if (!nextSource || !nextPuzzle) {
-        nextSource = await boundedRead(fetchPuzzleVocabulary(undefined, config.minimumWords), 10000)
+        nextSource = await boundedRead((embedded ? fetchLearnPuzzle : fetchPuzzleVocabulary)(undefined, config.minimumWords), 10000)
         nextPuzzle = nextSource ? puzzleFor(nextSource, selectedDifficulty) : null
       }
       if (!nextSource || !nextPuzzle) {
@@ -159,13 +160,16 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
     }
   }
 
+  const newGamePending = useRef(false)
   const newGame = async () => {
+    if (newGamePending.current) return
+    newGamePending.current = true
     setBusy(true)
     setMessage('')
     setCompletion(null)
     try {
       const config = WORD_SEARCH_DIFFICULTIES[selectedDifficulty]
-      const nextSource = await boundedRead(fetchPuzzleVocabulary(source ? `${source.type}:${source.id}` : undefined, config.minimumWords), 10000)
+      const nextSource = await boundedRead((embedded ? fetchLearnPuzzle : fetchPuzzleVocabulary)(source ? `${source.type}:${source.id}` : undefined, config.minimumWords), 10000)
       if (!nextSource) {
         setMessage('Not enough reliable vocabulary is available for a new puzzle yet.')
         return
@@ -180,6 +184,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
       console.error('[word-search] Unable to generate puzzle:', error)
       setMessage('Unable to create a new puzzle. Please try again.')
     } finally {
+      newGamePending.current = false
       setBusy(false)
     }
   }
@@ -269,7 +274,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
 
   return (
     <WordSearchShell source={source} controls={controls} embedded={embedded}>
-      {message && <Alert severity={complete ? 'success' : 'info'} sx={{ mb: 2 }}>{message}</Alert>}
+      {message && <Alert severity={embedded ? 'warning' : complete ? 'success' : 'info'} action={embedded ? <Button disabled={busy} onClick={() => void newGame()}>Retry</Button> : undefined} sx={{ mb: 2 }}>{message}</Alert>}
       {completionError && (
         <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" disabled={savingCompletion} onClick={() => pendingCompletion && void saveCompletion(pendingCompletion)}>Retry save</Button>}>
           {completionError}
@@ -326,12 +331,13 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
         </Box>
       )}
 
-      <Dialog open={Boolean(completion)} fullWidth maxWidth="xs" aria-labelledby="word-search-complete-title" slotProps={{ paper: { sx: { borderRadius: '18px', bgcolor: 'background.paper', overflow: 'hidden' } } }}>
+      <Dialog onClose={() => setCompletion(null)} open={Boolean(completion)} fullWidth maxWidth="xs" aria-labelledby="word-search-complete-title" slotProps={{ paper: { sx: { borderRadius: '18px', bgcolor: 'background.paper', overflow: 'hidden' } } }}>
         {completion && (
           <DialogContent sx={{ p: { xs: 2.5, sm: 4 }, textAlign: 'center' }}>
             <Box sx={{ width: 66, height: 66, mx: 'auto', display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: 'color-mix(in srgb, var(--awm-gold) 16%, transparent)', color: 'var(--awm-gold)', animation: 'awm-complete-pop .42s ease-out', '@keyframes awm-complete-pop': { from: { opacity: 0, transform: 'scale(.72)' }, to: { opacity: 1, transform: 'scale(1)' } }, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
               <Celebration sx={{ fontSize: 36 }} />
             </Box>
+            <IconButton aria-label="Close completion message" onClick={() => setCompletion(null)} sx={{position:'absolute',right:8,top:8}}><Close/></IconButton>
             <Typography id="word-search-complete-title" component="h2" sx={{ mt: 1.5, fontFamily: 'var(--font-heading)', fontSize: 32, fontWeight: 600, color: 'text.primary' }}>
               Word Search Complete!
             </Typography>
@@ -346,8 +352,8 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
               ].map(([label, value]) => <Box key={label} sx={{ minWidth: 0, p: 1.25, borderRadius: '10px', bgcolor: 'action.hover' }}><Typography sx={{ color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>{label}</Typography><Typography sx={{ mt: 0.3, overflowWrap: 'anywhere', color: 'text.primary', fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{value}</Typography></Box>)}
             </Box>
             <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>{completion.mistakes} mistake{completion.mistakes === 1 ? '' : 's'} · {completion.revealsUsed} reveal{completion.revealsUsed === 1 ? '' : 's'}</Typography>
-            <Button fullWidth variant="contained" onClick={() => router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Continue</Button>
-            <Button fullWidth color="secondary" onClick={() => void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>Play Again</Button>
+            <Button fullWidth variant="contained" disabled={busy} onClick={() => embedded ? void newGame() : router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Continue</Button>
+            <Button fullWidth color="secondary" onClick={() => embedded ? router.push('/') : void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>{embedded ? 'Back to Home' : 'Play Again'}</Button>
           </DialogContent>
         )}
       </Dialog>

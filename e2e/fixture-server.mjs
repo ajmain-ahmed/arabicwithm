@@ -520,7 +520,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       {key:'s:'+showId,kind:'show',title:'Test Show',source:'Test Show',arabic:'',english:'Test show.',href:'/cartoons/test-show'}];
       return json(res,hits.filter(h=>h.key>(body.p_after??'') && (h.kind!=='chapter'||body.p_books)))
     }
-    if(rpc==='nahw_candidates') return json(res,learning.nahw)
+    if(rpc==='nahw_candidates') return json(res,learning.nahw.slice(0,body.p_limit??40))
     if(rpc==='website_grammar_candidates') {
       const examples=[
         {tokens:[{arabic:'كَتَبَ'},{arabic:'الطَّالِبُ'},{arabic:'دَرْسًا'}],translation:'The student wrote a lesson.',target:1,role:'Doer / subject of the verb',key:'subject'},
@@ -793,6 +793,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if (filter.startsWith('gt.')) rows = rows.filter(row => Number(row[key]) > Number(filter.slice(3)))
       if (filter.startsWith('lte.')) rows = rows.filter(row => Number(row[key]) <= Number(filter.slice(4)))
     }
+    if(table==='episodes'&&url.searchParams.get('select')?.includes('block:transcript->')){const index=Number(url.searchParams.get('select').match(/block:transcript->(\d+)/)?.[1]);rows=rows.map(row=>({id:row.id,show_id:row.show_id,level:row.level,block:Array.isArray(row.transcript)?row.transcript[index]??null:null,legacyBlock:row.transcript?.scriptBlocks?.[index]??null}))}
+    if(table==='episodes'&&url.searchParams.get('select')?.includes('b0:transcript->0'))rows=rows.map(row=>({...Object.fromEntries(['id','show_id','slug','title','level'].map(k=>[k,row[k]])),...Object.fromEntries(Array.from({length:32},(_,i)=>[[`b${i}`,Array.isArray(row.transcript)?row.transcript[i]??null:null],[`l${i}`,row.transcript?.scriptBlocks?.[i]??null]]).flat())}))
     if(table==='youtube_transcripts'&&url.searchParams.get('select')?.includes('source_language:raw_transcript->>source_language'))rows=rows.map(row=>({...row,source_language:row.raw_transcript?.source_language??null}))
     if(table==='user_video_library')rows=rows.map(row=>({...row,youtube_transcripts:tables.youtube_transcripts.find(video=>video.id===row.transcript_id)??null}))
     if (table === 'phrases' && process.env.AWM_TEST_PHRASE_PAGINATION === '1' && url.searchParams.has('or')) {
@@ -983,4 +985,9 @@ if (process.env.AWM_TEST_PHRASE_PAGINATION === '1') tables.phrases = Array.from(
   english: index >= 2493 ? `Unique ${['webkit', 'chrome', 'firefox', 'edge'][Math.floor((index - 2493) / 2)]} ${(index - 2493) % 2 ? 1440 : 390} expression` : `Reusable expression number ${index + 1}`,
   cefr: 'B1', notes: 'Synthetic pagination fixture', word_glosses: [{ arabic: 'عَلَى', english: 'on' }, { arabic: 'الْفَوْرِ', english: 'the instant' }],
 }))
-if (process.env.AWM_TEST_LEARN_PROFILE === '1') for (const episode of tables.episodes) episode.transcript = [{ timestamp: '0:00', translation: 'A book, a pen, the sun, the sea, a house and a flower.', tokens: ['كِتَابٌ','قَلَمٌ','شَمْسٌ','بَحْرٌ','بَيْتٌ','وَرْدٌ'].map((arabic, index) => ({ arabic, english: ['book','pen','sun','sea','house','flower'][index], pos: 'noun', cefr: 'A1', headword: arabic })) }]
+if (process.env.AWM_TEST_LEARN_PROFILE === '1' || process.env.AWM_TEST_LEARN_CONTINUITY === '1') for (const episode of tables.episodes) episode.transcript = [{ timestamp: '0:00', translation: 'A book, a pen, the sun, the sea, a house and a flower.', tokens: ['كِتَابٌ','قَلَمٌ','شَمْسٌ','بَحْرٌ','بَيْتٌ','وَرْدٌ'].map((arabic, index) => ({ arabic, english: ['book','pen','sun','sea','house','flower'][index], pos: 'noun', cefr: 'A1', headword: arabic })) }]
+
+if(process.env.AWM_TEST_LEARN_CONTINUITY==='1')for(const episode of tables.episodes){
+ const tokens=episode.transcript[0].tokens
+ episode.transcript=tokens.map((token,index)=>({timestamp:String(index),tokens:[{arabic:'\u0647\u0630\u0627',english:'this',pos:'pronoun',cefr:'a1'},token],translation:`This is a ${token.english}.`}))
+}

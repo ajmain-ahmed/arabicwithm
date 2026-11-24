@@ -142,3 +142,11 @@ it("handles a malformed source URL as a missing selection without querying the d
   });
   expect(mocks.source).not.toHaveBeenCalled();
 });
+
+it('validates a Learn card against one canonical stored block without loading the full source',async()=>{
+ mocks.source.mockResolvedValue({data:{id:'episode',show_id:'show',level:'A1',block:{tokens:[],translation:'translation'}},error:null})
+ await expect(recordMemoryReview(card.id,'known',completion,session)).resolves.toMatchObject({accepted:true})
+ expect(mocks.source).toHaveBeenCalledOnce()
+ expect(mocks.extract).toHaveBeenCalledOnce()
+ expect(mocks.extract.mock.calls[0][0].transcript).toHaveLength(1)
+})

@@ -184,9 +184,9 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   }
 }
 
-/* Episode+show source for validating a rated card. Cached with the same tag
-   as the public episode page so a 20-card session doesn't download the same
-   transcript 20 times; admin episode edits bust it. */
+/* Legacy saved-card fallback: cache canonical ranked cards, not a full
+   transcript that would be normalized again for every individual review.
+   Episode edits invalidate this through the existing public catalogue tag. */
 const fetchMemoryCardSource = unstable_cache(
   async (episodeId: string) => {
     const { data: episode, error: episodeError } = await serviceClient
@@ -199,11 +199,23 @@ const fetchMemoryCardSource = unstable_cache(
     const { data: show, error: showError } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
     if (showError) throw new Error('Unable to verify the Memory source. Please retry.')
     if (!show) return null
-    return { episode, show }
+    return extractMemoryCards({id:String(episode.id),showId:String(show.id),showSlug:String(show.slug),showTitle:String(show.title),episodeSlug:String(episode.slug),episodeTitle:String(episode.title),level:episode.level?String(episode.level):undefined,transcript:episode.transcript})
   },
-  ['memory-card-source', 'v1'],
+  ['memory-card-source', 'v2-canonical-cards'],
   { revalidate: publicRevalidate, tags: ['cartoons-public'] }
 )
+
+// Learn cards retain their canonical first-window block IDs. Validate that exact
+// stored block without normalizing an entire episode for each rated card.
+const fetchMemoryReviewBlock=unstable_cache(async(episodeId:string,blockIndex:number)=>{
+ const {data,error}=await serviceClient.from('episodes').select(`id,show_id,level,block:transcript->${blockIndex},legacyBlock:transcript->scriptBlocks->${blockIndex}`).eq('id',episodeId).maybeSingle()
+ if(error)throw new Error('Unable to verify the Memory source. Please retry.')
+ if(!data)return {exists:false,card:null}
+ const row=data as unknown as Record<string,unknown>
+ if(!row.block&&!row.legacyBlock)return {exists:true,card:null}
+ const card=extractMemoryCards({id:episodeId,showId:String(row.show_id),showSlug:'',showTitle:'',episodeSlug:'',episodeTitle:'',level:row.level?String(row.level):undefined,transcript:row.block?[row.block]:{scriptBlocks:[row.legacyBlock]}})[0]
+ return {exists:true,card:card?{arabic:card.arabic,english:card.english}:null}
+},['memory-review-block-v1'],{revalidate:publicRevalidate,tags:['cartoons-public']})
 
 export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; used: number }> {
   const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchEntitlements()])
@@ -215,20 +227,17 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
 
   const parsed = parseMemoryCardId(cardId)
   if (!parsed) throw new Error('Invalid Memory card.')
-  const source = await fetchMemoryCardSource(parsed.episodeId)
-  if (!source) throw new Error('This Memory card is no longer available.')
-  const { episode, show } = source
-  const validCards = extractMemoryCards({
-    id: String(episode.id),
-    showId: String(show.id),
-    showSlug: String(show.slug),
-    showTitle: String(show.title),
-    episodeSlug: String(episode.slug),
-    episodeTitle: String(episode.title),
-    level: episode.level ? String(episode.level) : undefined,
-    transcript: episode.transcript,
-  })
-  if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')
+  const submittedCard=state.cards[state.index-1]
+  let valid=false
+  if(parsed.blockIndex<32){
+    const stored=await fetchMemoryReviewBlock(parsed.episodeId,parsed.blockIndex)
+    if(!stored.exists)throw new Error('This Memory card is no longer available.')
+    valid=Boolean(stored.card&&stored.card.arabic===submittedCard.arabic&&stored.card.english===submittedCard.english)
+  }
+  // Legacy malformed transcripts used compacted block indexes. Preserve those
+  // saved IDs through the original full-source validator, cached after ranking.
+  if(!valid){const cards=await fetchMemoryCardSource(parsed.episodeId);valid=Boolean(cards?.some(card=>card.id===cardId))}
+  if(!valid)throw new Error('This Memory card is no longer available.')
 
   const { data, error } = await serviceClient.rpc('website_complete_memory_card_v2', {
     p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,

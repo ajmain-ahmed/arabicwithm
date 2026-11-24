@@ -76,16 +76,17 @@ function NahwActivity({ activity, show }: {
     const row = rows[index];
     return <><Typography>{index + 1} / {rows.length}</Typography>{activity === 'governance' || activity === 'build' ? <RelationCard key={row.id} row={row} activity={activity} next={() => setIndex(i => i + 1)} show={show}/> : <MappingCard key={row.id} row={row} mode={mode} phrases={activity === 'phrases'} next={() => setIndex(i => i + 1)} show={show}/>}</>;
 }
-function MappingCard({ row, mode, phrases, next, show }: {
+function MappingCard({ row, mode, phrases, next, show, manualProgress = false }: {
     row: NahwRow;
     mode: Mode;
     phrases: boolean;
     next: () => void;
     show: (r: Rule) => void;
+    manualProgress?: boolean;
 }) {
     const [targets] = useState(() => eligible(row, mode, phrases)), [selected, setSelected] = useState(''), [placed, setPlaced] = useState<Record<number, string>>({}), [used, setUsed] = useState<string[]>([]), [feedback, setFeedback] = useState('');
     const [labels] = useState(() => { const answers = targets.map((t, i) => ({ id: `answer-${i}`, category: t[mode]!.category })), noun = targets.every(t => t.word_type?.category !== 'present'); const extras = categories[mode].filter(c => !answers.some(a => a.category === c) && (mode !== 'grammatical_case' || c !== (noun ? 'jussive' : 'genitive'))).sort(() => Math.random() - .5).slice(0, 2).map((category, i) => ({ id: `extra-${i}`, category })); return [...answers, ...extras].sort(() => Math.random() - .5); });
-    useCorrectAutoAdvance(Object.keys(placed).length === targets.length, next);
+    useCorrectAutoAdvance(!manualProgress && Object.keys(placed).length === targets.length, next);
     function place(t: Target, id: string) { if (placed[t.token_index] || used.includes(id))
         return; const label = labels.find(l => l.id === id); if (label?.category !== t[mode]!.category) {
         setFeedback('Try another label. Look at the meaning and position in this sentence.');
@@ -101,7 +102,7 @@ function MappingCard({ row, mode, phrases, next, show }: {
         else
             words.push(<Typography key={i} component="span" sx={arabicStyle}>{row.paragraph.tokens[i].arabic}</Typography>);
     }
-    return <Paper variant="outlined" sx={cardStyle}><Typography>Drag a label onto its word or phrase, or select a label and tap the target.</Typography><Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'start', gap: 1, my: 3 }}>{words}</Box><English>{row.paragraph.translation}</English><Typography variant="caption">{row.source_label}</Typography><Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 3 }}>{labels.filter(l => !used.includes(l.id)).map(l => <Button key={l.id} aria-label={title(l.category)} draggable onDragStart={e => e.dataTransfer.setData('text/plain', l.id)} variant={selected === l.id ? 'contained' : 'outlined'} onClick={() => setSelected(l.id)} sx={{ minHeight: 48, textTransform: 'none' }}><Box><Typography dir="rtl" sx={{fontSize:22,fontFamily:"var(--font-serif)"}}>{(curriculum.rules as Record<string,Rule>)[l.category]?.arabic}</Typography><Typography sx={{fontSize:14}}>{title(l.category)}</Typography></Box></Button>)}</Box><Typography role="status">{feedback}</Typography><Button fullWidth variant="contained" disabled={Object.keys(placed).length !== targets.length} onClick={next} sx={{ mt: 2, minHeight: 48 }}>Next Sentence</Button></Paper>;
+    return <Paper data-learn-nahw={row.id} variant="outlined" sx={cardStyle}><Typography>Drag a label onto its word or phrase, or select a label and tap the target.</Typography><Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'start', gap: 1, my: 3 }}>{words}</Box><English>{row.paragraph.translation}</English><Typography variant="caption">{row.source_label}</Typography><Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 3 }}>{labels.filter(l => !used.includes(l.id)).map(l => <Button key={l.id} aria-label={title(l.category)} draggable onDragStart={e => e.dataTransfer.setData('text/plain', l.id)} variant={selected === l.id ? 'contained' : 'outlined'} onClick={() => setSelected(l.id)} sx={{ minHeight: 48, textTransform: 'none' }}><Box><Typography dir="rtl" sx={{fontSize:22,fontFamily:"var(--font-serif)"}}>{(curriculum.rules as Record<string,Rule>)[l.category]?.arabic}</Typography><Typography sx={{fontSize:14}}>{title(l.category)}</Typography></Box></Button>)}</Box><Typography role="status">{feedback}</Typography><Button fullWidth variant="contained" disabled={Object.keys(placed).length !== targets.length} onClick={next} sx={{ mt: 2, minHeight: 48 }}>{manualProgress ? 'Next Activity' : 'Next Sentence'}</Button></Paper>;
 }
 function relations(row: NahwRow, activity: string) { const spans = new Map(row.targets.map(t => [`${t.token_index}:${t.token_end ?? t.token_index + 1}`, t])); return row.targets.flatMap(source => (source.relations ?? []).filter(r => reviewed(r) && spans.has(r.target_span) && spans.get(r.target_span) !== source && (activity === 'governance' ? r.type === 'governs' && (reviewed(spans.get(r.target_span)?.grammatical_case) || reviewed(spans.get(r.target_span)?.sentence_role)) : ['describes', 'idafa', 'predicates', 'attachment', 'subject', 'object'].includes(r.type))).map(r => ({ source, target: spans.get(r.target_span)!, ...r }))); }
 function RelationCard({ row, activity, next, show }: {
@@ -173,4 +174,11 @@ function WeakCards({ mode }: {mode:string}) {
    <Box data-grammar-answers sx={{display:'flex',flexWrap:'wrap',gap:1,justifyContent:'center'}}>{types.map(t=><Button key={t.type} variant="outlined" disabled={result!==null} sx={{minHeight:48}} onClick={()=>setResult(t.type===card.type)}>{t.typeLabel} · <Box component="span" lang="ar" sx={{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size)',ml:1}}>{text(t.typeArabic)}</Box></Button>)}</Box>
   </AnswerArea>:<><Typography>{card.tense}</Typography><Arabic>{card.pronoun}</Arabic>{!revealed?<Button fullWidth variant="contained" onClick={()=>setRevealed(true)}>Reveal answer</Button>:<><Typography>{card.typeLabel} · {text(card.description)}</Typography><Arabic>{card.answer}</Arabic><Typography>{text(card.explanation)}</Typography><Box sx={{display:'flex',gap:1,mt:3}}><Button fullWidth variant="outlined" onClick={()=>advance(true)}>Again</Button><Button fullWidth variant="contained" onClick={()=>advance()}>Got it</Button></Box></>}</>}
  </Paper>
+}
+
+/** The same reviewed matching/classification engine used by the Na?w course. */
+export function LearnMappingActivity({row,mode,onNext}:{row:NahwRow;mode:Mode;onNext:()=>void}){
+ const [rule,setRule]=useState<Rule|null>(null)
+ return <><MappingCard key={row.id} row={row} mode={mode} phrases={false} next={onNext} show={setRule} manualProgress/>
+ <Dialog open={Boolean(rule)} onClose={()=>setRule(null)} fullWidth maxWidth="sm"><DialogTitle>{rule?.title}<Button onClick={()=>setRule(null)}>Close explanation</Button></DialogTitle><DialogContent>{rule?.arabic&&<Arabic>{rule.arabic}</Arabic>}{rule?.sections.map((section,i)=><Box key={i} sx={{my:2}}><Typography variant="h6">{section.heading}</Typography>{section.text&&<English>{section.text}</English>}{section.detail&&<English>{section.detail}</English>}{section.arabic&&<Arabic>{section.arabic}</Arabic>}{section.translation&&<English>{section.translation}</English>}</Box>)}</DialogContent></Dialog></>
 }

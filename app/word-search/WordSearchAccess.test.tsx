@@ -1,15 +1,16 @@
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ user: null as null | { id: string }, complete: vi.fn(), vocabulary: vi.fn() }))
+const mocks = vi.hoisted(() => ({ user: null as null | { id: string }, complete: vi.fn(), vocabulary: vi.fn(), learnVocabulary:vi.fn(), push:vi.fn() }))
 // Keep access tests focused on the game rather than loading decorative icons.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { RestartAlt: Icon, OpenInNew: Icon, ArrowBack: Icon, Celebration: Icon, CheckCircle: Icon, EmojiEvents: Icon, LightbulbOutlined: Icon, Refresh: Icon, TimerOutlined: Icon, ExpandLess: Icon, ExpandMore: Icon, Visibility: Icon, VisibilityOff: Icon }
+  return { Close: Icon, RestartAlt: Icon, OpenInNew: Icon, ArrowBack: Icon, Celebration: Icon, CheckCircle: Icon, EmojiEvents: Icon, LightbulbOutlined: Icon, Refresh: Icon, TimerOutlined: Icon, ExpandLess: Icon, ExpandMore: Icon, Visibility: Icon, VisibilityOff: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }))
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
 vi.mock('next/server', () => ({ connection: vi.fn() }))
+vi.mock('@/app/lib/learnClient',()=>({fetchLearnPuzzleClient:mocks.learnVocabulary}))
 vi.mock('@/app/actions/puzzles', () => ({ fetchPuzzleVocabulary: mocks.vocabulary, completeWordSearch: mocks.complete }))
 vi.mock('@/app/components/puzzles/GamePageShell', () => ({ default: ({ children, controls }: { children: React.ReactNode; controls: React.ReactNode }) => <div>{controls}{children}</div> }))
 import WordSearchGame from './WordSearchGame'
@@ -21,7 +22,7 @@ const source: PuzzleVocabularySource = {
 }
 let host: HTMLDivElement, root: Root
 beforeEach(() => {
-  vi.clearAllMocks(); mocks.user = null; mocks.vocabulary.mockResolvedValue(source)
+  vi.clearAllMocks(); mocks.user = null; mocks.vocabulary.mockResolvedValue(source);mocks.learnVocabulary.mockResolvedValue({...source,id:'other-episode'})
   mocks.complete.mockResolvedValue({ ok: true, data: { duplicate: false } })
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
@@ -61,4 +62,37 @@ it.each([null, { id: 'free' }, { id: 'premium' }, { id: 'editor' }, { id: 'admin
     expect(mocks.complete).not.toHaveBeenCalled()
     expect(document.body.textContent).toContain('Sign in to save your progress')
   }
+})
+
+it.each(['continue','close','home'])('embedded completion %s only navigates Home when explicitly requested',async action=>{
+ const puzzle=generateWordSearch(source.words,{difficulty:'regular'})
+ await act(async()=>root.render(<WordSearchGame embedded initialSource={source} initialPuzzle={puzzle}/>))
+ for(const placement of puzzle.placements){
+  const start=placement.cells[0],end=placement.cells.at(-1)!
+  const first=host.querySelector(`[data-row="${start.row}"][data-col="${start.col}"]`)!,last=host.querySelector(`[data-row="${end.row}"][data-col="${end.col}"]`)!
+  Object.defineProperty(document,'elementFromPoint',{configurable:true,value:()=>last})
+  const pointer=(type:string)=>{const event=new Event(type,{bubbles:true,cancelable:true});Object.assign(event,{pointerId:1,pointerType:'mouse',button:0,clientX:1,clientY:1});return event}
+  await act(async()=>first.dispatchEvent(pointer('pointerdown')));await act(async()=>last.dispatchEvent(pointer('pointerup')))
+ }
+ expect(document.body.textContent).toContain('Word Search Complete!')
+ if(action==='close')await act(async()=>document.querySelector<HTMLButtonElement>('[aria-label="Close completion message"]')!.click())
+ else {
+  const button=Array.from(document.querySelectorAll('button')).find(b=>b.textContent===(action==='home'?'Back to Home':'Continue'))!
+  await act(async()=>{button.click();if(action==='continue')button.click()})
+ }
+ if(action==='home')expect(mocks.push).toHaveBeenCalledWith('/')
+ else expect(mocks.push).not.toHaveBeenCalled()
+ if(action==='continue')expect(mocks.learnVocabulary).toHaveBeenCalledOnce()
+})
+
+it('offers a local Retry after an embedded source request fails',async()=>{
+ const puzzle=generateWordSearch(source.words,{difficulty:'regular'})
+ await act(async()=>root.render(<WordSearchGame embedded initialSource={source} initialPuzzle={puzzle}/>))
+ mocks.learnVocabulary.mockRejectedValueOnce(new Error('Temporary failure'))
+ await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="New game"]')!.click())
+ expect(host.textContent).toContain('Unable to create a new puzzle')
+ const retry=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Retry')!
+ expect(retry).toBeDefined()
+ await act(async()=>retry.click())
+ expect(mocks.learnVocabulary).toHaveBeenCalledTimes(2);expect(mocks.push).not.toHaveBeenCalled()
 })

@@ -9,6 +9,14 @@ export default defineConfig({
        zone, so zone-level WAF/bot/rate rules do not apply there — scrapers
        could bypass them entirely. */
     workersDev: false,
+    // Required to attribute CPU/resource failures to the Learn route. Do not
+    // retain URL query strings (auth callbacks can contain one-time tokens).
+    observability: {
+      enabled: true,
+      headSamplingRate: 1,
+      redactQueryString: true,
+      logs: { enabled: true, invocationLogs: true, persist: true },
+    },
     assets: {
       htmlHandling: "none",
       notFoundHandling: "none",

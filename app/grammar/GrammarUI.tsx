@@ -65,7 +65,7 @@ export function Feedback({ correct, children, answer, onContinue }: { correct: b
    {onContinue&&(!correct||!preferences.autoNext)&&<Button variant="contained" onClick={onContinue}>Next</Button>}
   </Box>
 }
-export type GrammarResult={correct:boolean;answer?:ReactNode;explanation:ReactNode;next:()=>void}
+export type GrammarResult={correct:boolean;answer?:ReactNode;explanation:ReactNode;next?:()=>void}
 /** Each state owns its natural height; no space is reserved for future feedback. */
 export function AnswerArea({children,result}:{children:ReactNode;result?:GrammarResult}){
  return <Box data-grammar-answer-area sx={{my:2,minWidth:0,overflowWrap:'anywhere'}}>

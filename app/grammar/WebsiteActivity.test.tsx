@@ -31,3 +31,13 @@ it('filters reviewed root identification by three or four radicals',async()=>{
  await act(async()=>root.render(<WebsiteActivity key="three" activity="roots" rootLength={3}/>))
  expect(host.textContent).toContain('three-letter root');expect(host.textContent).toContain('1 / 3')
 })
+
+it('keeps Learn feedback visible until explicit Next Activity',async()=>{
+ const next=vi.fn()
+ await act(async()=>root.render(<WebsiteActivity activity="roles" manualProgress onRestart={next}/>))
+ const option=host.querySelector<HTMLButtonElement>('button[aria-label]')!
+ await act(async()=>option.click())
+ expect(host.querySelector('[role=status]')).not.toBeNull()
+ expect(next).not.toHaveBeenCalled()
+ await click('Next Activity');expect(next).toHaveBeenCalledOnce()
+})

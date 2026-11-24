@@ -47,14 +47,14 @@ function subscribeToDirection(onChange: () => void): () => void {
   }
 }
 
-export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string; embedded?: boolean }) {
+export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string; embedded?: boolean; onContinue?: () => void }) {
   const { user, loading } = useAuth()
   if (loading) return <MemoryPageLoading />
-  if (!user) return <LearningSignInGate activity="Memory" />
+  if (!user) return props.embedded ? <Alert severity="info">Sign in to practise Memory. <Button onClick={()=>window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}))}>Sign In</Button></Alert> : <LearningSignInGate activity="Memory" />
   return <MemorySession key={`${user?.id ?? 'guest'}:${props.library.selectedShowId ?? ''}:${props.library.selectedEpisodeId ?? ''}`} {...props} />
 }
 
-function MemorySession({ library, loadError, embedded = false }: { library: MemoryLibrary; loadError?: string; embedded?: boolean }) {
+function MemorySession({ library, loadError, embedded = false, onContinue }: { library: MemoryLibrary; loadError?: string; embedded?: boolean; onContinue?: () => void }) {
   const router = useRouter()
   const { user, loading } = useAuth()
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
@@ -198,6 +198,7 @@ function MemorySession({ library, loadError, embedded = false }: { library: Memo
   }, [embedded, ready, loading, user, started, limited, restart])
   const requestNewCards = () => {
     if (busyRef.current || navigating || loading) return
+    if (embedded && onContinue) { onContinue(); return }
     const params = new URLSearchParams({ new: '1', deck: crypto.randomUUID() })
     if (library.selectedEpisodeId) params.set('episode', library.selectedEpisodeId)
     else if (library.selectedShowId) params.set('show', library.selectedShowId)
@@ -238,7 +239,7 @@ function MemorySession({ library, loadError, embedded = false }: { library: Memo
               isOptionEqualToValue={(option, value) => option.id === value.id}
               renderInput={(params) => <TextField {...params} size="small" label="Search or choose a show" />}
             />
-            <Button onClick={() => router.push('/memory')} startIcon={<Refresh />} variant={library.scope === 'global' ? 'contained' : 'outlined'} sx={{ minHeight: 40, bgcolor: library.scope === 'global' ? 'var(--awm-forest)' : undefined, color: library.scope === 'global' ? '#fff' : 'var(--awm-forest)', borderRadius: '9px', textTransform: 'none', '&:hover': { bgcolor: library.scope === 'global' ? '#174832' : 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}>Random practice</Button>
+            <Button onClick={embedded && onContinue ? onContinue : () => router.push('/memory')} startIcon={<Refresh />} variant={library.scope === 'global' ? 'contained' : 'outlined'} sx={{ minHeight: 40, bgcolor: library.scope === 'global' ? 'var(--awm-forest)' : undefined, color: library.scope === 'global' ? '#fff' : 'var(--awm-forest)', borderRadius: '9px', textTransform: 'none', '&:hover': { bgcolor: library.scope === 'global' ? '#174832' : 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}>Random practice</Button>
           </Box>
           <Box sx={{ mt: 1.75, display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', gap: 1.5 }}>
             <ToggleButtonGroup exclusive size="small" value={direction} onChange={(_, value: MemoryDirection | null) => value && chooseDirection(value)} aria-label="Practice direction" sx={{ '& .MuiToggleButton-root': { minHeight: 40, flex: { xs: 1, sm: 'initial' }, px: 2, borderColor: 'color-mix(in srgb, var(--awm-bark) 16%, transparent)', color: 'var(--awm-muted)', textTransform: 'none', '&.Mui-selected': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', color: 'var(--awm-bark)', fontWeight: 700 } } }}>
@@ -287,7 +288,7 @@ function MemorySession({ library, loadError, embedded = false }: { library: Memo
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button><Button disabled={saving} onClick={()=>void exitPractice()}>Exit Practice</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}>{embedded && onContinue ? <><Button disabled={saving} onClick={onContinue}>Continue</Button><Button href="/" disabled={saving}>Back to Home</Button></> : <><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button><Button disabled={saving} onClick={()=>void exitPractice()}>Exit Practice</Button></>}</Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 1.5 }}>

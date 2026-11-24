@@ -1,6 +1,6 @@
 'use server';
 import { getAuthClient } from '@/app/lib/supabase/server';
-import { validNahw, type Mode, type NahwRow, type PreparedRow } from '@/app/grammar/models';
+import { validNahw, prepareNahw, eligible, type Mode, type NahwRow, type PreparedRow } from '@/app/grammar/models';
 import type { BankRow } from '@/app/grammar/questionBank';
 export async function loadGrammarBank(mode: Mode, seed: string, recent: string[] = [], cefr: number | null = null): Promise<BankRow[]> {
     if (!['word_type','sentence_role','grammatical_case'].includes(mode) || typeof seed !== 'string' || seed.length>64 || !Array.isArray(recent) || recent.length>200 || recent.some(id=>typeof id!=='string'||!/^[a-f0-9]{32}$/.test(id)) || (cefr!==null && (!Number.isInteger(cefr)||cefr<1||cefr>6))) throw new Error('Invalid activity request');
@@ -26,4 +26,16 @@ export async function loadGrammar(kind: 'nahw' | 'sarf' | 'word_pattern', mode: 
         throw new Error('Unable to load this activity. Please try again.');
     const data = Array.isArray(response.data) ? response.data : [];
     return { nahw: kind === 'nahw' ? data.filter(validNahw) : [], prepared: kind === 'nahw' ? [] : data as PreparedRow[] };
+}
+
+/** Compact Learn matching/classification selection; never load a whole course. */
+export async function fetchLearnNahw(mode:Mode, seed:string, previous?:string):Promise<NahwRow|null>{
+ if(!['word_type','sentence_role','grammatical_case'].includes(mode)||typeof seed!=='string'||seed.length>64||previous!==undefined&&(typeof previous!=='string'||previous.length>160))throw new Error('Invalid activity request')
+ const client=await getAuthClient()
+ const {data:auth,error}=await client.auth.getUser()
+ if(error||!auth.user)throw new Error('Sign in to practise Grammar')
+ const response=await client.rpc('nahw_candidates',{p_mode:mode,p_seed:seed,p_limit:2}).abortSignal(AbortSignal.timeout(8000))
+ if(response.error)throw new Error('Unable to load this activity. Please retry.')
+ const rows=Array.isArray(response.data)?response.data.filter(validNahw):[]
+ return prepareNahw(rows,mode).find(row=>String(row.id)!==previous&&eligible(row,mode).length>=2)??null
 }
