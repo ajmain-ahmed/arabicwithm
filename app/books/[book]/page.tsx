@@ -3,7 +3,7 @@ import BookCoverImage from '@/app/books/BookCoverImage'
 import { notFound } from 'next/navigation'
 import { Box, Container, Paper, Typography } from '@mui/material'
 import { ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
-import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChapterCardsForBookPublic } from '@/app/actions/books'
+import { fetchBookBySlugPublic, fetchChapterCardsForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
 import BookDetailMetadata from './BookDetailMetadata'
@@ -15,13 +15,9 @@ import { fetchChaptersForBookReader } from '@/app/actions/books'
 import StructuredData from '@/app/components/StructuredData'
 import { absoluteUrl, breadcrumbJsonLd } from '@/app/lib/seo'
 
-export const revalidate = 3600
+// Viewer-specific chapter access must never enter a shared static page cache.
 export const dynamic = 'force-dynamic'
-
-export async function generateStaticParams() {
-  const books = await fetchBooksForPublic()
-  return books.map((book) => ({ book: book.slug }))
-}
+export const revalidate = 0
 
 export async function generateMetadata({ params }: { params: Promise<{ book: string }> }) {
   const { book: slug } = await params
@@ -75,6 +71,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           {book.description}
         </Typography>
       )}
+      {admin && book.isCompleted === false && <Typography role="status" sx={{ mt: 2, color: 'var(--awm-gold)', fontWeight: 600 }}>In progress — Admin preview</Typography>}
       <BookDetailMetadata level={book.level} readingTimeMinutes={book.readingTimeMinutes} tags={book.tags} audioChapterCount={audioChapterIds.size}/>
       <Box sx={{ mt: 3 }}>
         {completed ? <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} /> : <BookInProgress bookId={book.id} />}
@@ -97,6 +94,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         {chapters.map((chapter) => (
           <Box key={chapter.id}>
             <ChapterLink
+              serverAuthorized={admin}
               href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
               chapterNumber={chapter.chapterNumber}
             >

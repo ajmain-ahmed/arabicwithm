@@ -11,6 +11,9 @@ for (const role of ['guest', 'free', 'plus', 'editor', 'admin']) test(`${role}: 
   if (role !== 'admin') {
     await expect(page).toHaveURL(/\/books\/unreleased-book$/)
     await expect(page.locator('#reader-content:visible')).toHaveCount(0)
+    await expect(page.getByText('This book is in progress',{exact:true}).filter({visible:true})).toBeVisible()
+    await expect(page.getByText('Draft legacy chapter',{exact:true})).toHaveCount(0)
+    if(process.env.AWM_TEST_PUBLIC_VISIBILITY==='1') return
     await page.goto('/books/test-book/draft-structured')
     await expect(page.locator('#reader-content:visible')).toHaveCount(0)
     return
@@ -20,6 +23,19 @@ for (const role of ['guest', 'free', 'plus', 'editor', 'admin']) test(`${role}: 
   await page.goto('/books/unreleased-book')
   await expect(page.getByRole('heading',{name:'Unreleased Book',exact:true})).toBeVisible()
   await expect(page.getByText('Published chapter in unreleased Book',{exact:true}).filter({visible:true}).first()).toBeVisible()
+  await expect(page.getByText('In progress — Admin preview',{exact:true})).toBeVisible()
+  await page.getByRole('link').filter({hasText:'Draft legacy chapter'}).click()
+  await expect(page.locator('#reader-content:visible')).toContainText('A book. Paragraph 1.')
+  await page.reload()
+  await expect(page.locator('#reader-content:visible')).toContainText('A book. Paragraph 1.')
+  await page.getByRole('link',{name:'Next chapter',exact:true}).click()
+  await expect(page.locator('#reader-content:visible')).toContainText('The Government of the Adjective')
+  await expect(page.getByRole('navigation',{name:'Admin chapter navigation'})).toContainText('Draft legacy chapter')
+  await page.getByRole('link',{name:'Previous chapter',exact:true}).click()
+  await expect(page.locator('#reader-content:visible')).toContainText('A book. Paragraph 1.')
+  await page.goto('/books/unreleased-book/hidden-structured')
+  await expect(page.locator('#reader-content:visible')).toContainText('The Government of the Adjective')
+  if(process.env.AWM_TEST_PUBLIC_VISIBILITY==='1') return
   await page.goto('/admin/books/preview/abababab-abab-4bab-8bab-000000000010')
   await expect(page.getByRole('navigation',{name:'All Chapters'})).toContainText('Unpublished structured chapter')
   await page.getByRole('link',{name:'Next chapter',exact:true}).click()

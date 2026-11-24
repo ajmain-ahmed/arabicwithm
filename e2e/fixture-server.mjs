@@ -952,6 +952,7 @@ if(process.env.AWM_TEST_CHAPTER_PUBLICATION==='1'){
  const hiddenBookId='aaaaaaaa-aaaa-4aaa-8aaa-000000000002'
  tables.books.push({id:hiddenBookId,slug:'unreleased-book',title:'Unreleased Book',is_completed:false})
  tables.chapters.push({id:'abababab-abab-4bab-8bab-000000000014',book_id:hiddenBookId,slug:'hidden-parent',title:'Published chapter in unreleased Book',chapter_number:1,content,is_published:true})
+ tables.chapters.push({id:'abababab-abab-4bab-8bab-000000000015',book_id:hiddenBookId,slug:'hidden-legacy',title:'Draft legacy chapter',chapter_number:2,content,is_published:false},{id:'abababab-abab-4bab-8bab-000000000016',book_id:hiddenBookId,slug:'hidden-structured',title:'Draft structured chapter',chapter_number:3,content:structured,is_published:false})
 }
 
 

@@ -3,13 +3,27 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Box, Button, Typography } from '@mui/material'
 import { CheckRounded, NotificationsNoneRounded } from '@mui/icons-material'
+import { useRouter } from 'next/navigation'
+import { useVerifiedAccountAccess } from '@/app/AccountAccessContext'
 import { useAuth } from '@/app/AuthContext'
 import { bookReleaseReminder, setBookReleaseReminder, type BookReminderState } from '@/app/actions/bookReleaseReminders'
 import useBookCatalogueRefresh from '@/app/books/useBookCatalogueRefresh'
 
 export default function BookInProgress({ bookId }: { bookId: string }) {
   const { user, loading } = useAuth()
+  const { access, loading: accessLoading } = useVerifiedAccountAccess()
+  const router = useRouter()
+  const refreshedIdentity = useRef<string | null>(null)
+  // A Router Cache entry loaded before sign-in/role resolution may still contain
+  // the public gate. Re-request it; only the server may grant chapter access.
+  const admin = !loading && !accessLoading && access?.userId === user?.id && access?.admin === true
+  useEffect(() => {
+    if (!admin || !user || refreshedIdentity.current === user.id) return
+    refreshedIdentity.current = user.id
+    router.refresh()
+  }, [admin, user, router])
   useBookCatalogueRefresh()
+  if (admin) return <Box role="status"><Typography>Loading Admin preview...</Typography><Button onClick={() => router.refresh()}>Retry Admin preview</Button></Box>
   return <Reminder key={`${bookId}:${user?.id ?? 'guest'}`} bookId={bookId} userId={user?.id} authLoading={loading} />
 }
 

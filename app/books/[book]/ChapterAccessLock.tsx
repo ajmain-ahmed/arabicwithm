@@ -13,8 +13,11 @@ export default function ChapterAccessLock({ chapterNumber }: ChapterAccessProps)
   return <LockOutlined aria-label={`Sign in to read chapter ${chapterNumber}`} sx={{ color: 'text.secondary' }} />
 }
 
-export function ChapterLink({ href, children, chapterNumber }: ChapterAccessProps & { href: string; children: ReactNode }) {
+export function ChapterLink({ href, children, chapterNumber, serverAuthorized = false }: ChapterAccessProps & { href: string; children: ReactNode; serverAuthorized?: boolean }) {
   const { user, loading } = useAuth()
+  // Server-confirmed Admin links must not wait for browser session hydration.
+  // A fresh document also avoids reusing a public Router Cache payload.
+  if (serverAuthorized) return <a href={href} style={{ color: 'inherit', textDecoration: 'none' }}>{children}</a>
   function openChapter(event: MouseEvent<HTMLAnchorElement>) {
     if (loading) {
       event.preventDefault()

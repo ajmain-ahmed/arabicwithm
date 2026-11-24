@@ -35,6 +35,17 @@ jobs:
       - name: Verify critical browser journeys
         run: npx playwright test e2e/auth-session.pw.ts e2e/book-actions-quality.pw.ts e2e/watch-navigation.pw.ts e2e/library-discovery.pw.ts --grep 'registration hand-off|matching book actions|Watch, Show, Episode|mobile library renders|desktop navigation omits'
 
+      - name: Verify Admin incomplete-Book reader access
+        run: npx playwright test e2e/admin-chapter-visibility.pw.ts
+        env:
+          AWM_TEST_CHAPTER_PUBLICATION: '1'
+
+      - name: Verify Admin reader on legacy publication schema
+        run: npx playwright test e2e/admin-chapter-visibility.pw.ts
+        env:
+          AWM_TEST_CHAPTER_PUBLICATION: '1'
+          AWM_TEST_PUBLIC_VISIBILITY: '1'
+
       # vinext-cloudflare deploy validates, builds, and deploys the
       # arabicwithm Worker. NEXT_PUBLIC_* values are inlined into the client
       # bundle at build time; all server secrets live as Worker secrets and
