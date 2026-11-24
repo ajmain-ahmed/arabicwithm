@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - .github/workflows/learn-worker-check.yml
       - scripts/diagnose-learn-worker.mjs
+      - .github/workflows/production-learn-verification.yml
   workflow_dispatch:
 
 # Serialize deploys so two pushes cannot interleave uploads.

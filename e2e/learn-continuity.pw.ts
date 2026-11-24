@@ -1,5 +1,10 @@
 import {test,expect,type Page} from '@playwright/test'
 import {normalizePuzzleArabic} from '../app/lib/transcriptPuzzles'
+test.afterEach(async({page},info)=>{
+ if(process.env.AWM_LEARN_BASE_URL&&info.status!==info.expectedStatus){
+  console.log('Public Learn failure snapshot:',(await page.locator('body').innerText()).slice(0,6000))
+ }
+})
 async function solve(page:Page){
  const panel=page.locator('section[aria-label="Word Search activity"]')
  await panel.getByRole('grid').scrollIntoViewIfNeeded()
@@ -31,6 +36,10 @@ async function solve(page:Page){
 }
 for(const width of [390,1440])test(`continuous independent Learn at ${width}px`,async({page,context})=>{
  const failures:number[]=[]
+ if(process.env.AWM_LEARN_BASE_URL){
+  page.on('pageerror',error=>console.log('Public Learn browser error:',error.message))
+  page.on('response',response=>{if(response.status()>=400)console.log('Public Learn HTTP error:',response.status(),new URL(response.url()).pathname)})
+ }
  page.on('response',response=>{if((new URL(response.url()).pathname==='/learn'||new URL(response.url()).pathname.startsWith('/api/learn/'))&&response.status()>=500)failures.push(response.status())})
  await page.setViewportSize({width,height:1000});await page.goto('/learn')
  const puzzle=page.getByRole('region',{name:'Word Search activity'}),grammar=page.getByRole('region',{name:'Grammar activity'}),memory=page.getByRole('region',{name:'Memory activity'})
