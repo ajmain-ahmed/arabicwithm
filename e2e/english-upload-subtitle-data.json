@@ -1,0 +1,152 @@
+{
+  "transcriptId": "ee29cd86-3134-46e3-91ac-73c013692d87",
+  "youtubeId": "0cCvKCt1gB4",
+  "title": "As Told By Ginger",
+  "groupId": "5b98c563-5c35-4696-98e1-06aa000eb622",
+  "retrievedAt": "2026-11-24",
+  "segments": [
+    {
+      "tokens": [
+        {
+          "pos": "pronoun",
+          "cefr": "A2",
+          "arabic": "أَخْبَرْتُهُمَا أَنَّ سَبَبَ عَدَمِ",
+          "english": "I told them that the",
+          "headword": "أَخْبَرَ",
+          "entry_type": "word",
+          "transliteration": "ʾakhbartuhumā ʾanna sababa ʿadami"
+        },
+        {
+          "pos": "noun",
+          "cefr": "B1",
+          "arabic": "قُدُومِ الْكَثِيرِ مِنَ الْأَطْفَالِ",
+          "english": "reason so many kids couldn't",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "qudūmi alkathīri mina alʾaṭfāli"
+        },
+        {
+          "pos": "noun",
+          "cefr": "A2",
+          "arabic": "إِلَى حَفْلَتِي هُوَ أَنَّهُمْ",
+          "english": "come to my party was",
+          "headword": "حَفْلَة",
+          "entry_type": "word",
+          "transliteration": "ʾilā ḥaflatī huwa ʾannahum"
+        },
+        {
+          "pos": "conjunction",
+          "cefr": "B1",
+          "arabic": "جَمِيعًا أُصِيبُوا بِاضْطِرَابَاتِ تَوَازُنٍ",
+          "english": "because they all suffered inner",
+          "headword": "جَمِيع",
+          "entry_type": "word",
+          "transliteration": "jamīʿan ʾuṣībūā biāḍṭirābāti tawāzunin"
+        },
+        {
+          "pos": "noun",
+          "cefr": "B2",
+          "arabic": "فِي الْأُذُنِ الدَّاخِلِيَّةِ عِنْدَمَا",
+          "english": "ear imbalances when the carousel",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "fī alʾudhuni alddākhiliyyati ʿindamā"
+        },
+        {
+          "pos": "determiner",
+          "cefr": "A2",
+          "arabic": "خَرَجَتِ الْأُرْجُوحَةُ الدَّوَّارَةُ عَنِ",
+          "english": "the most went out of",
+          "headword": "خَرَجَ",
+          "entry_type": "word",
+          "transliteration": "kharajati alʾurjūḥatu alddawwāratu ʿani"
+        },
+        {
+          "pos": "noun",
+          "cefr": "B2",
+          "arabic": "السَّيْطَرَةِ بِسَبَبِ انْدِفَاعٍ مُفَاجِئٍ لِلْكَهْرَبَاءِ.",
+          "english": "control on account of a power surge.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "alssayṭarati bisababi andifāʿin mufājiʾin lilkahrabāʾi."
+        }
+      ],
+      "paragraph": 391,
+      "timestamp": "18:28",
+      "translation": "أَخْبَرْتُهُمَا أَنَّ سَبَبَ عَدَمِ قُدُومِ الْكَثِيرِ مِنَ الْأَطْفَالِ إِلَى حَفْلَتِي هُوَ أَنَّهُمْ جَمِيعًا أُصِيبُوا بِاضْطِرَابَاتِ تَوَازُنٍ فِي الْأُذُنِ الدَّاخِلِيَّةِ عِنْدَمَا خَرَجَتِ الْأُرْجُوحَةُ الدَّوَّارَةُ عَنِ السَّيْطَرَةِ بِسَبَبِ انْدِفَاعٍ مُفَاجِئٍ لِلْكَهْرَبَاءِ.",
+      "translation_EN": "I told them that the reason so many kids couldn't come to my party was because they all suffered inner ear imbalances when the carousel the most went out of control on account of a power surge.",
+      "start_seconds": 1108,
+      "end_seconds": 1118,
+      "source_position": 390
+    },
+    {
+      "tokens": [
+        {
+          "pos": "noun",
+          "cefr": "A2",
+          "arabic": "كَذِبَةٌ مُحْكَمَةٌ.",
+          "english": "Smooth lie.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "kadhibatun muḥkamatun."
+        }
+      ],
+      "paragraph": 392,
+      "timestamp": "18:38",
+      "translation": "كَذِبَةٌ مُحْكَمَةٌ.",
+      "translation_EN": "Smooth lie.",
+      "start_seconds": 1118,
+      "end_seconds": 1120,
+      "source_position": 391
+    },
+    {
+      "tokens": [
+        {
+          "pos": "adjective",
+          "cefr": "A2",
+          "arabic": "تَفَاصِيلُ جَيِّدَةٌ.",
+          "english": "Nice details.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "tafāṣīlu jayyidatun."
+        }
+      ],
+      "paragraph": 393,
+      "timestamp": "18:38",
+      "translation": "تَفَاصِيلُ جَيِّدَةٌ.",
+      "translation_EN": "Nice details.",
+      "start_seconds": 1118,
+      "end_seconds": 1120,
+      "source_position": 392
+    },
+    {
+      "tokens": [
+        {
+          "pos": "conjunction",
+          "cefr": "A2",
+          "arabic": "فَإِنْ رَحَلْتُمَا",
+          "english": "So if you leave now,",
+          "headword": "رَحَلَ",
+          "entry_type": "word",
+          "transliteration": "faʾin raḥaltumā"
+        },
+        {
+          "pos": "noun",
+          "cefr": "B1",
+          "arabic": "الْآنَ، فَسَيَرْتَابَانِ.",
+          "english": "they'll get suspicious.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "alʾāna، fasayartābāni."
+        }
+      ],
+      "paragraph": 394,
+      "timestamp": "18:40",
+      "translation": "فَإِنْ رَحَلْتُمَا الْآنَ، فَسَيَرْتَابَانِ.",
+      "translation_EN": "So if you leave now, they'll get suspicious.",
+      "start_seconds": 1120,
+      "end_seconds": 1131,
+      "source_position": 393
+    }
+  ]
+}

@@ -55,6 +55,9 @@ jobs:
         env:
           AWM_TEST_LEARN_CONTINUITY: '1'
 
+      - name: Verify English-source subtitle layout and playback
+        run: npx playwright test --config=playwright.english-subtitles.config.ts --project=chromium-ci
+
       # vinext-cloudflare deploy validates, builds, and deploys the
       # arabicwithm Worker. NEXT_PUBLIC_* values are inlined into the client
       # bundle at build time; all server secrets live as Worker secrets and
