@@ -28,6 +28,7 @@ import { usePathname } from "next/navigation"
 import { useColorMode } from "@/app/components/ThemeProvider"
 
 const navItems = [
+  { label: "Translations", href: "/admin/translations", icon: <FormatQuote /> },
   { label: "Users", href: "/admin/users", icon: <People /> },
   { label: "Reviews", href: "/admin/reviews", icon: <RateReview /> },
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },

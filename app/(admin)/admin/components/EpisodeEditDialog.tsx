@@ -23,6 +23,7 @@ import {
 } from "@mui/material"
 import { useTheme } from "@mui/material/styles"
 import { Close, Save, Delete } from "@mui/icons-material"
+import LocalisationEditor from '@/app/components/admin/LocalisationEditor'
 import AdminTextField from "./AdminTextField"
 import {
   fetchEpisodeForAdmin,
@@ -352,6 +353,7 @@ export default function EpisodeEditDialog({
             )}
           </Box>
         )}
+      {episodeId&&<LocalisationEditor entity="episode" id={episodeId}/>}
       </DialogContent>
 
       <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>

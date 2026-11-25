@@ -17,6 +17,7 @@ import {
   Checkbox,
 } from "@mui/material"
 import { Close, Save, Delete } from "@mui/icons-material"
+import LocalisationEditor from '@/app/components/admin/LocalisationEditor'
 import AdminTextField from "./AdminTextField"
 import ImageUploadField from "./ImageUploadField"
 import {
@@ -275,6 +276,7 @@ export default function BookEditDialog({
             </Box>
           </Box>
         )}
+      {bookId&&<LocalisationEditor entity="book" id={bookId}/>}
       </DialogContent>
 
       <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>

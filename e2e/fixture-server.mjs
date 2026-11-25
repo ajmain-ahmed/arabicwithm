@@ -284,6 +284,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(body.failSave!==undefined)bookCoverSaveFailure=body.failSave
     return json(res,{attempts:bookCoverAttempts,contentDigest:createHash('sha256').update(JSON.stringify({chapters:tables.chapters,audio:tables.book_chapter_audio})).digest('hex'),writes:bookCoverWrites,objects:[...bookCoverObjects].map(([name,value])=>({name,hash:createHash('sha256').update(value.bytes).digest('hex')})),books:tables.books.map(({id,slug,cover,is_completed,title,description})=>({id,slug,cover,is_completed,title,description}))})
   }
+  if(url.pathname==='/fixture/metadata-localisation'){tables.content_localisations=[];return json(res,{})}
   if(url.pathname==='/fixture/member-branding'){brandMembership=body.state||'active';return json(res,{})}
   if(url.pathname==='/fixture/expired-membership'){expiredMembership=Boolean(body.expired);return json(res,{})}
   if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;englishSubtitleLayout=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
@@ -694,6 +695,24 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
+    if(table==='content_localisations'){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      tables.content_localisations??=[]
+      if(req.method==='POST'){
+        const inserted=[]
+        for(const row of Array.isArray(body)?body:[body]){
+          const existing=tables.content_localisations.find(item=>['entity_type','entity_id','locale','field'].every(key=>item[key]===row[key]))
+          if(existing)continue
+          const saved={...row,updated_at:new Date().toISOString(),created_at:new Date().toISOString()};tables.content_localisations.push(saved);inserted.push(saved)
+        }
+        return json(res,inserted,201)
+      }
+      if(req.method==='PATCH'){
+        const selected=tables.content_localisations.filter(row=>[...url.searchParams].filter(([,value])=>value.startsWith('eq.')).every(([key,value])=>String(row[key])===value.slice(3)))
+        for(const row of selected)Object.assign(row,body)
+        return json(res,selected)
+      }
+    }
     if(process.env.AWM_TEST_PUBLIC_VISIBILITY==='1'&&table==='chapters'&&(url.searchParams.has('is_published')||(url.searchParams.get('select')??'').includes('is_published')))return json(res,{code:'42703',message:'column chapters.is_published does not exist'},400)
     if(table==='public_profiles'&&profileDelay)await new Promise(resolve=>setTimeout(resolve,profileDelay))
     tableLog.push(table)
