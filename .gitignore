@@ -54,3 +54,6 @@ backups/
 .cloudflare/
 .dev-server*.log
 .kimi-code/
+
+# Generated localisation source audit (rebuild with scripts/audit-localisation.mjs)
+/artifacts/localisation/
