@@ -56,7 +56,14 @@ state was changed, and no migration was needed for these presentation changes.
 - Browser journeys verify persistence, filter keys, curated Arabic title display,
   square tile dimensions/position, player/activity identity, no hydration
   warnings and no translation-provider requests.
+- English supporting sentences and numeric timestamps have their own reading
+  direction, including Watch headings and the bilingual Reader.
 - Fixture server syntax, conflict-marker and staged credential/path checks pass.
+
+The initial GitHub run passed all 1,695 assertions but exposed a pre-existing
+late playback-store import during `AuthContext.test.tsx` teardown. That test now
+uses an isolated playback-store mock and verifies its sign-out reset. Production
+authentication and sign-out behaviour were not changed for this test fix.
 
 Screenshots are generated under `artifacts/localisation/screenshots/`, including
 `chrome-1440-navbar-ar.png`, `chrome-1440-home-ar.png`,

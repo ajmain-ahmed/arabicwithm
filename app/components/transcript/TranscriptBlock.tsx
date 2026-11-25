@@ -1,3 +1,5 @@
+'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 import { forwardRef, type MouseEventHandler, type ReactNode } from 'react'
 import { Box, Typography } from '@mui/material'
 
@@ -19,6 +21,7 @@ const TranscriptBlock = forwardRef<HTMLDivElement, {
   onClick?: MouseEventHandler<HTMLDivElement>
   onTimestampClick?: () => void
 }>(function TranscriptBlock({ active = false, timestamp, title, children, id, blockIndex, interactive = false, dimmed = false, scrollMarginTop, onClick, onTimestampClick }, ref) {
+  const {t}=useWebsiteLocale()
   return <Box
     ref={ref}
     id={id}
@@ -42,7 +45,7 @@ const TranscriptBlock = forwardRef<HTMLDivElement, {
     }}
   >
     {(timestamp != null || title) && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-      {timestamp != null && <Typography component={onTimestampClick ? 'button' : 'span'} type={onTimestampClick ? 'button' : undefined} onClick={onTimestampClick} aria-label={onTimestampClick ? `Seek to ${formatTranscriptTimestamp(timestamp)}` : undefined} sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--awm-gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1, cursor: onTimestampClick ? 'pointer' : 'default', border: 0, bgcolor: 'transparent', p: 0 }}>
+      {timestamp != null && <Typography dir="ltr" component={onTimestampClick ? 'button' : 'span'} type={onTimestampClick ? 'button' : undefined} onClick={onTimestampClick} aria-label={onTimestampClick ? t('Seek to {time}',{time:formatTranscriptTimestamp(timestamp)}) : undefined} sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--awm-gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1, cursor: onTimestampClick ? 'pointer' : 'default', border: 0, bgcolor: 'transparent', p: 0 }}>
         {formatTranscriptTimestamp(timestamp)}
       </Typography>}
       {title}

@@ -1,5 +1,6 @@
 /** Interface guidance only; authored exercises, answers and source tokens stay intact. */
 export const activityMessages:Record<string,string>={
+ 'Seek to {time}':'الانتقال إلى {time}',
  'Open navigation':'فتح التنقّل','Close navigation':'إغلاق التنقّل',
  'Garamond':'جاراموند','Amiri':'الأميري','Adjust Arabic text size':'ضبط حجم النص العربي','Adjust Arabic, translation, vocabulary, and grammar text':'ضبط حجم النص العربي والترجمة والمفردات والقواعد',
  '{title} cover unavailable':'غلاف {title} غير متاح','{title} cover':'غلاف {title}','Audiobook available in {languages}':'كتاب صوتي متاح باللغة {languages}',

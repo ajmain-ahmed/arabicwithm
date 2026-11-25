@@ -1,7 +1,10 @@
 import { act,useEffect } from 'react'
 import { createRoot,type Root } from 'react-dom/client'
 import { beforeEach,afterEach,expect,it,vi } from 'vitest'
-const mocks=vi.hoisted(()=>({session:vi.fn(),set:vi.fn(),user:vi.fn(),access:vi.fn(),refresh:vi.fn(),home:vi.fn(),callback:null as null|((event:string,session:unknown)=>void),unsubscribe:vi.fn()}))
+const mocks=vi.hoisted(()=>({session:vi.fn(),set:vi.fn(),user:vi.fn(),access:vi.fn(),refresh:vi.fn(),home:vi.fn(),clearPlayback:vi.fn(),callback:null as null|((event:string,session:unknown)=>void),unsubscribe:vi.fn()}))
+// Resolve the deferred sign-out dependency without importing server actions
+// after jsdom teardown; the real playback store has its own tests.
+vi.mock('@/store/audiobookStore',()=>({useAudiobookStore:{getState:()=>({clearPlaybackCache:mocks.clearPlayback})}}))
 vi.mock('@/app/lib/publicHome',()=>({returnToPublicHome:mocks.home}))
 vi.mock('next/navigation',()=>{const router={refresh:mocks.refresh};return {useRouter:()=>router}})
 vi.mock('@/app/lib/supabase/client',()=>({supabase:{auth:{getSession:mocks.session,getUser:mocks.user,setSession:mocks.set,onAuthStateChange:(callback:typeof mocks.callback)=>{mocks.callback=callback;return{data:{subscription:{unsubscribe:mocks.unsubscribe}}}}}}}))
@@ -9,6 +12,7 @@ vi.mock('@/app/actions/auth',()=>({getAuthenticatedAccess:mocks.access}))
 vi.mock('@/app/actions/premium',()=>({fetchPremiumStatus:vi.fn()}))
 import { AuthProvider,useAuth } from './AuthContext'
 import { useAccountAccess } from './lib/useAccountAccess'
+import {useAudiobookStore} from '@/store/audiobookStore'
 let host:HTMLDivElement,root:Root
 const adminSession={user:{id:'admin',user_metadata:{}},access_token:'token'}
 const SESSION_COOKIE='sb-testref-auth-token=encoded'
@@ -29,6 +33,7 @@ it('restores auth, keeps Admin through profile updates, and does not refresh rou
  await act(async()=>mocks.callback!('USER_UPDATED',{...adminSession,user:{...adminSession.user,user_metadata:{name:'New name'}}}))
  expect(host.textContent).toContain('"isAdmin":true');expect(mocks.access).toHaveBeenCalledTimes(1);expect(mocks.refresh).toHaveBeenCalledTimes(1)
  await act(async()=>mocks.callback!('SIGNED_OUT',null));expect(host.textContent).toContain('"isAdmin":false');expect(mocks.refresh).toHaveBeenCalledTimes(1);expect(mocks.home).toHaveBeenCalledOnce()
+ await vi.waitFor(()=>expect(useAudiobookStore.getState().clearPlaybackCache).toHaveBeenCalledOnce())
 })
 it('does not restore an old session after a newer sign-out event or after unmount',async()=>{
  seedSessionCookie()

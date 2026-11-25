@@ -559,7 +559,7 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
         timestamp={block.timestamp}
         interactive={hasTimestamp}
         dimmed={!hasTimestamp}
-        title={<Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>{block.title}</Typography>}
+        title={<Typography dir="auto" sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>{block.title}</Typography>}
         onClick={(e) => {
           if (vocabTrackerRef.openCount > 0) return
           if ((e.target as HTMLElement).closest('.vocab-word')) return
@@ -587,7 +587,7 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 
         {/* English */}
         {block.english && (
-          <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1 }}>
+          <Typography className="english-line" lang="en" dir="ltr" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1 }}>
             {block.english}
           </Typography>
         )}
