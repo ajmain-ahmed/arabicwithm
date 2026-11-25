@@ -314,3 +314,14 @@ chapter, read and follow `docs/content-ingestion.md`. Treat it as the canonical
 schema, Hans Wehr matching policy, validation checklist, and Supabase routing
 guide. Do not guess ambiguous dictionary senses, and do not mutate content until
 the user identifies the target and explicitly asks for it to be added or updated.
+
+## Reusable chapter imports
+
+For `AWM IMPORT CHAPTERS — [Book Title] — [Source URL]`,
+`AWM IMPORT CHAPTERS — [Book Title] — LATEST`,
+`AWM IMPORT CHAPTERS — LATEST`, or equivalent completed-chapter import requests,
+read and use [.agents/skills/awm-chapter-import/SKILL.md](.agents/skills/awm-chapter-import/SKILL.md).
+It supports conversation URLs, GitHub sources, directories and JSON files;
+requires an existing verified Book and canonical Admin authorization; skips
+identical chapters, reports conflicts without overwriting, preserves publication
+state and requires actual Admin Reader verification after saving.

@@ -1,0 +1,15 @@
+{
+  "sources": [
+    {
+      "bookTitle": "The Book of Proverbs",
+      "bookArabicTitle": "كِتَابُ الْأَمْثَالِ",
+      "expectedBookId": "fc987085-c1d2-436b-8e89-cedd128464d3",
+      "expectedBookSlug": "bop",
+      "conversation": "https://chatgpt.com/c/6ac3d2a1-b8f4-83ed-8205-49e8e1cc2eb3",
+      "repository": "xiggeth/free-books-arabic-autoflow",
+      "chapterDirectory": "simple-books/books/book-09/chapters",
+      "plan": "simple-books/books/book-09/plan.md",
+      "progress": "simple-books/progress/book-09.md"
+    }
+  ]
+}
