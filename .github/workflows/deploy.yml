@@ -58,6 +58,20 @@ jobs:
       - name: Verify English-source subtitle layout and playback
         run: npx playwright test --config=playwright.english-subtitles.config.ts --project=chromium-ci
 
+      - name: Verify bilingual layouts, activity continuity and metadata review
+        run: |
+          npx playwright test --config=playwright.localisation.config.ts --project=chromium-ci
+          npx playwright test --config=playwright.localisation-settings.config.ts --project=chromium-ci
+
+      - name: Save localisation screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: localisation-screenshots
+          path: artifacts/localisation/screenshots
+          if-no-files-found: ignore
+          retention-days: 14
+
       # vinext-cloudflare deploy validates, builds, and deploys the
       # arabicwithm Worker. NEXT_PUBLIC_* values are inlined into the client
       # bundle at build time; all server secrets live as Worker secrets and

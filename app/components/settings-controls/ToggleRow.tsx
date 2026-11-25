@@ -1,4 +1,5 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 
 import React from 'react'
 import { Box, Typography } from '@mui/material'
@@ -14,6 +15,7 @@ export interface ToggleRowProps {
 export default function ToggleRow({
   label, description, enabled, onToggle, activeColor = '#b8860b',
 }: ToggleRowProps) {
+  const {t}=useWebsiteLocale()
   return (
     <Box onClick={onToggle} sx={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -24,8 +26,8 @@ export default function ToggleRow({
       '&:hover': { borderColor: `${activeColor}88`, background: `${activeColor}0d` },
     }}>
       <Box sx={{ pr: 2 }}>
-        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{label}</Typography>
-        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3, lineHeight: 1.4 }}>{description}</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{t(label)}</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3, lineHeight: 1.4 }}>{t(description)}</Typography>
       </Box>
       <Box sx={{
         width: 38, height: 22, borderRadius: '999px', flexShrink: 0,

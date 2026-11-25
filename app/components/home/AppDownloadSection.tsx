@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import Image from 'next/image'
 import {HOME_PROMO_MAX_WIDTH} from './promoLayout'
 import { Box, Typography } from '@mui/material'
@@ -29,14 +31,11 @@ export default function AppDownloadSection({ fullWidth = false }: { fullWidth?: 
       <Box sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 460px) auto' }, alignItems: 'center', gap: { xs: 2, md: 3 }, px: { xs: 2.5, sm: 3, md: 4 }, py: { xs: 3, md: 3 } }}>
         <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-            Mobile App
-          </Typography>
+            <UiText>{"Mobile App"}</UiText></Typography>
           <Typography component="h2" sx={{ mt: 1, color: '#f5ede0', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 42 }, fontWeight: 600, lineHeight: 1.12 }}>
-            ArabicwithM on the go!
-          </Typography>
+            <UiText>{"ArabicwithM on the go!"}</UiText></Typography>
           <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
-            Keep your streak alive on the go — episodes, books, flashcards and daily goals, all synced with your account.
-          </Typography>
+            <UiText>{"Keep your streak alive on the go — episodes, books, flashcards and daily goals, all synced with your account."}</UiText></Typography>
 
           <AppLaunchSignup />
         </Box>

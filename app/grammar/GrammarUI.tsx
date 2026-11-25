@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Box, Button, FormControlLabel, IconButton, Popover, Switch, Typography } from '@mui/material'
@@ -26,24 +30,30 @@ export function useGrammarDisplay() {
 }
 export function useGrammarPreferences(){return useContext(Context)}
 export function AutoNextControl(){
+ const {t:awmT}=useWebsiteLocale()
+
  const {preferences,update}=useGrammarPreferences()
- return <FormControlLabel sx={{m:0,whiteSpace:'nowrap'}} label="Auto Next" control={<Switch size="small" checked={preferences.autoNext} onChange={(_,autoNext)=>update({autoNext})}/>}/>
+ return <FormControlLabel sx={{m:0,whiteSpace:'nowrap'}} label={awmT("Auto Next")} control={<Switch size="small" checked={preferences.autoNext} onChange={(_,autoNext)=>update({autoNext})}/>}/>
 }
 export function ActivityControls({children}:{children:ReactNode}){
  return <Box data-grammar-controls sx={{display:'flex',alignItems:'center',justifyContent:'center',flexWrap:'wrap',columnGap:3,rowGap:2,mb:2}}>{children}</Box>
 }
 export function TashkeelControl(){
+ const {t:awmT}=useWebsiteLocale()
+
  const {preferences,update}=useGrammarPreferences()
- return <FormControlLabel sx={{m:0,whiteSpace:'nowrap'}} label="Show Tashkīl" control={<Switch size="small" checked={preferences.tashkeel} onChange={(_,tashkeel)=>update({tashkeel})}/>}/>
+ return <FormControlLabel sx={{m:0,whiteSpace:'nowrap'}} label={awmT("Show Tashkīl")} control={<Switch size="small" checked={preferences.tashkeel} onChange={(_,tashkeel)=>update({tashkeel})}/>}/>
 }
 export function GrammarSettings() {
+ const {t:awmT}=useWebsiteLocale()
+
   const { preferences, update } = useContext(Context)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
-  return <><IconButton aria-label="Settings" aria-expanded={!!anchor} onClick={e => setAnchor(e.currentTarget)}><SettingsOutlined /></IconButton><Popover open={!!anchor} anchorEl={anchor} onClose={() => setAnchor(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} slotProps={{ paper: { sx: { p: 2, width: 280, maxWidth: 'calc(100vw - 32px)', borderRadius: 3 } } }}>
-    <Typography component="h2" sx={{fontWeight:600}}>Settings</Typography>
-    <TextSizeControl label="Arabic text size" value={preferences.arabicSize} onChange={arabicSize => update({ arabicSize })} />
-    <TextSizeControl label="English text size" value={preferences.englishSize} onChange={englishSize => update({ englishSize })} />
-    <FormControlLabel label="Tashkīl" control={<Switch checked={preferences.tashkeel} onChange={(_, tashkeel) => update({ tashkeel })} />} /><Button onClick={() => setAnchor(null)}>Done</Button>
+  return <><IconButton aria-label={awmT("Settings")} aria-expanded={!!anchor} onClick={e => setAnchor(e.currentTarget)}><SettingsOutlined /></IconButton><Popover open={!!anchor} anchorEl={anchor} onClose={() => setAnchor(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} slotProps={{ paper: { sx: { p: 2, width: 280, maxWidth: 'calc(100vw - 32px)', borderRadius: 3 } } }}>
+    <Typography component="h2" sx={{fontWeight:600}}><UiText>{"Settings"}</UiText></Typography>
+    <TextSizeControl label={awmT("Arabic text size")} value={preferences.arabicSize} onChange={arabicSize => update({ arabicSize })} />
+    <TextSizeControl label={awmT("English text size")} value={preferences.englishSize} onChange={englishSize => update({ englishSize })} />
+    <FormControlLabel label={awmT("Tashkīl")} control={<Switch checked={preferences.tashkeel} onChange={(_, tashkeel) => update({ tashkeel })} />} /><Button onClick={() => setAnchor(null)}><UiText>{"Done"}</UiText></Button>
   </Popover></>
 }
 export function Arabic({ children }: { children: string }) {
@@ -51,18 +61,20 @@ export function Arabic({ children }: { children: string }) {
   const {preferences}=useContext(Context)
   return <Typography lang="ar" dir="rtl" data-grammar-arabic sx={{ fontFamily: 'var(--font-serif)', fontSize: `var(--grammar-arabic-size, ${32*TEXT_SCALES[preferences.arabicSize]}px)`, lineHeight: 1.9, textAlign: 'center', my: .5 }}>{text(children)}</Typography>
 }
-export function English({ children }: { children: ReactNode }) { const {preferences}=useContext(Context);return <Typography lang="en" data-grammar-english sx={{ fontSize: `var(--grammar-english-size, ${16*TEXT_SCALES[preferences.englishSize]}px)`, textAlign: 'center', mb: 1.5 }}>{children}</Typography> }
-export function Instruction({ children }: { children: ReactNode }) { return <Typography component="h2" sx={{ textAlign: 'center', fontSize: 'calc(var(--grammar-english-size, 16px) * 1.2)', fontWeight: 600, mt: 3, mb: 2 }}>{children}</Typography> }
+export function English({ children }: { children: ReactNode }) { const {preferences}=useContext(Context);return <Typography lang="en" dir="ltr" data-grammar-english sx={{ fontSize: `var(--grammar-english-size, ${16*TEXT_SCALES[preferences.englishSize]}px)`, textAlign: 'center', mb: 1.5 }}>{children}</Typography> }
+export function Instruction({ children }: { children: ReactNode }) { return <Typography component="h2" dir="auto" sx={{ textAlign: 'center', fontSize: 'calc(var(--grammar-english-size, 16px) * 1.2)', fontWeight: 600, mt: 3, mb: 2 }}>{children}</Typography> }
 export function Feedback({ correct, children, answer, onContinue }: { correct: boolean; children: ReactNode; answer?:ReactNode; onContinue?: () => void }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const {preferences}=useGrammarPreferences(),ref=useRef<HTMLDivElement>(null)
   useEffect(()=>{ref.current?.focus({preventScroll:true})},[])
   const Icon=correct?CheckRounded:CloseRounded
   return <Box ref={ref} tabIndex={-1} role="status" aria-live="polite" aria-atomic="true" data-grammar-feedback={correct?'correct':'incorrect'} sx={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100%',gap:1.25,p:2,width:'100%',maxWidth:'46ch',mx:'auto',textAlign:'center',overflowWrap:'anywhere',outline:'none'}}>
    <Icon aria-hidden sx={{fontSize:64,color:correct?'success.main':'error.main'}}/>
-   <Typography component="h3" sx={{fontWeight:700,fontSize:24}}>{correct?'Correct':'Incorrect'}</Typography>
-   {answer&&<Box sx={{fontWeight:600,fontSize:'var(--grammar-english-size,16px)','& [lang=ar]':{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size,32px)',lineHeight:1.7}}}>{!correct&&'Correct answer: '}{answer}</Box>}
+   <Typography component="h3" sx={{fontWeight:700,fontSize:24}}>{correct?awmT("Correct"):awmT("Incorrect")}</Typography>
+   {answer&&<Box sx={{fontWeight:600,fontSize:'var(--grammar-english-size,16px)','& [lang=ar]':{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size,32px)',lineHeight:1.7}}}>{!correct&&awmT('Correct answer: ')}{answer}</Box>}
    <Box sx={{maxWidth:'40ch',fontSize:'var(--grammar-english-size,16px)',lineHeight:1.5}}>{children}</Box>
-   {onContinue&&(!correct||!preferences.autoNext)&&<Button variant="contained" onClick={onContinue}>Next</Button>}
+   {onContinue&&(!correct||!preferences.autoNext)&&<Button variant="contained" onClick={onContinue}><UiText>{"Next"}</UiText></Button>}
   </Box>
 }
 export type GrammarResult={correct:boolean;answer?:ReactNode;explanation:ReactNode;next?:()=>void}

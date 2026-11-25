@@ -1,4 +1,9 @@
 'use client'
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import React, {
   useState,
@@ -183,6 +188,8 @@ function ArabicLineText({
   onDrawerOpenChange?: (open: boolean) => void
   onWordActivate?: () => void
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
 
@@ -434,7 +441,7 @@ function ArabicLineText({
               return (
                 <span
                   key={i}
-                  role="button" tabIndex={0} aria-label={`Define ${wordText}`}
+                  role="button" tabIndex={0} aria-label={awmT('Define {word}',{word:wordText})}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenDrawer(entry, e.currentTarget) } }}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -463,7 +470,7 @@ function ArabicLineText({
             return (
               <span
                 key={i}
-                role="button" tabIndex={0} aria-label={`Define ${wordText}`}
+                role="button" tabIndex={0} aria-label={awmT('Define {word}',{word:wordText})}
                 onClick={e => { e.stopPropagation(); handleOpen(entry, e.currentTarget); onWordActivate?.() }}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpen(entry, e.currentTarget); onWordActivate?.() } }}
                 onMouseEnter={(e) => {
@@ -613,7 +620,7 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
                 '&:hover': { background: 'rgba(184,134,11,0.06)', borderColor: 'rgba(184,134,11,0.35)' },
               }}
             >
-              Notes ({block.notes.length})
+              <UiText>{"Notes ("}</UiText>{block.notes.length})
             </Button>
             {expanded && (
               <Box sx={{ mt: 1 }}>
@@ -659,15 +666,16 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
    with the existing playlist rows on wider screens.
 ───────────────────────────────────────────── */
 export function UpNextList({ related }: { related: RelatedEpisode[] }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const narrow = useMediaQuery('(max-width:767.95px)')
   if (related.length === 0) {
     return (
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.6)', px: 0.5 }}>
-        No other episodes in this show yet.
-      </Typography>
+        <UiText>{"No other episodes in this show yet."}</UiText></Typography>
     )
   }
-  if (narrow) return <Box component="section" aria-label="Up next" data-mobile-related sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:{xs:.75,sm:1},minWidth:0}}>
+  if (narrow) return <Box component="section" aria-label={awmT("Up next")} data-mobile-related sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:{xs:.75,sm:1},minWidth:0}}>
     {related.filter(item=>item.slug&&item.showSlug).slice(0,9).map(item=><Box component={Link} prefetch={false} key={item.id} href={`/cartoons/${item.showSlug}/${encodeURIComponent(item.slug)}`} aria-label={item.title} sx={{position:'relative',display:'block',aspectRatio:HOME_CAROUSEL_CARD_ASPECT_RATIO,minWidth:0,borderRadius:'10px',overflow:'hidden',bgcolor:'#0e2e1f',textDecoration:'none','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}>
       <Box component="img" src={item.cover??''} alt="" loading="lazy" decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden'}} sx={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
       <Box aria-hidden sx={{position:'absolute',inset:0,background:'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)'}}/>
@@ -675,7 +683,7 @@ export function UpNextList({ related }: { related: RelatedEpisode[] }) {
     </Box>)}
   </Box>
   return (
-    <Box component="section" aria-label="Up next" sx={{ display: 'flex', flexDirection: 'column' }}>
+    <Box component="section" aria-label={awmT("Up next")} sx={{ display: 'flex', flexDirection: 'column' }}>
       {related.map((item) => (
         <Box
           key={item.id}
@@ -758,6 +766,8 @@ export default function EpisodePage({
   initialStart?: number
   related?: Array<EpisodeMeta & { showSlug: string; showTitle?: string }>
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const router = useRouter()
   const isAdmin = useIsAdmin()
   const closePip = usePlayerStore((state) => state.closePip)
@@ -1050,10 +1060,10 @@ export default function EpisodePage({
                 separator={<BreadcrumbSep sx={{ fontSize: 13, color: 'rgba(245,237,224,0.5)' }} />}
                 sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
               >
-                <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Home</Typography>
-                <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Cartoons</Typography>
+                <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}><UiText>{"Home"}</UiText></Typography>
+                <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}><UiText>{"Cartoons"}</UiText></Typography>
                 <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>{showTitle}</Typography>
-                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>{episode.title}</Typography>
+                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}><LocalisedContent original={episode.title} arabic={episode.titleAr}/></Typography>
               </Breadcrumbs>
             </Box>
             <Box sx={{ display: 'block' }}>
@@ -1082,11 +1092,10 @@ export default function EpisodePage({
                 {errorCode != null && isYouTubeSource && (
                   <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
                     <Box sx={{ textAlign: 'center', color: '#fff' }}>
-                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>YouTube could not load this video.</Typography>
-                      <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.75 }}>Player error {errorCode}</Typography>
+                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}><UiText>{"YouTube could not load this video."}</UiText></Typography>
+                      <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.75 }}><UiText>{"Player error"}</UiText>{' '}{errorCode}</Typography>
                       <Button onClick={retry} variant="contained" startIcon={<Refresh />} sx={{ bgcolor: 'var(--gold)', color: '#fff', textTransform: 'none' }}>
-                        Retry video
-                      </Button>
+                        <UiText>{"Retry video"}</UiText></Button>
                     </Box>
                   </Box>
                 )}
@@ -1150,10 +1159,9 @@ export default function EpisodePage({
                   {errorCode != null && isYouTubeSource && (
                     <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 2 }}>
                       <Box sx={{ textAlign: 'center', color: '#fff' }}>
-                        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700 }}>Video unavailable</Typography>
+                        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700 }}><UiText>{"Video unavailable"}</UiText></Typography>
                         <Button onClick={retry} size="small" startIcon={<Refresh />} sx={{ mt: 0.75, color: '#fff', fontSize: 11, textTransform: 'none' }}>
-                          Retry
-                        </Button>
+                          <UiText>{"Retry"}</UiText></Button>
                       </Box>
                     </Box>
                   )}
@@ -1170,25 +1178,21 @@ export default function EpisodePage({
                   startIcon={<PsychologyOutlined sx={{ fontSize: 17 }} />}
                   sx={{ color: 'rgba(245,237,224,0.65)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold-light)', bgcolor: 'rgba(245,237,224,0.06)' } }}
                 >
-                  Memory
-                </Button>
+                  <UiText>{"Memory"}</UiText></Button>
                 <Button
                   onClick={openSettings}
                   size="small"
                   startIcon={<SettingsIcon sx={{ fontSize: 17 }} />}
                   sx={{ color: 'rgba(245,237,224,0.65)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold-light)', bgcolor: 'rgba(245,237,224,0.06)' } }}
                 >
-                  Settings
-                </Button>
+                  <UiText>{"Settings"}</UiText></Button>
                 <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2.5, color: 'rgba(245,237,224,0.5)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, fontWeight: 600, pr: 0.5, whiteSpace: 'nowrap' }}>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                    <SpaceBar sx={{ fontSize: 17 }} /> play/pause
-                  </Box>
+                    <SpaceBar sx={{ fontSize: 17 }} /> {' '}<UiText>{"play/pause"}</UiText></Box>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                    <KeyboardArrowLeft sx={{ fontSize: 17 }} /> prev timestamp
-                  </Box>
+                    <KeyboardArrowLeft sx={{ fontSize: 17 }} /> {' '}<UiText>{"prev timestamp"}</UiText></Box>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                    next timestamp <KeyboardArrowRight sx={{ fontSize: 17 }} />
+                    <UiText>{"next timestamp"}</UiText>{' '}<KeyboardArrowRight sx={{ fontSize: 17 }} />
                   </Box>
                 </Box>
               </Box>
@@ -1210,10 +1214,10 @@ export default function EpisodePage({
                   '& .MuiTabs-indicator': { background: 'var(--gold)', height: '2px' },
                 }}
               >
-                <Tab label="Script" />
-                <Tab label="More" />
-                {isMobile && <Tab label="Settings" />}
-                {isMobile && <Tab label="Memory" />}
+                <Tab label={awmT("Script")} />
+                <Tab label={awmT("More")} />
+                {isMobile && <Tab label={awmT("Settings")} />}
+                {isMobile && <Tab label={awmT("Memory")} />}
               </Tabs>
 
             </Box>
@@ -1221,7 +1225,7 @@ export default function EpisodePage({
             <Box data-watch-tab-content sx={{ background: 'var(--awm-white)', borderRadius: { xs: '0 0 12px 12px', md: '12px' }, px: { xs: 2, md: 4 }, '@media (max-width:767.95px)':{px:1}, py: { xs: 2, md: 3 }, mt: { xs: 0, md: '2px' } }}>
               {tab === 0 && (
                 <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
-                  {episode.title}
+                  <LocalisedContent original={episode.title} arabic={episode.titleAr}/>
                 </Typography>
               )}
               {/* ── Test Yourself button (Script tab only) ── */}
@@ -1255,7 +1259,7 @@ export default function EpisodePage({
                         },
                       }}
                     >
-                      {allNotesExpanded ? 'Collapse notes' : 'Notes'}
+                      {allNotesExpanded ? awmT("Collapse notes") : awmT("Notes")}
                     </Button>
                   )}
                 </Box>
@@ -1271,7 +1275,7 @@ export default function EpisodePage({
                   }}
                 >
                   {episode.scriptBlocks.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}><UiText>{"No script found in this episode file."}</UiText></Typography>
                   ) : (
                     episode.scriptBlocks.map((block, i) => (
                       <ScriptBlockView
@@ -1307,7 +1311,7 @@ export default function EpisodePage({
               {!isMobile && tab === 2 && (
                 <Box>
                   {episode.grammarPoints.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}><UiText>{"No grammar points found."}</UiText></Typography>
                   ) : (
                     <>
                       {/* Mobile: cards */}
@@ -1353,9 +1357,9 @@ export default function EpisodePage({
                           <thead>
                             <tr>
                               <th style={{ textAlign: 'center', width: 48 }}>#</th>
-                              <th>Pattern</th>
-                              <th>How It Works</th>
-                              <th style={{ textAlign: 'right', direction: 'rtl' }}>Example</th>
+                              <th><UiText>{"Pattern"}</UiText></th>
+                              <th><UiText>{"How It Works"}</UiText></th>
+                              <th style={{ textAlign: 'right', direction: 'rtl' }}><UiText>{"Example"}</UiText></th>
                             </tr>
                           </thead>
                           <tbody>

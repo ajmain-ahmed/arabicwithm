@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
@@ -42,6 +46,7 @@ export interface WatchEpisode extends EpisodeMeta {
   showId: string
   showSlug: string
   showTitle: string
+  showTitleAr?: string
   showCategory?: string
 }
 
@@ -84,6 +89,8 @@ export default function CartoonsPage({
   totalShows: number
   query?: string
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const isAdmin = useIsAdmin()
   const router = useRouter()
   const pathname = usePathname()
@@ -200,20 +207,20 @@ export default function CartoonsPage({
     <CatalogueLayout
       breadcrumbs={(
         <Breadcrumbs separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />} sx={{ display: { xs: 'none', md: 'flex' }, mb: 2 }}>
-          <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: GOLD } }}>Home</Typography>
-          <Typography sx={{ color: BARK, fontWeight: 600, fontFamily: 'var(--font-sans), sans-serif' }}>Watch</Typography>
+          <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: GOLD } }}><UiText>{"Home"}</UiText></Typography>
+          <Typography sx={{ color: BARK, fontWeight: 600, fontFamily: 'var(--font-sans), sans-serif' }}><UiText>{"Watch"}</UiText></Typography>
         </Breadcrumbs>
       )}
       headerStart={(
         <>
-          <Typography component="h1" sx={{ position: 'absolute', width: '1px', height: '1px', p: 0, m: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Arabic cartoons</Typography>
+          <Typography component="h1" sx={{ position: 'absolute', width: '1px', height: '1px', p: 0, m: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}><UiText>{"Arabic cartoons"}</UiText></Typography>
           <ToggleButtonGroup
             exclusive
             value={view}
             onChange={(_, nextControl: WatchControl | null) => {
               if (nextControl) setView(nextControl)
             }}
-            aria-label="Watch catalogue view"
+            aria-label={awmT("Watch catalogue view")}
             size="small"
             sx={{
               width: { xs: '100%', sm: 'auto' },
@@ -239,15 +246,15 @@ export default function CartoonsPage({
               },
             }}
           >
-            <ToggleButton value="episodes" aria-label="Show all episodes">
+            <ToggleButton value="episodes" aria-label={awmT("Show all episodes")}>
               <VideoLibrary sx={{ display: { xs: 'none', sm: 'inline-flex' }, mr: 0.75, fontSize: 19 }} />
-              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Episodes</Box>
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>All Episodes</Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}><UiText>{"Episodes"}</UiText></Box>
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}><UiText>{"All Episodes"}</UiText></Box>
             </ToggleButton>
-            <ToggleButton value="shows" aria-label="Show all shows">
+            <ToggleButton value="shows" aria-label={awmT("Show all shows")}>
               <Movie sx={{ display: { xs: 'none', sm: 'inline-flex' }, mr: 0.75, fontSize: 19 }} />
-              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Shows</Box>
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>All Shows</Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}><UiText>{"Shows"}</UiText></Box>
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}><UiText>{"All Shows"}</UiText></Box>
             </ToggleButton>
           </ToggleButtonGroup>
         </>
@@ -256,7 +263,7 @@ export default function CartoonsPage({
         <TextField
           value={searchInput}
           onChange={(event) => { setSearchInput(event.target.value); applySearch(event.target.value) }}
-          placeholder="Search episodes or shows"
+          placeholder={awmT("Search episodes or shows")}
           size="small"
           sx={{
             width: { xs: '100%', sm: 230, md: 260 },
@@ -272,7 +279,7 @@ export default function CartoonsPage({
             },
           }}
           slotProps={{
-            htmlInput: { 'aria-label': 'Search episodes or shows' },
+            htmlInput: { 'aria-label': awmT('Search episodes or shows') },
             input: {
               startAdornment: (
                 <InputAdornment position="start"><Search sx={{ fontSize: 18, color: MUTED }} /></InputAdornment>
@@ -280,7 +287,7 @@ export default function CartoonsPage({
               endAdornment: searchInput ? (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="Clear search"
+                    aria-label={awmT("Clear search")}
                     onClick={() => { setSearchInput(''); applySearch('') }}
                     sx={{ width: 28, height: 28, color: MUTED }}
                   >
@@ -302,7 +309,7 @@ export default function CartoonsPage({
       {visibleItems.length === 0 ? (
         <Box sx={{ py: 10, textAlign: 'center' }}>
           <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>{query ? `No ${view} match "${query}"` : `No ${view} match your filters`}</Typography>
-          <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
+          <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}><UiText>{"Reset filters"}</UiText></Button>
         </Box>
       ) : view === 'episodes' ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
@@ -313,7 +320,9 @@ export default function CartoonsPage({
                     hrefPrefix={`/cartoons/${episode.showSlug}`}
                     cover={episode.cover ?? ''}
                     title={episode.title}
+                    titleAr={episode.titleAr}
                     description={episode.description}
+                    descriptionAr={episode.descriptionAr}
                     level={episode.level}
                     tags={episode.tags}
                     showTags={false}
@@ -326,7 +335,7 @@ export default function CartoonsPage({
                     mobileImagePosition="center"
                     mobileTitleSize={10}
                     overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}
-                    metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle }]}
+                    metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle,labelAr:episode.showTitleAr }]}
                   />
                 ))}
               </Box>
@@ -347,6 +356,7 @@ export default function CartoonsPage({
                       title={show.title}
                       titleAr={show.titleAr}
                       description={show.description}
+                      descriptionAr={show.descriptionAr}
                       category={show.category}
                       tags={showAdditionalTags[show.slug]}
                       maxVisibleTags={2}

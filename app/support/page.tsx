@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import type { Metadata } from 'next'
 import { HOME_HERO_IMAGE } from '@/app/lib/brand'
 import { CheckCircleRounded, FavoriteRounded, InfoOutlined } from '@mui/icons-material'
@@ -28,24 +30,20 @@ export default async function SupportPage({
     <Box component="div" sx={{ minHeight: '75vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 4, md: 8 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 8 } }}>
       <Container maxWidth="lg">
         {checkoutStatus === 'paid' && (
-          <Alert icon={<CheckCircleRounded />} severity="success" action={<Button href="/" color="inherit" size="small" sx={{ whiteSpace: 'nowrap', textTransform: 'none' }}>Return home</Button>} sx={{ mb: 3, borderRadius: '12px' }}>
-            Thank you. Your contribution was received and will help Arabic with M keep creating useful learning resources.
-          </Alert>
+          <Alert icon={<CheckCircleRounded />} severity="success" action={<Button href="/" color="inherit" size="small" sx={{ whiteSpace: 'nowrap', textTransform: 'none' }}><UiText>{"Return home"}</UiText></Button>} sx={{ mb: 3, borderRadius: '12px' }}>
+            <UiText>{"Thank you. Your contribution was received and will help Arabic with M keep creating useful learning resources."}</UiText></Alert>
         )}
         {checkoutStatus === 'pending' && (
           <Alert icon={<InfoOutlined />} severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
-            Your payment is still being confirmed by Stripe. Please check again shortly.
-          </Alert>
+            <UiText>{"Your payment is still being confirmed by Stripe. Please check again shortly."}</UiText></Alert>
         )}
         {support === 'success' && checkoutStatus === 'invalid' && (
           <Alert severity="warning" sx={{ mb: 3, borderRadius: '12px' }}>
-            We could not verify that Checkout session. No payment confirmation has been recorded on this page.
-          </Alert>
+            <UiText>{"We could not verify that Checkout session. No payment confirmation has been recorded on this page."}</UiText></Alert>
         )}
         {support === 'cancelled' && (
           <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
-            Checkout was cancelled. You have not been charged and can return whenever you are ready.
-          </Alert>
+            <UiText>{"Checkout was cancelled. You have not been charged and can return whenever you are ready."}</UiText></Alert>
         )}
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.05fr) minmax(360px, .75fr)' }, gap: { xs: 3, md: 6 }, alignItems: 'center' }}>
@@ -54,15 +52,13 @@ export default async function SupportPage({
               <FavoriteRounded sx={{ fontSize: 28 }} />
             </Box>
             <Typography component="h1" sx={{ mt: 2, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 'clamp(1.8rem, 7.7vw, 2.6rem)', sm: 52, md: 'clamp(2.6rem, 4.4vw, 3.75rem)' }, fontWeight: 600, lineHeight: 1.05 }}>
-              <Box component="span" sx={{ display: 'block' }}>Support</Box>
-              <Box component="span" sx={{ display: 'block', whiteSpace: 'nowrap' }}>Arabic with M</Box>
+              <Box component="span" sx={{ display: 'block' }}><UiText>{"Support"}</UiText></Box>
+              <Box component="span" sx={{ display: 'block', whiteSpace: 'nowrap' }}><UiText>{"Arabic with M"}</UiText></Box>
             </Typography>
             <Typography sx={{ mt: 2, maxWidth: 650, color: 'rgba(255,255,255,.9)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 16, sm: 18 }, lineHeight: 1.75 }}>
-              Arabic with M turns stories, cartoons and carefully graded reading into practical learning experiences. Contributions help fund content production, platform hosting, development, infrastructure and the learning tools behind those resources.
-            </Typography>
+              <UiText>{"Arabic with M turns stories, cartoons and carefully graded reading into practical learning experiences. Contributions help fund content production, platform hosting, development, infrastructure and the learning tools behind those resources."}</UiText></Typography>
             <Typography sx={{ mt: 1.5, maxWidth: 650, color: 'rgba(255,255,255,.9)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.7 }}>
-              Support is entirely optional. Every contribution helps us expand the book and video library, improve the learning experience and keep investing in the services needed to deliver high-quality Arabic content.
-            </Typography>
+              <UiText>{"Support is entirely optional. Every contribution helps us expand the book and video library, improve the learning experience and keep investing in the services needed to deliver high-quality Arabic content."}</UiText></Typography>
           </Box>
 
           <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 4 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '18px', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}>

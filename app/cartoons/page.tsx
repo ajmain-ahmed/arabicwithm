@@ -143,6 +143,7 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
         showId: show.id,
         showSlug: show.slug,
         showTitle: show.title,
+        showTitleAr:show.titleAr,
         showCategory,
       }))}
       query={query}

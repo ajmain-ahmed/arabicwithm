@@ -1,4 +1,6 @@
 'use client'
+import {UiText,useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useState } from 'react'
 import {
@@ -28,33 +30,46 @@ export default function LearningStats({
   now: Date
 }) {
   const theme = useTheme()
+  const {locale,t}=useWebsiteLocale()
+  const time=(seconds:number)=>{
+    if(locale==='en')return formatLearningTime(seconds)
+    const minutes=Math.floor(Math.max(0,seconds)/60),hours=Math.floor(minutes/60)
+    return hours?minutes%60?t('{hours} hours {minutes} minutes',{hours,minutes:minutes%60}):t('{count} hours',{count:hours}):t('{count} minutes',{count:minutes})
+  }
   const mobileDetail = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const summary = summarizeLearningDashboard(activity, now)
   const { week } = summary
   const comparison = week.comparisonPercent
-  const comparisonText = comparison === null
+  const englishComparison = comparison === null
     ? 'No previous-week comparison yet'
     : `${comparison >= 0 ? 'Up' : 'Down'} ${Math.abs(comparison)}% from last week`
+  const comparisonText=locale==='ar'?(comparison===null?t('No previous-week comparison yet'):t(comparison>=0?'Up {percent}% from last week':'Down {percent}% from last week',{percent:Math.abs(comparison)})):englishComparison
   const metrics = [
     ...(activity.memory ? [{ id: 'memory', ...summary.memory, shortLabel: 'Memory', icon: PsychologyOutlined }] : []),
     ...(activity.wordSearch ? [{ id: 'word-search', ...summary.wordSearch, shortLabel: 'Word Search', icon: GridOnRounded }] : []),
-    { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), shortLabel: 'This week', icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
-    { id: 'today', label: 'Active today', value: formatLearningTime(week.todaySeconds), shortLabel: 'Today', icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
-    { id: 'reading', label: 'Reading this week', value: formatLearningTime(week.readingSeconds), shortLabel: 'Reading', icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },
+    { id: 'week', label: 'Learning this week', value: time(week.thisWeekSeconds), shortLabel: 'This week', icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
+    { id: 'today', label: 'Active today', value: time(week.todaySeconds), shortLabel: 'Today', icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
+    { id: 'reading', label: 'Reading this week', value: time(week.readingSeconds), shortLabel: 'Reading', icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },
     { id: 'streak', label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, shortLabel: 'Streak', icon: LocalFireDepartmentRounded, description: 'Consecutive calendar days with recorded learning activity.' },
     { id: 'books', label: 'Books in progress', value: String(booksInProgress), shortLabel: 'Books', icon: AutoStories, description: 'Books with saved reading progress on this account.' },
     { id: 'definitions', label: 'Words inspected this week', value: String(week.wordLookups), shortLabel: 'Words', icon: ExploreOutlined, description: 'Arabic word definitions opened during the current week.' },
   ]
-  const selected = metrics.find((metric) => metric.id === selectedMetric) ?? null
+  if(locale==='ar')for(const metric of metrics){
+ if(metric.id==='memory'){metric.value=t('{count} cards',{count:activity.memory?.weekCards??0});metric.description=t('{count} Memory cards reviewed this week.',{count:activity.memory?.weekCards??0})}
+ if(metric.id==='word-search'){metric.value=t('{count} puzzles',{count:activity.wordSearch?.weekCompleted??0});metric.description=t('{count} Word Searches completed this week.',{count:activity.wordSearch?.weekCompleted??0})}
+ if(metric.id==='streak')metric.value=t('{count} days',{count:streak})
+ if(metric.id==='week')metric.description=t('{count} active days this week. {comparison}.',{count:week.activeDays,comparison:comparisonText})
+ }
+ const selected = metrics.find((metric) => metric.id === selectedMetric) ?? null
   const closeDetail = () => setSelectedMetric(null)
   const detailPanel = selected ? (() => {
     const DetailIcon = selected.icon
     return <Box sx={{ px: { xs: 2.5, sm: 3 }, pt: { xs: 1, sm: 0 }, pb: { xs: 'calc(24px + env(safe-area-inset-bottom))', sm: 3 } }}>
       <Box sx={{ width: 52, height: 52, display: 'grid', placeItems: 'center', borderRadius: '14px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><DetailIcon sx={{ fontSize: 29 }} /></Box>
-      <Typography sx={{ mt: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>{selected.label}</Typography>
+      <Typography sx={{ mt: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}><UiText>{selected.label}</UiText></Typography>
       <Typography sx={{ mt: 0.5, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: 36, fontWeight: 600, lineHeight: 1.1 }}>{selected.value}</Typography>
-      <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.6 }}>{selected.description}</Typography>
+      <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.6 }}><UiText>{selected.description}</UiText></Typography>
     </Box>
   })() : null
 
@@ -72,12 +87,12 @@ export default function LearningStats({
           ) : (
             <>
               <Icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: { sm: 22, md: 24 } }} />
-              <Typography sx={{ mt: 0.6, maxWidth: '100%', color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.25, overflowWrap: 'anywhere' }}>{metric.shortLabel ?? metric.label}</Typography>
+              <Typography sx={{ mt: 0.6, maxWidth: '100%', color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.25, overflowWrap: 'anywhere' }}><UiText>{metric.shortLabel ?? metric.label}</UiText></Typography>
               <Typography sx={{ mt: 0.3, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { sm: 17, md: 20 }, fontWeight: 600, lineHeight: 1.1, textAlign: 'center' }}>{metric.value}</Typography>
             </>
           )
           return mobileDetail ? (
-            <Box component="button" type="button" key={metric.id} onClick={() => setSelectedMetric(metric.id)} aria-label={`${metric.label}: ${metric.value}. Show details`} sx={{ minWidth: 0, minHeight: { xs: 74, sm: 82 }, p: { xs: 0.7, sm: 1 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.65, border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px', bgcolor: 'var(--awm-cream-light)', color: 'var(--awm-bark)', font: 'inherit', cursor: 'pointer', transition: 'border-color .15s ease, transform .15s ease, background-color .15s ease', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 48%, transparent)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 7%, var(--awm-cream-light))', transform: { sm: 'translateY(-2px)' } }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 2 } }}>
+            <Box component="button" type="button" key={metric.id} onClick={() => setSelectedMetric(metric.id)} aria-label={t('{label}: {value}. Show details',{label:t(metric.label),value:metric.value})} sx={{ minWidth: 0, minHeight: { xs: 74, sm: 82 }, p: { xs: 0.7, sm: 1 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.65, border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px', bgcolor: 'var(--awm-cream-light)', color: 'var(--awm-bark)', font: 'inherit', cursor: 'pointer', transition: 'border-color .15s ease, transform .15s ease, background-color .15s ease', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 48%, transparent)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 7%, var(--awm-cream-light))', transform: { sm: 'translateY(-2px)' } }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 2 } }}>
               {tileContent}
             </Box>
           ) : (
@@ -89,7 +104,7 @@ export default function LearningStats({
       </Box>
     </Paper>
     {mobileDetail && (
-      <SwipeableDrawer anchor="bottom" open={Boolean(selected)} onOpen={() => undefined} onClose={closeDetail} disableSwipeToOpen disableDiscovery slotProps={{ paper: { role: 'dialog', 'aria-modal': true, 'aria-label': selected?.label ?? 'Learning activity detail', sx: { borderRadius: '22px 22px 0 0', bgcolor: 'var(--awm-white)', maxHeight: '82dvh' } } }}>
+      <SwipeableDrawer anchor="bottom" open={Boolean(selected)} onOpen={() => undefined} onClose={closeDetail} disableSwipeToOpen disableDiscovery slotProps={{ paper: { role: 'dialog', 'aria-modal': true, 'aria-label': t(selected?.label ?? 'Learning activity detail'), sx: { borderRadius: '22px 22px 0 0', bgcolor: 'var(--awm-white)', maxHeight: '82dvh' } } }}>
         <Box aria-hidden="true" sx={{ width: 42, height: 5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--awm-bark) 24%, transparent)', mx: 'auto', mt: 1.25, mb: 1 }} />
         {detailPanel}
       </SwipeableDrawer>

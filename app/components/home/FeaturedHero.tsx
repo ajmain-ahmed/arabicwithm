@@ -1,6 +1,12 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+import {localisedText} from '@/app/lib/localisation/locale'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import Link from 'next/link'
+import LocalisedContent from '@/app/components/LocalisedContent'
 import {featuredImageSrcSet} from '@/app/lib/imageVariantPaths'
 import type {ReactNode} from 'react'
 import {FEATURED_DESKTOP_RATIO,FEATURED_MOBILE_HEIGHT,featuredObjectPosition,type FeaturedPosition} from '@/app/lib/featuredFraming'
@@ -26,11 +32,13 @@ function recoverArtwork(image: HTMLImageElement, cover: string) {
 
 /** The same Featured frame remains visible during loading or a catalogue outage. */
 export function FeaturedShell({ loading = false }: { loading?: boolean }) {
+ const {t:awmT}=useWebsiteLocale()
+
   return <Box data-featured-hero data-featured-shell sx={{ pt: '32px', pb: { xs: 1.5, md: 2.5 }, px: { xs: 2, md: 4 } }}>
     <Box sx={{ position: 'relative', height: { xs: FEATURED_MOBILE_HEIGHT, md: 'auto' }, aspectRatio: { md: FEATURED_DESKTOP_RATIO }, borderRadius: { xs: '14px', md: '18px' }, bgcolor: '#0a0f0d', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-start', p: { xs: 3, md: 6 } }}>
-      <Typography sx={{ color: 'var(--awm-gold-light)', letterSpacing: '.18em', textTransform: 'uppercase' }}>Featured</Typography>
-      <Typography role="status" sx={{ color: '#fff', my: 2, fontFamily: 'var(--font-heading)', fontSize: { xs: 28, md: 42 } }}>{loading ? 'Loading Featured…' : 'Discover your next Arabic story'}</Typography>
-      {!loading && <Button component={Link} prefetch={false} href="/cartoons" variant="contained">Browse Shows</Button>}
+      <Typography sx={{ color: 'var(--awm-gold-light)', letterSpacing: '.18em', textTransform: 'uppercase' }}><UiText>{"Featured"}</UiText></Typography>
+      <Typography role="status" sx={{ color: '#fff', my: 2, fontFamily: 'var(--font-heading)', fontSize: { xs: 28, md: 42 } }}>{loading ? awmT("Loading Featured…") : awmT("Discover your next Arabic story")}</Typography>
+      {!loading && <Button component={Link} prefetch={false} href="/cartoons" variant="contained"><UiText>{"Browse Shows"}</UiText></Button>}
     </Box>
   </Box>
 }
@@ -41,6 +49,7 @@ export function FeaturedShell({ loading = false }: { loading?: boolean }) {
    visible. Deliberately shorter than a streaming billboard so the rows stay
    near the fold. */
 export default function FeaturedHero({ show, episode, featuredImage, featuredPosition, priority=true, loadImage=true, pagination=false, navigation }: FeaturedShow & {priority?:boolean;loadImage?:boolean;pagination?:boolean;navigation?:ReactNode}) {
+ const {t:awmT,locale}=useWebsiteLocale()
   return (
     <Box
       data-featured-hero
@@ -82,7 +91,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           onError={event => recoverArtwork(event.currentTarget, show.cover)}
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
         />}
-        <Box component={Link} prefetch={false} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
+         <Box component={Link} prefetch={false} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={awmT('View {title}',{title:localisedText(locale,show.title,show.titleAr)})} sx={{position:'absolute',inset:0,zIndex:1}} />
         {navigation&&<Box data-featured-mobile-navigation sx={{display:{xs:'block',md:'none'},position:'absolute',top:12,right:12,zIndex:3}}>{navigation}</Box>}
         {/* Legibility: weighted to the left where the text sits. */}
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
@@ -102,8 +111,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           }}
         >
           <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', lineHeight: 1 }}>
-            Featured
-          </Typography>
+            <UiText>{"Featured"}</UiText></Typography>
         </Box>
 
         <Box
@@ -123,7 +131,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
             pb: { xs: 2.25, md: 3.5 },
           }}
         >
-          {show.slug.toLowerCase()==='dbz'?<Box component="img" src="/homepage/dbz-logo.png" alt={show.title} sx={{width:{xs:250,md:500},height:'auto',display:'block',filter:'drop-shadow(0 3px 10px rgba(0,0,0,.55))'}}/>:<Typography component="h2" sx={{color:'#fff',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:{xs:44,md:76},lineHeight:1.05,textShadow:'0 3px 10px rgba(0,0,0,.55)'}}>{show.title}</Typography>}
+          {show.slug.toLowerCase()==='dbz'?<Box component="img" src="/homepage/dbz-logo.png" alt={show.title} sx={{width:{xs:250,md:500},height:'auto',display:'block',filter:'drop-shadow(0 3px 10px rgba(0,0,0,.55))'}}/>:<Typography component="h2" sx={{color:'#fff',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:{xs:44,md:76},lineHeight:1.05,textShadow:'0 3px 10px rgba(0,0,0,.55)'}}><LocalisedContent original={show.title} arabic={show.titleAr}/></Typography>}
           <Box data-featured-actions sx={{ display:{xs:'flex',md:pagination?'grid':'flex'},gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)',gridTemplateRows:{xs:'auto auto',md:'auto'}, alignItems: 'center',justifyContent:{xs:'flex-start',md:'normal'}, gap: {xs:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
            <Box sx={{display:'flex',gridColumn:1,gridRow:1,gap:1.25,width:{xs:'auto',md:'100%'}}} >
             <Button
@@ -147,8 +155,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
                 '&:hover': { bgcolor: '#174832', boxShadow: '0 6px 18px rgba(0,0,0,0.35)' },
               }}
             >
-              Play
-            </Button>
+              <UiText>{"Play"}</UiText></Button>
             <Button
               component={Link} prefetch={false}
               href={`/cartoons/${encodeURIComponent(show.slug)}`}
@@ -169,8 +176,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
                 '&:hover': { bgcolor: 'rgba(109,109,110,0.4)' },
               }}
             >
-              Episodes
-            </Button>
+              <UiText>{"Episodes"}</UiText></Button>
            </Box>
            {navigation&&<Box sx={{display:{xs:'none',md:'block'},gridColumn:2,gridRow:1,justifySelf:'center'}}>{navigation}</Box>}
           </Box>

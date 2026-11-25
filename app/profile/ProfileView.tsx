@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
 import { boundedRead } from '@/app/lib/readRecovery'
@@ -92,6 +96,8 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 }
 
 function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved: (name: string) => void }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user } = useAuth()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -148,11 +154,11 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
 
   return (
     <Box className="pv-fade-up">
-      <SectionLabel>Profile</SectionLabel>
+      <SectionLabel><UiText>{"Profile"}</UiText></SectionLabel>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3, gap: 2 }}>
-        <SectionTitle>Your Account</SectionTitle>
+        <SectionTitle><UiText>{"Your Account"}</UiText></SectionTitle>
         {profile.own && !editing && (
-          <Button onClick={() => setEditing(true)} variant="contained" size="small" sx={{ ...GOLD_BUTTON, fontSize: '0.75rem', flexShrink: 0, mt: 0.5 }}>Edit</Button>
+          <Button onClick={() => setEditing(true)} variant="contained" size="small" sx={{ ...GOLD_BUTTON, fontSize: '0.75rem', flexShrink: 0, mt: 0.5 }}><UiText>{"Edit"}</UiText></Button>
         )}
       </Box>
 
@@ -168,14 +174,14 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
         {profile.own && user?.email && (
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <FieldShell icon={<EmailOutlined sx={{ fontSize: 16 }} />} label="Email">
+            <FieldShell icon={<EmailOutlined sx={{ fontSize: 16 }} />} label={awmT("Email")}>
               <InfoBox>{user.email}</InfoBox>
             </FieldShell>
           </Box>
         )}
 
         <Box>
-          <FieldShell icon={<PersonOutlined sx={{ fontSize: 16 }} />} label="Display Name">
+          <FieldShell icon={<PersonOutlined sx={{ fontSize: 16 }} />} label={awmT("Display Name")}>
             {editing ? (
               <TextField className="pv-field" fullWidth size="small" value={name} onChange={e => setName(e.target.value)} slotProps={{ htmlInput: { maxLength: 60 } }} />
             ) : <InfoBox>{profile.displayName}</InfoBox>}
@@ -183,7 +189,7 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
         </Box>
 
         <Box>
-          <FieldShell icon={<PersonOutlined sx={{ fontSize: 16 }} />} label="Username">
+          <FieldShell icon={<PersonOutlined sx={{ fontSize: 16 }} />} label={awmT("Username")}>
             {editing ? (
               <TextField
                 className="pv-field" fullWidth size="small" value={username}
@@ -196,21 +202,21 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
         </Box>
 
         <Box>
-          <FieldShell icon={<CalendarMonthOutlined sx={{ fontSize: 16 }} />} label="Member Since">
+          <FieldShell icon={<CalendarMonthOutlined sx={{ fontSize: 16 }} />} label={awmT("Member Since")}>
             <InfoBox>{profile.joined}</InfoBox>
           </FieldShell>
         </Box>
 
         <Box>
-          <FieldShell icon={<LocalFireDepartmentRounded sx={{ fontSize: 16 }} />} label="Streak">
-            <InfoBox>{profile.summary.streak} day streak</InfoBox>
+          <FieldShell icon={<LocalFireDepartmentRounded sx={{ fontSize: 16 }} />} label={awmT("Streak")}>
+            <InfoBox>{profile.summary.streak}{' '}<UiText>{"day streak"}</UiText></InfoBox>
           </FieldShell>
         </Box>
 
         <Box sx={{ gridColumn: '1 / -1' }}>
           <FieldShell icon={<ShieldOutlined sx={{ fontSize: 16 }} />} label="AWM+">
-            <Box aria-label={profile.premium ? 'AWM Plus' : undefined}>
-              <InfoBox>{profile.premium ? 'AWM+ subscription active' : 'Free account'}</InfoBox>
+            <Box aria-label={profile.premium ? awmT("AWM Plus") : undefined}>
+              <InfoBox>{profile.premium ? awmT("AWM+ subscription active") : awmT("Free account")}</InfoBox>
             </Box>
           </FieldShell>
         </Box>
@@ -221,20 +227,21 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
       {editing && (
         <Box sx={{ display: 'flex', gap: 1.5, mt: 3, flexWrap: 'wrap' }}>
           <Button onClick={() => void save()} disabled={saving || !name.trim() || Boolean(usernameError) || Boolean(usernameStatus && !usernameStatus.available)} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
-            {saving ? 'Saving…' : 'Save Changes'}
+            {saving ? awmT("Saving…") : awmT("Save Changes")}
           </Button>
           <Button onClick={cancelEdit} disabled={saving} variant="outlined"
             sx={{ borderColor: 'rgba(184,134,11,0.18)', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '2px', px: 3, '&:hover': { borderColor: 'var(--awm-gold)', color: 'var(--awm-gold)' } }}>
-            Cancel
-          </Button>
+            <UiText>{"Cancel"}</UiText></Button>
         </Box>
       )}
-      {message && <Alert severity={message === 'Profile saved.' ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
+      {message && <Alert severity={message === 'Profile saved.' ? 'success' : 'error'} sx={{ mt: 2 }}><UiText>{message}</UiText></Alert>}
     </Box>
   )
 }
 
 function AwmSection({ profile }: { profile: PublicProfile }) {
+ const {t:awmT,locale}=useWebsiteLocale()
+
   const [status, setStatus] = useState<PremiumStatus | null>(null)
   const [statusLoading, setStatusLoading] = useState(true)
   const [statusAttempt, setStatusAttempt] = useState(0)
@@ -298,18 +305,18 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
 
   if (!status) return (
     <Box className="pv-fade-up">
-      <SectionLabel>Subscription</SectionLabel>
+      <SectionLabel><UiText>{"Subscription"}</UiText></SectionLabel>
       <SectionTitle>AWM+</SectionTitle>
       <Box sx={{ minHeight: 280, display: 'grid', placeItems: 'center', background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
         {statusLoading || !error ? (
           <Box role="status" sx={{ textAlign: 'center' }}>
             <CircularProgress size={30} sx={{ color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-muted)' }}>Confirming your AWM+ status…</Typography>
+            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-muted)' }}><UiText>{"Confirming your AWM+ status…"}</UiText></Typography>
           </Box>
         ) : (
           <Box sx={{ width: '100%', textAlign: 'center' }}>
-            <Alert severity="error">{error}</Alert>
-            <Button onClick={retryStatus} variant="outlined" sx={{ mt: 2, textTransform: 'none' }}>Retry</Button>
+            <Alert severity="error"><UiText>{error}</UiText></Alert>
+            <Button onClick={retryStatus} variant="outlined" sx={{ mt: 2, textTransform: 'none' }}><UiText>{"Retry"}</UiText></Button>
           </Box>
         )}
       </Box>
@@ -318,12 +325,12 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
 
   return (
     <Box className="pv-fade-up">
-      <SectionLabel>Subscription</SectionLabel>
+      <SectionLabel><UiText>{"Subscription"}</UiText></SectionLabel>
       <SectionTitle>AWM+</SectionTitle>
       <Box sx={{ background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
-        {premium && manageable && formatMembershipDate(status?.startedAt) && (
+        {premium && manageable && formatMembershipDate(status?.startedAt,locale) && (
           <Typography sx={{ mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)' }}>
-            Member since {formatMembershipDate(status?.startedAt)}
+            <UiText>{"Member since"}</UiText>{' '}{formatMembershipDate(status?.startedAt,locale)}
             {tenureMonths > 0 ? ` · ${tenureMonths} month${tenureMonths === 1 ? '' : 's'} a subscriber` : ''}
           </Typography>
         )}
@@ -331,55 +338,56 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
           {PREMIUM_BENEFITS.map((benefit) => (
             <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.1, borderRadius: '2px', bgcolor: 'var(--awm-cream-light)' }}>
               <CheckCircleOutlined aria-hidden="true" sx={{ flex: '0 0 auto', color: 'var(--awm-gold)', fontSize: 19 }} />
-              <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-bark)', fontSize: { xs: 13, sm: 14 }, fontWeight: 600 }}>{benefit.label}</Typography>
+              <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-bark)', fontSize: { xs: 13, sm: 14 }, fontWeight: 600 }}><UiText>{benefit.label}</UiText></Typography>
             </Box>
           ))}
         </Box>
         {!premium && (
           <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
             {new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM.monthlyPence / 100)}
-            <Typography component="span" sx={{ ml: 1, fontSize: '0.9rem', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>GBP / month</Typography>
+            <Typography component="span" sx={{ ml: 1, fontSize: '0.9rem', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}><UiText>{"GBP / month"}</UiText></Typography>
           </Typography>
         )}
         {premium && !manageable ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1.4, background: 'rgba(46,125,50,0.06)', border: '1px solid rgba(46,125,50,0.2)', borderRadius: '2px' }}>
             <CheckCircleOutlined sx={{ fontSize: 16, color: '#2e7d32', flexShrink: 0 }} />
-            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: '#2e7d32' }}>Your AWM+ subscription is active.</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: '#2e7d32' }}><UiText>{"Your AWM+ subscription is active."}</UiText></Typography>
           </Box>
         ) : (
           <>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%' }}>
               <Button onClick={() => void cta()} disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="contained" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ ...GOLD_BUTTON, width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
-                {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
+                {busy ? awmT("Opening…") : premium ? awmT("Manage AWM+") : awmT('Subscribe — {price}',{price:PREMIUM.label})}
               </Button>
             </Box>
-            {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd) ? (
+            {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd,locale) ? (
               <>
                 <Alert severity="error" sx={{ mt: 2, py: 0 }}>
-                  Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
+                  <UiText>{"Your last payment didn’t go through — update your payment method. Access continues until"}</UiText>{' '}{formatMembershipDate(status?.periodEnd,locale)}.
                 </Alert>
                 <Button onClick={() => void updateCard()} disabled={cardBusy} loading={cardBusy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="outlined" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ mt: 1.5, width: '100%', minHeight: { xs: 44, sm: 40 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
-                  {cardBusy ? 'Opening…' : 'Update payment method'}
+                  {cardBusy ? awmT("Opening…") : awmT("Update payment method")}
                 </Button>
               </>
-            ) : premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd) ? (
+            ) : premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd,locale) ? (
               <Alert severity="warning" icon={false} sx={{ mt: 2, py: 0 }}>
-                Cancellation scheduled — your access ends on {formatMembershipDate(status.periodEnd)}. You won&rsquo;t be charged again.
-              </Alert>
-            ) : premium && manageable && formatMembershipDate(status?.periodEnd) ? (
+                <UiText>{"Cancellation scheduled — your access ends on"}</UiText>{' '}{formatMembershipDate(status.periodEnd,locale)}<UiText>{". You won’t be charged again."}</UiText></Alert>
+            ) : premium && manageable && formatMembershipDate(status?.periodEnd,locale) ? (
               <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.8rem', color: 'var(--awm-muted)' }}>
-                Renews on {formatMembershipDate(status?.periodEnd)} · {PREMIUM.price}.
+                <UiText>{"Renews on"}</UiText>{' '}{formatMembershipDate(status?.periodEnd,locale)} · {PREMIUM.price}.
               </Typography>
             ) : null}
           </>
         )}
-        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mt: 2 }}><UiText>{error}</UiText></Alert>}
       </Box>
     </Box>
   )
 }
 
 function SettingsSection() {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user } = useAuth()
   const [resetStatus, setResetStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [signingOut, setSigningOut] = useState(false)
@@ -406,28 +414,28 @@ function SettingsSection() {
 
   return (
     <Box className="pv-fade-up">
-      <SectionLabel>Preferences</SectionLabel>
-      <SectionTitle>Settings</SectionTitle>
+      <SectionLabel><UiText>{"Preferences"}</UiText></SectionLabel>
+      <SectionTitle><UiText>{"Settings"}</UiText></SectionTitle>
       <Box sx={{ background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 }, mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <LockOutlined sx={{ fontSize: 17, color: 'var(--awm-gold)' }} />
-          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Password</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', fontWeight: 600, color: 'var(--awm-bark)' }}><UiText>{"Password"}</UiText></Typography>
         </Box>
         <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.8rem', color: 'var(--awm-muted)', mb: 2.5, lineHeight: 1.6 }}>
-          We&apos;ll send a secure reset link to <Box component="span" sx={{ color: 'var(--awm-bark)', fontWeight: 500 }}>{user?.email ?? 'your account email'}</Box>
+          <UiText>{"We'll send a secure reset link to"}</UiText>{' '}<Box component="span" sx={{ color: 'var(--awm-bark)', fontWeight: 500 }}>{user?.email ?? 'your account email'}</Box>
         </Typography>
         {resetStatus === 'sent' ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1.4, background: 'rgba(46,125,50,0.06)', border: '1px solid rgba(46,125,50,0.2)', borderRadius: '2px' }}>
             <CheckCircleOutlined sx={{ fontSize: 16, color: '#2e7d32', flexShrink: 0 }} />
-            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: '#2e7d32' }}>Reset link sent — check your inbox.</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: '#2e7d32' }}><UiText>{"Reset link sent — check your inbox."}</UiText></Typography>
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Button onClick={() => void sendResetLink()} disabled={resetStatus === 'sending'} variant="contained" sx={{ ...GOLD_BUTTON, alignSelf: 'flex-start', px: 3, '&:disabled': { background: 'rgba(44,26,14,0.08)', color: 'rgba(44,26,14,0.3)' } }}>
-              {resetStatus === 'sending' ? 'Sending…' : 'Send Reset Link'}
+              {resetStatus === 'sending' ? awmT("Sending…") : awmT("Send Reset Link")}
             </Button>
             {resetStatus === 'error' && (
-              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#c0392b' }}>Something went wrong. Please try again.</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#c0392b' }}><UiText>{"Something went wrong. Please try again."}</UiText></Typography>
             )}
           </Box>
         )}
@@ -436,12 +444,12 @@ function SettingsSection() {
       <Box sx={{ background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <LogoutOutlined sx={{ fontSize: 17, color: 'var(--awm-gold)' }} />
-          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Sign Out</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', fontWeight: 600, color: 'var(--awm-bark)' }}><UiText>{"Sign Out"}</UiText></Typography>
         </Box>
-        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.8rem', color: 'var(--awm-muted)', mb: 2.5, lineHeight: 1.6 }}>You can sign back in anytime with your email.</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.8rem', color: 'var(--awm-muted)', mb: 2.5, lineHeight: 1.6 }}><UiText>{"You can sign back in anytime with your email."}</UiText></Typography>
         <Button onClick={() => void signOut()} disabled={signingOut} variant="outlined"
           sx={{ alignSelf: 'flex-start', borderColor: 'rgba(184,134,11,0.18)', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '2px', px: 3, '&:hover': { borderColor: 'var(--awm-gold)', color: 'var(--awm-gold)', background: 'rgba(184,134,11,0.04)' } }}>
-          {signingOut ? 'Signing out…' : 'Sign Out'}
+          {signingOut ? awmT("Signing out…") : awmT("Sign Out")}
         </Button>
       </Box>
     </Box>
@@ -450,6 +458,7 @@ function SettingsSection() {
 
 
 function SupportSection() {
+
   const [dialog, setDialog] = useState<null | 'contact' | 'support'>(null)
   const faqs = [
     { q: 'What is AWM+?', a: 'AWM+ is our subscription: unlimited Memory sessions, audiobook listening, PDF downloads and more. Manage it any time from this profile page.' },
@@ -460,26 +469,26 @@ function SupportSection() {
   const close = () => setDialog(null)
   return (
     <Box className="pv-fade-up">
-      <SectionLabel>Help</SectionLabel>
-      <SectionTitle>Support</SectionTitle>
+      <SectionLabel><UiText>{"Help"}</UiText></SectionLabel>
+      <SectionTitle><UiText>{"Support"}</UiText></SectionTitle>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 4 }}>
         {[
-          { key: 'contact' as const, icon: <EmailOutlined sx={{ fontSize: 22 }} />, title: 'Contact Us', body: 'Questions, feedback or suggestions? Contact us on social media or by email.', action: 'Contact us' },
-          { key: 'support' as const, icon: <FavoriteRounded sx={{ fontSize: 22 }} />, title: 'Support the Project', body: 'Help us create more Arabic learning resources.', action: 'Support us' },
+          { key: 'contact' as const, icon: <EmailOutlined sx={{ fontSize: 22 }} />, title: "Contact Us", body: 'Questions, feedback or suggestions? Contact us on social media or by email.', action: 'Contact us' },
+          { key: 'support' as const, icon: <FavoriteRounded sx={{ fontSize: 22 }} />, title: "Support the Project", body: 'Help us create more Arabic learning resources.', action: 'Support us' },
         ].map(({ key, icon, title, body, action }) => (
           <Box key={key} className="pv-support-card" component="button" type="button" onClick={() => setDialog(key)}>
             <Box sx={{ color: 'var(--awm-gold)', mb: 1.5 }}>{icon}</Box>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--awm-bark)', mb: 0.5 }}>{title}</Typography>
-            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)', lineHeight: 1.6, mb: 1.5 }}>{body}</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--awm-bark)', mb: 0.5 }}><UiText>{title}</UiText></Typography>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)', lineHeight: 1.6, mb: 1.5 }}><UiText>{body}</UiText></Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--awm-gold)', letterSpacing: '0.04em' }}>{action}</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--awm-gold)', letterSpacing: '0.04em' }}><UiText>{action}</UiText></Typography>
               <ArrowForwardIos sx={{ fontSize: 10, color: 'var(--awm-gold)' }} />
             </Box>
           </Box>
         ))}
       </Box>
       <Box sx={{ background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.3rem', fontWeight: 600, color: 'var(--awm-bark)', mb: 2.5 }}>Common Questions</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.3rem', fontWeight: 600, color: 'var(--awm-bark)', mb: 2.5 }}><UiText>{"Common Questions"}</UiText></Typography>
         {faqs.map(({ q, a }) => <FaqItem key={q} q={q} a={a} />)}
       </Box>
       <ContactDialog open={dialog === 'contact'} onClose={close} />
@@ -493,15 +502,17 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', '&:last-child': { borderBottom: 'none' } }}>
       <Box onClick={() => setOpen(o => !o)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.8, cursor: 'pointer', gap: 2 }}>
-        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.88rem', fontWeight: 500, color: 'var(--awm-bark)' }}>{q}</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.88rem', fontWeight: 500, color: 'var(--awm-bark)' }}><UiText>{q}</UiText></Typography>
         <ChevronRight sx={{ fontSize: 16, color: 'var(--awm-muted)', flexShrink: 0, transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none' }} />
       </Box>
-      {open && <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)', lineHeight: 1.7, pb: 2 }}>{a}</Typography>}
+      {open && <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)', lineHeight: 1.7, pb: 2 }}><UiText>{a}</UiText></Typography>}
     </Box>
   )
 }
 
 export default function ProfileView({ profile }: { profile: PublicProfile }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -526,17 +537,17 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
   return (
     <>
       <style>{CSS}</style>
-      {!!profile.warnings?.length && <Alert severity="info" sx={{ mx: 2, mt: 2 }}>{profile.warnings.join(' ')} Your profile is still available. Refresh to retry.</Alert>}
+      {!!profile.warnings?.length && <Alert severity="info" sx={{ mx: 2, mt: 2 }}>{profile.warnings.join(' ')}{' '}<UiText>{"Your profile is still available. Refresh to retry."}</UiText></Alert>}
       {/* body */}
       <Box sx={{ background: 'var(--awm-cream-light)', minHeight: 'calc(100dvh - var(--awm-navbar-height))', transition: 'background-color 180ms ease', pb: { xs: 9, md: 0 } }}>
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
           <Box sx={{ display: 'flex', gap: { md: 5 }, flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'stretch', md: 'flex-start' } }}>
             {/* sidebar (desktop) */}
-            <Box component="nav" aria-label="Profile sections" sx={{ display: { xs: 'none', md: 'flex' }, width: 220, flexShrink: 0, position: 'sticky', top: 96, flexDirection: 'column', gap: 0.5 }}>
+            <Box component="nav" aria-label={awmT("Profile sections")} sx={{ display: { xs: 'none', md: 'flex' }, width: 220, flexShrink: 0, position: 'sticky', top: 96, flexDirection: 'column', gap: 0.5 }}>
               {sections.map(item => (
                 <Box key={item.id} component="button" type="button" aria-current={active === item.id ? 'page' : undefined} className={`pv-nav-item${active === item.id ? ' active' : ''}`} sx={{ width: '100%', background: 'transparent', textAlign: 'start', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }} onClick={() => selectSection(item.id)}>
                   <Box className="pv-nav-icon" sx={{ color: active === item.id ? 'var(--awm-gold)' : 'var(--awm-muted)', display: 'flex', transition: 'color 0.15s' }}>{item.icon}</Box>
-                  {item.label}
+                  <UiText>{item.label}</UiText>
                 </Box>
               ))}
             </Box>
@@ -569,7 +580,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
         {sections.map(item => (
           <Box key={item.id} component="button" type="button" className={`pv-mobile-tab${active === item.id ? ' active' : ''}`} onClick={() => selectSection(item.id)}>
             <Box sx={{ display: 'flex', color: 'inherit' }}>{item.icon}</Box>
-            {item.label}
+            <UiText>{item.label}</UiText>
           </Box>
         ))}
       </Box>

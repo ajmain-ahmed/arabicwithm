@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import EnglishForYouSegment from './EnglishForYouSegment'
 import { boundedRead } from '@/app/lib/readRecovery'
@@ -53,6 +57,8 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
 }
 
 export function ClipPlayer({ clip, language = 'ar', desktopLanguageControl, mobileViewControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { language?:'ar'|'en'; desktopLanguageControl?:ReactNode; mobileViewControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const samplePlayback=useForYouMeter()
   const canAdvance=useForYouAdvance()
   const inspectingSeek=useRef(false)
@@ -128,16 +134,16 @@ export function ClipPlayer({ clip, language = 'ar', desktopLanguageControl, mobi
       {leftControls}
       {rightControls}
     </Box>
-    {isPhone&&autoplayBlocked&&soundEnabled&&<Typography role="status" sx={{color:"inherit",px:2,py:1,fontSize:13}}>Tap the video to play with sound.</Typography>}
-    {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
+    {isPhone&&autoplayBlocked&&soundEnabled&&<Typography role="status" sx={{color:"inherit",px:2,py:1,fontSize:13}}><UiText>{"Tap the video to play with sound."}</UiText></Typography>}
+    {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}><UiText>{"Replay clip"}</UiText></Button></Box>}
     <Box data-desktop-for-you-toolbar sx={{display:{xs:'none',md:'flex'},alignItems:'center',justifyContent:'space-between',gap:1.25,flexWrap:'wrap',py:2,color:'#fff','& .MuiIconButton-root':{color:'#fff',width:44,height:44},'& .MuiButton-root':{color:'#fff'}}}>
-      {navigation&&<IconButton aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardArrowUp/></IconButton>}
+      {navigation&&<IconButton aria-label={awmT("Previous video")} disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardArrowUp/></IconButton>}
       {mobileSwitcher}{desktopLanguageControl}
-      <IconButton aria-label={isMuted?'Unmute clip':'Mute clip'} disabled={!isReady} onClick={sound}>{isMuted?<VolumeOff/>:<VolumeUp/>}</IconButton>
-      <Button aria-label="Playback speed" disabled={!isReady||rates.length<2} onClick={()=>setPlaybackRate(nextRate)} sx={{minWidth:44,height:44,textTransform:'none'}}>{rate}{'\u00d7'}</Button>
+      <IconButton aria-label={isMuted?awmT("Unmute clip"):awmT("Mute clip")} disabled={!isReady} onClick={sound}>{isMuted?<VolumeOff/>:<VolumeUp/>}</IconButton>
+      <Button aria-label={awmT("Playback speed")} disabled={!isReady||rates.length<2} onClick={()=>setPlaybackRate(nextRate)} sx={{minWidth:44,height:44,textTransform:'none'}}>{rate}{'\u00d7'}</Button>
       {filterControl}{mobileToolbar}{modeControl}
       {!isPhone&&<DesktopPlayerResize playerRef={playerSizeRef} onResize={setPlayerWidth}/>}
-      {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
+      {navigation&&<IconButton aria-label={awmT("Next video")} disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
     <MobileForYouPanel language={language} onTranscriptInteraction={transcriptAudio} activeOnly={full||followingSeek} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileViewControl??mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
@@ -153,10 +159,12 @@ export function ClipPlayer({ clip, language = 'ar', desktopLanguageControl, mobi
 }
 
 function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden, sx }: { onUp: () => void; onDown: () => void; upDisabled: boolean; downDisabled: boolean; hidden?: 'mobile' | 'desktop'; sx?: object }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const button = (label: string, onClick: () => void, disabled: boolean, icon: ReactNode) => (
     <IconButton
       onClick={onClick}
-      aria-label={label}
+      aria-label={awmT(label)}
       disabled={disabled}
       sx={{
         width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
@@ -203,6 +211,8 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
 }
 
 export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, languageControl, mobileViewControl, groups = [], language = 'ar' }: { previewSegments?: ForYouSegment[]; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; languageControl?:ReactNode; mobileViewControl?:ReactNode; language?:'ar'|'en'; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const canAdvance=useForYouAdvance()
   const [full,setFull]=useState(false)
   const modeControl=()=> <ShortFullSwitch full={full} onChange={setFull}/>
@@ -352,24 +362,24 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
     setClips(remaining);setIndex(Math.max(0,Math.min(before,remaining.length-1)))
     if(!remaining.length)void loadMore()
   }
-  const settingsButton=<Box sx={{display:'flex',flexDirection:{xs:'row',md:'column'},gap:{xs:1,md:0},alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:'#fff',bgcolor:settingsAnchor?{xs:'var(--awm-forest)',md:'rgba(184,134,11,.24)'}:{xs:'var(--awm-forest)',md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{color:'#fff',bgcolor:{xs:'var(--awm-forest)',md:'rgba(184,134,11,.3)'}},'&:active':{color:'#fff'},'&.Mui-disabled':{color:'rgba(255,255,255,.5)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{fontSize:{xs:13,md:11},color:{xs:'var(--awm-bark)',md:'#fff'},mt:{xs:0,md:.5}}}>Settings</Typography></Box>
-  const mobileSettingsButton = <IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event => setSettingsAnchor(event.currentTarget)} sx={{ width: 40, height: 40, color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,.1)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold-light)', outlineOffset: 2 } }}><SettingsOutlined /></IconButton>
+  const settingsButton=<Box sx={{display:'flex',flexDirection:{xs:'row',md:'column'},gap:{xs:1,md:0},alignItems:'center'}}><Tooltip title={awmT("Settings")}><IconButton aria-label={awmT("Settings")} aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:'#fff',bgcolor:settingsAnchor?{xs:'var(--awm-forest)',md:'rgba(184,134,11,.24)'}:{xs:'var(--awm-forest)',md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{color:'#fff',bgcolor:{xs:'var(--awm-forest)',md:'rgba(184,134,11,.3)'}},'&:active':{color:'#fff'},'&.Mui-disabled':{color:'rgba(255,255,255,.5)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{fontSize:{xs:13,md:11},color:{xs:'var(--awm-bark)',md:'#fff'},mt:{xs:0,md:.5}}}><UiText>{"Settings"}</UiText></Typography></Box>
+  const mobileSettingsButton = <IconButton aria-label={awmT("Settings")} aria-expanded={!!settingsAnchor} onClick={event => setSettingsAnchor(event.currentTarget)} sx={{ width: 40, height: 40, color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,.1)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold-light)', outlineOffset: 2 } }}><SettingsOutlined /></IconButton>
   const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{languageControl}{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}{modeControl()}</Box>
   const initialLoading = clips.length === 0 && busy
 
   return <Box component="div" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
     <Box sx={{ maxWidth: 2400, mx: 'auto', height: { xs: '100%', md: 'auto' }, px: { xs: 0, sm: 0, md: 3 } }}>
       <Popover open={Boolean(settingsAnchor)} anchorEl={settingsAnchor} onClose={()=>setSettingsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:2,width:'max-content',maxWidth:'calc(100vw - 32px)',borderRadius:'12px'}}}}>
-        <Typography component="h2" sx={{fontWeight:600,mb:1}}>Settings</Typography>
-        <TextSizeControl label="Arabic text size" value={safeTextSize(settings.arabicSize)} onChange={value=>resizeText('arabicSize',value)}/>
-        <TextSizeControl label="English text size" value={safeTextSize(settings.englishSize)} onChange={value=>resizeText('englishSize',value)}/>
+        <Typography component="h2" sx={{fontWeight:600,mb:1}}><UiText>{"Settings"}</UiText></Typography>
+        <TextSizeControl label={awmT("Arabic text size")} value={safeTextSize(settings.arabicSize)} onChange={value=>resizeText('arabicSize',value)}/>
+        <TextSizeControl label={awmT("English text size")} value={safeTextSize(settings.englishSize)} onChange={value=>resizeText('englishSize',value)}/>
         <Box sx={{display:'flex',flexDirection:'column'}}>
           {([['tashkeel','Tashkīl'],['meanings','Inline word meanings'],['sentence','English sentence']] as const).map(([key,label])=><FormControlLabel key={key} label={label} control={<Switch checked={settings[key]} onChange={()=>toggleSetting(key)}/>}/>)}
         </Box>
-        <Button onClick={()=>setSettingsAnchor(null)}>Done</Button>
+        <Button onClick={()=>setSettingsAnchor(null)}><UiText>{"Done"}</UiText></Button>
       </Popover>
       <Box sx={{ mt: { xs: 0, md: .5 }, height: { xs: '100%', md: 'auto' } }}>
-        {error && <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" disabled={busy} onClick={()=>{seed.current=crypto.randomUUID();setHasMore(true);void loadMore()}}>Retry</Button>}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" disabled={busy} onClick={()=>{seed.current=crypto.randomUUID();setHasMore(true);void loadMore()}}><UiText>{"Retry"}</UiText></Button>}><UiText>{error}</UiText></Alert>}
         {initialLoading
           ? <ForYouLoading
               mobileControls={mobileViewControl}
@@ -391,7 +401,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
 
                 /></MobileClipNavigator>
               </Box>
-            : <Box><Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography><Box sx={{display:{xs:"flex",md:"none"},justifyContent:"center",alignItems:"center",gap:1,pt:2}}>{mobileViewControl??mobileSwitcher}{filterControl}</Box></Box>}
+            : <Box><Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? awmT("Loading clips…") : awmT("No more clips available.")}</Typography><Box sx={{display:{xs:"flex",md:"none"},justifyContent:"center",alignItems:"center",gap:1,pt:2}}>{mobileViewControl??mobileSwitcher}{filterControl}</Box></Box>}
       </Box>
       {!initialLoading && !clips[index] && <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mt: 2 }}>{desktopRail}</Box>}
 

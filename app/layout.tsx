@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Script from 'next/script'
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter"
+import DirectionalStyles from '@/app/components/DirectionalStyles'
 import {
   brandFont,
   headingFont,
@@ -10,6 +10,9 @@ import "./globals.css"
 import "./fonts/reading.css"
 import { startupRecoveryScript } from '@/app/lib/startupRecoveryScript'
 import ThemeProvider from "./components/ThemeProvider"
+import WebsiteLocaleProvider from './components/WebsiteLocaleProvider'
+import {cookies} from 'next/headers'
+import {websiteLocale,localeDirection,WEBSITE_LOCALE_KEY} from '@/app/lib/localisation/locale'
 import { AuthProvider } from "./AuthContext"
 import SiteShell from "./components/SiteShell"
 import ScrollReset from "./components/ScrollReset"
@@ -67,13 +70,14 @@ export const viewport = {
   viewportFit: "cover",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const initialLocale=websiteLocale((await cookies()).get(WEBSITE_LOCALE_KEY)?.value)
   return (
-    <html lang="en" data-theme="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
+    <html lang={initialLocale} dir={localeDirection(initialLocale)} data-theme="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
       <head>
         {/* Keep these global links present even when page metadata streams. */}
         <link rel="manifest" href="/site.webmanifest" />
@@ -105,15 +109,17 @@ export default function RootLayout({
       <body
         className={`${jost.variable} ${brandFont.variable} ${headingFont.variable}`}
       >
-        <AppRouterCacheProvider options={{ key: 'css', enableCssLayer: true }}>
           <AuthProvider>
+            <WebsiteLocaleProvider initialLocale={initialLocale}>
+            <DirectionalStyles>
             <ThemeProvider>
               <ScrollReset />
               <VitalsReporter />
               <SiteShell>{children}</SiteShell>
             </ThemeProvider>
+            </DirectionalStyles>
+            </WebsiteLocaleProvider>
           </AuthProvider>
-        </AppRouterCacheProvider>
       </body>
     </html>
   )

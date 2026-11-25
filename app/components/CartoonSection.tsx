@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import React from 'react'
 import { Box, Typography, Paper, Button } from '@mui/material'
@@ -192,9 +194,7 @@ export default function CartoonSection() {
             mx: 'auto',
             mb: 1.5,
           }}
-        >
-          Watch and Learn!
-        </Typography>
+        ><UiText>{"Watch and Learn!"}</UiText></Typography>
 
         {/* Mobile: single combined Typography */}
         <Typography
@@ -239,9 +239,7 @@ export default function CartoonSection() {
             mx: 'auto',
             mb: { xs: 4, md: 3 },
           }}
-        >
-          Printable worksheets, interactive quizzes by CEFR level available.
-        </Typography>
+        ><UiText>{"Printable worksheets, interactive quizzes by CEFR level available."}</UiText></Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 6, md: 6 } }}>
           <Button
@@ -267,9 +265,7 @@ export default function CartoonSection() {
                 transform: 'translateY(-1px)',
               },
             }}
-          >
-            Watch and Learn
-          </Button>
+          ><UiText>{"Watch and Learn"}</UiText></Button>
         </Box>
       </Box>
 

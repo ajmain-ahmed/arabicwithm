@@ -1,4 +1,6 @@
 'use client';
+import {UiText,useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 import { useState } from 'react';
 import { Box, Button, CircularProgress, Container, Typography } from '@mui/material';
 import { useAuth } from '@/app/AuthContext';
@@ -6,14 +8,15 @@ import AuthDialog from '@/app/components/AuthDialog';
 export default function LearningSignInGate({ activity }: {
     activity: string;
 }) {
+    const {t}=useWebsiteLocale()
     const { user, loading } = useAuth();
     const [open, setOpen] = useState(true);
     return <Container sx={{ pt: 16, pb: 'calc(100px + env(safe-area-inset-bottom))', textAlign: 'center' }}>
-    <Typography component="h1" variant="h3">{activity}</Typography>
-    {loading || user ? <CircularProgress aria-label={`Loading ${activity}`} sx={{ mt: 3 }}/> : <Box sx={{ mt: 3 }}>
-      <Typography>Your personal {activity} activities are protected.</Typography>
-      <Button variant="contained" onClick={() => setOpen(true)} sx={{ mt: 2 }}>Sign In</Button>
+    <Typography component="h1" variant="h3">{t(activity)}</Typography>
+    {loading || user ? <CircularProgress aria-label={t('Loading {activity}',{activity:t(activity)})} sx={{ mt: 3 }}/> : <Box sx={{ mt: 3 }}>
+      <Typography>{t('Your personal {activity} activities are protected.',{activity:t(activity)})}</Typography>
+      <Button variant="contained" onClick={() => setOpen(true)} sx={{ mt: 2 }}><UiText>{"Sign In"}</UiText></Button>
     </Box>}
-    <AuthDialog open={open && !loading && !user} onClose={() => setOpen(false)} purpose={`Sign in to practise ${activity}`}/>
+    <AuthDialog open={open && !loading && !user} onClose={() => setOpen(false)} purpose={t('Sign in to practise {activity}',{activity:t(activity)})}/>
   </Container>;
 }

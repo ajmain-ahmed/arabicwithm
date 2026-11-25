@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useState, type ReactNode } from 'react'
 import { Box, Button, Container, Drawer, IconButton, Typography } from '@mui/material'
@@ -36,6 +40,8 @@ export default function CatalogueLayout({
   drawerTitle = 'Filters',
   children,
 }: CatalogueLayoutProps) {
+ const {t:awmT}=useWebsiteLocale()
+
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
 
   return (
@@ -59,9 +65,9 @@ export default function CatalogueLayout({
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             {headerSearch}
             <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
-              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              <UiText>{"Filters"}</UiText>{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Button>
-            {activeFilterCount > 0 && <Button onClick={onClearFilters} sx={{ minHeight: 44 }}>Clear all</Button>}
+            {activeFilterCount > 0 && <Button onClick={onClearFilters} sx={{ minHeight: 44 }}><UiText>{"Clear all"}</UiText></Button>}
           </Box>
         </Box>
 
@@ -73,7 +79,7 @@ export default function CatalogueLayout({
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {countLabel && (
               <Typography sx={{ display: { xs: 'none', md: 'block' }, mb: 2, color: MUTED, textAlign: 'right', fontSize: 13 }}>
-                {countLabel}
+                {awmT(countLabel)}
               </Typography>
             )}
             {children}
@@ -83,8 +89,8 @@ export default function CatalogueLayout({
 
       <Drawer anchor="left" open={filterDrawerOpen} onClose={() => setFilterDrawerOpen(false)} slotProps={{ paper: { sx: { width: 310, bgcolor: WARM_WHITE, p: 3 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>{drawerTitle}</Typography>
-          <IconButton onClick={() => setFilterDrawerOpen(false)} aria-label="Close filters"><Close /></IconButton>
+          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>{awmT(drawerTitle)}</Typography>
+          <IconButton onClick={() => setFilterDrawerOpen(false)} aria-label={awmT("Close filters")}><Close /></IconButton>
         </Box>
         {filtersPanel}
       </Drawer>

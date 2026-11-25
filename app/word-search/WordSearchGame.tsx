@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useRouter } from 'next/navigation'
@@ -28,6 +32,8 @@ interface DragSelection {
 interface CompletionSummary extends WordSearchCompletionStats, WordSearchCompletionResult {}
 
 export default function WordSearchGame({ initialSource, initialPuzzle, embedded = false }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null; embedded?: boolean }) {
+ const {t:awmT,locale}=useWebsiteLocale()
+
   const router = useRouter()
   const { user } = useAuth()
   const [source, setSource] = useState(initialSource)
@@ -263,9 +269,9 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
     <Box sx={{mb:2.5}}>
       <Box sx={{display:'flex',justifyContent:'center',mb:1.25}}><WordSearchDifficultySelector value={selectedDifficulty} disabled={busy || savingCompletion} onChange={setSelectedDifficulty}/></Box>
       <Box data-word-search-status sx={{display:'flex',flexWrap:'wrap',justifyContent:'center',alignItems:'center',gap:.5,'& .MuiChip-root, & .MuiButton-root':{height:44,borderRadius:'999px',fontSize:13,fontWeight:600},'& .MuiChip-root':{color:'var(--awm-bark)',bgcolor:'var(--awm-cream)',border:'1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)'},'& .MuiChip-label':{px:1}}}>
-        <Chip label={`${activeConfig.label} ${activeConfig.gridSize}\u00d7${activeConfig.gridSize}`}/>
-        <Chip label={`${found.size} of ${puzzle?.placements.length ?? 0} found`}/>
-        <Button aria-label="New game" variant="contained" onClick={()=>void newGame()} disabled={busy} sx={{px:1,minWidth:0,textTransform:'none'}}>{busy?<CircularProgress size={20} aria-label="Loading new game"/>:'New Game'}</Button>
+        <Chip label={`${awmT(activeConfig.label)} ${activeConfig.gridSize}\u00d7${activeConfig.gridSize}`}/>
+        <Chip label={awmT('{found} of {total} found',{found:found.size,total:puzzle?.placements.length??0})}/>
+        <Button aria-label={awmT("New game")} variant="contained" onClick={()=>void newGame()} disabled={busy} sx={{px:1,minWidth:0,textTransform:'none'}}>{busy?<CircularProgress size={20} aria-label={awmT("Loading new game")}/>:awmT("New Game")}</Button>
       </Box>
     </Box>
   ) : undefined
@@ -274,43 +280,43 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
 
   return (
     <WordSearchShell source={source} controls={controls} embedded={embedded}>
-      {message && <Alert severity={embedded ? 'warning' : complete ? 'success' : 'info'} action={embedded ? <Button disabled={busy} onClick={() => void newGame()}>Retry</Button> : undefined} sx={{ mb: 2 }}>{message}</Alert>}
+      {message && <Alert severity={embedded ? 'warning' : complete ? 'success' : 'info'} action={embedded ? <Button disabled={busy} onClick={() => void newGame()}><UiText>{"Retry"}</UiText></Button> : undefined} sx={{ mb: 2 }}><UiText>{message}</UiText></Alert>}
       {completionError && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" disabled={savingCompletion} onClick={() => pendingCompletion && void saveCompletion(pendingCompletion)}>Retry save</Button>}>
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" disabled={savingCompletion} onClick={() => pendingCompletion && void saveCompletion(pendingCompletion)}><UiText>{"Retry save"}</UiText></Button>}>
           {completionError}
         </Alert>
       )}
       {!started ? (
         <Paper elevation={0} sx={{ mx: 'auto', maxWidth: 720, p: { xs: 2, sm: 3 }, textAlign: 'center', borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34 }, fontWeight: 600, color: 'text.primary' }}>Choose your difficulty</Typography>
-          <Typography sx={{ mt: 0.5, mb: 2.25, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Select a level, then start your puzzle.</Typography>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34 }, fontWeight: 600, color: 'text.primary' }}><UiText>{"Choose your difficulty"}</UiText></Typography>
+          <Typography sx={{ mt: 0.5, mb: 2.25, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}><UiText>{"Select a level, then start your puzzle."}</UiText></Typography>
           <WordSearchDifficultySelector value={selectedDifficulty} disabled={busy} onChange={setSelectedDifficulty} />
           <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.75 }}>
-            <Chip label={`${selectedConfig.gridSize} × ${selectedConfig.gridSize} grid`} variant="outlined" />
-            <Chip label={`${selectedConfig.wordCount} target words`} variant="outlined" />
-            <Chip label={selectedDifficulty === 'easy' ? 'Horizontal & vertical' : 'All directions'} variant="outlined" />
+            <Chip label={awmT('{size} × {size} grid',{size:selectedConfig.gridSize})} variant="outlined" />
+            <Chip label={awmT('{count} target words',{count:selectedConfig.wordCount})} variant="outlined" />
+            <Chip label={selectedDifficulty === 'easy' ? awmT("Horizontal & vertical") : awmT("All directions")} variant="outlined" />
           </Box>
           <Button onClick={() => void startGame()} disabled={busy} variant="contained" size="large" sx={{ mt: 2.5, minWidth: 190, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 800 }}>
-            {busy ? <CircularProgress size={22} color="inherit" /> : `Start ${selectedConfig.label}`}
+            {busy ? <CircularProgress size={22} color="inherit" /> : awmT('Start {level}',{level:awmT(selectedConfig.label)})}
           </Button>
         </Paper>
       ) : !puzzle || puzzle.placements.length === 0 ? (
         <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 26, color: 'text.primary' }}>No puzzle available</Typography>
-          <Typography sx={{ mt: 0.75, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Not enough reliable vocabulary is available for this activity yet.</Typography>
-          <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ mt: 2 }}>Try another source</Button>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 26, color: 'text.primary' }}><UiText>{"No puzzle available"}</UiText></Typography>
+          <Typography sx={{ mt: 0.75, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}><UiText>{"Not enough reliable vocabulary is available for this activity yet."}</UiText></Typography>
+          <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ mt: 2 }}><UiText>{"Try another source"}</UiText></Button>
         </Paper>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: { xs: 2, lg: 2.5 }, alignItems: 'start' }}>
           <Paper elevation={0} sx={{ minWidth: 0, p: { xs: 0.35, sm: 1.25 }, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <Box ref={gridRef} role="grid" aria-label={`${activeConfig.label} Arabic word search, ${activeConfig.gridSize} by ${activeConfig.gridSize}. Drag in a straight line to select a word.`} dir="ltr" onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={cancelDrag} sx={{ mx: 'auto', width: '100%', maxWidth: activeConfig.maxBoardWidth, display: 'grid', gridTemplateColumns: `repeat(${puzzle.grid.length}, minmax(0, 1fr))`, gap: activeDifficulty === 'easy' ? { xs: '2px', sm: '4px' } : activeDifficulty === 'regular' ? { xs: '1.5px', sm: '3px' } : { xs: '1px', sm: '2px' }, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            <Box ref={gridRef} role="grid" aria-label={awmT('{level} Arabic word search, {size} by {size}. Drag in a straight line to select a word.',{level:awmT(activeConfig.label),size:activeConfig.gridSize})} dir="ltr" onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={cancelDrag} sx={{ mx: 'auto', width: '100%', maxWidth: activeConfig.maxBoardWidth, display: 'grid', gridTemplateColumns: `repeat(${puzzle.grid.length}, minmax(0, 1fr))`, gap: activeDifficulty === 'easy' ? { xs: '2px', sm: '4px' } : activeDifficulty === 'regular' ? { xs: '1.5px', sm: '3px' } : { xs: '1px', sm: '2px' }, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}>
               {puzzle.grid.flatMap((row, rowIndex) => row.map((letter, colIndex) => {
                 const key = `${rowIndex}:${colIndex}`
                 const isDragging = dragCells.has(key)
                 const isInvalid = invalidCells.has(key)
                 const isFound = foundCells.has(key)
                 return (
-                  <Box component="button" type="button" role="gridcell" key={key} data-word-search-cell="true" data-row={rowIndex} data-col={colIndex} data-selection-state={isInvalid?'incorrect':isFound?'found':isDragging?'selecting':'idle'} onPointerDown={(event) => beginDrag(event, { row: rowIndex, col: colIndex })} aria-label={`Arabic letter ${letter}, row ${rowIndex + 1}, column ${colIndex + 1}`} lang="ar" dir="rtl"
+                  <Box component="button" type="button" role="gridcell" key={key} data-word-search-cell="true" data-row={rowIndex} data-col={colIndex} data-selection-state={isInvalid?'incorrect':isFound?'found':isDragging?'selecting':'idle'} onPointerDown={(event) => beginDrag(event, { row: rowIndex, col: colIndex })} aria-label={awmT('Arabic letter {letter}, row {row}, column {column}',{letter,row:rowIndex+1,column:colIndex+1})} lang="ar" dir="rtl"
                     sx={(theme) => {
                       const dark = theme.palette.mode === 'dark'
                       const borderColor = isInvalid ? theme.palette.error.main : isDragging ? theme.palette.primary.main : isFound ? theme.palette.success.main : theme.palette.divider
@@ -325,7 +331,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
             </Box>
           </Paper>
           <Paper elevation={0} sx={{ p: 2, minWidth: 0, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 600, color: 'text.primary' }}>Vocabulary</Typography>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 600, color: 'text.primary' }}><UiText>{"Vocabulary"}</UiText></Typography>
             <WordSearchClues key={`${source?.puzzleId}-${round}`} words={puzzle.placements} foundIds={found} sourceLabel={source ? `${source.title} · ${source.subtitle}` : 'Arabic with M'} onReveal={() => setRevealsUsed((current) => current + 1)} />
           </Paper>
         </Box>
@@ -337,23 +343,22 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
             <Box sx={{ width: 66, height: 66, mx: 'auto', display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: 'color-mix(in srgb, var(--awm-gold) 16%, transparent)', color: 'var(--awm-gold)', animation: 'awm-complete-pop .42s ease-out', '@keyframes awm-complete-pop': { from: { opacity: 0, transform: 'scale(.72)' }, to: { opacity: 1, transform: 'scale(1)' } }, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
               <Celebration sx={{ fontSize: 36 }} />
             </Box>
-            <IconButton aria-label="Close completion message" onClick={() => setCompletion(null)} sx={{position:'absolute',right:8,top:8}}><Close/></IconButton>
+            <IconButton aria-label={awmT("Close completion message")} onClick={() => setCompletion(null)} sx={{position:'absolute',right:8,top:8}}><Close/></IconButton>
             <Typography id="word-search-complete-title" component="h2" sx={{ mt: 1.5, fontFamily: 'var(--font-heading)', fontSize: 32, fontWeight: 600, color: 'text.primary' }}>
-              Word Search Complete!
-            </Typography>
-            <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Nice work — you found every word.</Typography>
-            {!user && <Typography sx={{ mt: 2, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Sign in to save your progress.</Typography>}
-            {completion.duplicate && <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: 12 }}>This completion was already saved.</Typography>}
+              <UiText>{"Word Search Complete!"}</UiText></Typography>
+            <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}><UiText>{"Nice work — you found every word."}</UiText></Typography>
+            {!user && <Typography sx={{ mt: 2, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}><UiText>{"Sign in to save your progress."}</UiText></Typography>}
+            {completion.duplicate && <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: 12 }}><UiText>{"This completion was already saved."}</UiText></Typography>}
             <Box sx={{ mt: 2.5, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 1 }}>
               {[
                 ['Time', formatWordSearchDuration(completion.durationSeconds)],
                 ['Words', `${completion.wordsFound} / ${completion.wordCount}`],
                 ['Accuracy', `${accuracy}%`],
-              ].map(([label, value]) => <Box key={label} sx={{ minWidth: 0, p: 1.25, borderRadius: '10px', bgcolor: 'action.hover' }}><Typography sx={{ color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>{label}</Typography><Typography sx={{ mt: 0.3, overflowWrap: 'anywhere', color: 'text.primary', fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{value}</Typography></Box>)}
+              ].map(([label, value]) => <Box key={label} sx={{ minWidth: 0, p: 1.25, borderRadius: '10px', bgcolor: 'action.hover' }}><Typography sx={{ color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>{awmT(label)}</Typography><Typography sx={{ mt: 0.3, overflowWrap: 'anywhere', color: 'text.primary', fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{value}</Typography></Box>)}
             </Box>
-            <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>{completion.mistakes} mistake{completion.mistakes === 1 ? '' : 's'} · {completion.revealsUsed} reveal{completion.revealsUsed === 1 ? '' : 's'}</Typography>
-            <Button fullWidth variant="contained" disabled={busy} onClick={() => embedded ? void newGame() : router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Continue</Button>
-            <Button fullWidth color="secondary" onClick={() => embedded ? router.push('/') : void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>{embedded ? 'Back to Home' : 'Play Again'}</Button>
+            <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>{locale==='ar'?awmT('{mistakes} mistakes · {reveals} reveals',{mistakes:completion.mistakes,reveals:completion.revealsUsed}):<>{completion.mistakes}{' '}<UiText>{"mistake"}</UiText>{completion.mistakes===1?'':'s'} · {completion.revealsUsed}{' '}<UiText>{"reveal"}</UiText>{completion.revealsUsed===1?'':'s'}</>}</Typography>
+            <Button fullWidth variant="contained" disabled={busy} onClick={() => embedded ? void newGame() : router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}><UiText>{"Continue"}</UiText></Button>
+            <Button fullWidth color="secondary" onClick={() => embedded ? router.push('/') : void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>{embedded ? awmT("Back to Home") : awmT("Play Again")}</Button>
           </DialogContent>
         )}
       </Dialog>

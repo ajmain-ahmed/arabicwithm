@@ -1,3 +1,6 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+import LocalisedRegion from '@/app/components/LocalisedRegion'
 import { Box, Typography } from '@mui/material'
 import { grammarTerminology } from '@/app/lib/grammarTerminology'
 
@@ -41,7 +44,7 @@ export default function GrammarNoteRenderer({
     ['How to spot it', note.recognition_tip],
   ]
   return (
-    <Box
+    <LocalisedRegion
       component="article"
       aria-label={grammarTerminology(note.title_en)}
       sx={{ overflowWrap: 'anywhere' }}
@@ -56,7 +59,7 @@ export default function GrammarNoteRenderer({
       >
         {note.title_ar}
       </Typography>
-      <Typography variant="caption">Rule {note.rule_cefr}</Typography>
+      <Typography variant="caption"><UiText>{"Rule"}</UiText>{' '}{note.rule_cefr}</Typography>
       {sections.map(([heading, text]) =>
         text ? (
           <Box key={heading} sx={{ mt: 2 }}>
@@ -69,9 +72,7 @@ export default function GrammarNoteRenderer({
       )}
       {!!note.transformations?.length && (
         <Box sx={{ my: 2 }}>
-          <Typography component="h3" variant="h6">
-            Transformations
-          </Typography>
+          <Typography component="h3" variant="h6"><UiText>{"Transformations"}</UiText></Typography>
           {note.transformations.map((value, index) => (
             <Typography key={index} dir="auto" sx={{ whiteSpace: 'pre-wrap' }}>
               {grammarTerminology(value)}
@@ -80,9 +81,7 @@ export default function GrammarNoteRenderer({
         </Box>
       )}
       {!!note.examples?.length && (
-        <Typography component="h3" variant="h6" sx={{ mt: 2 }}>
-          Real examples
-        </Typography>
+        <Typography component="h3" variant="h6" sx={{ mt: 2 }}><UiText>{"Real examples"}</UiText></Typography>
       )}
       {note.examples?.map((example) => {
         const index = example.arabic.indexOf(example.highlight)
@@ -125,12 +124,10 @@ export default function GrammarNoteRenderer({
       })}
       {note.detail && (
         <Box sx={{ mt: 2 }}>
-          <Typography component="h3" variant="h6">
-            Advanced note
-          </Typography>
+          <Typography component="h3" variant="h6"><UiText>{"Advanced note"}</UiText></Typography>
           <Typography sx={{ whiteSpace: 'pre-wrap' }}>{grammarTerminology(note.detail)}</Typography>
         </Box>
       )}
-    </Box>
+    </LocalisedRegion>
   )
 }

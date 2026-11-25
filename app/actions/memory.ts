@@ -36,6 +36,7 @@ export interface MemoryShowSource {
   id: string
   slug: string
   title: string
+  titleAr?:string
 }
 
 export interface MemoryLibrary {
@@ -43,6 +44,7 @@ export interface MemoryLibrary {
   shows: MemoryShowSource[]
   scope: 'global' | 'show' | 'episode'
   scopeTitle: string
+  scopeTitleAr?:string
   selectedShowId?: string
   selectedEpisodeId?: string
   missingScope: boolean
@@ -92,7 +94,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
 
   /* The shows list and the episode sources don't depend on each other. */
   const [showsResult, sourcesResult] = await Promise.all([
-    serviceClient.from('shows').select('id, slug, title').order('title'),
+    serviceClient.from('shows').select('id, slug, title, title_ar').order('title'),
     sourceQuery,
   ])
   const { data: showRows, error: showError } = showsResult
@@ -100,7 +102,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   if (showError) throw new Error(showError.message)
   if (sourceError) throw new Error(sourceError.message)
 
-  const shows = (showRows ?? []).map((show) => ({ id: String(show.id), slug: String(show.slug), title: String(show.title) }))
+  const shows = (showRows ?? []).map((show) => ({ id: String(show.id), slug: String(show.slug), title: String(show.title),titleAr:show.title_ar?String(show.title_ar):undefined }))
   const showsById = new Map(shows.map((show) => [show.id, show]))
   const scope = input.episodeId ? 'episode' : input.showId ? 'show' : 'global'
 
@@ -175,6 +177,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
     shows,
     scope,
     scopeTitle: selectedEpisode ? `${selectedEpisode.showTitle} — ${selectedEpisode.episodeTitle}` : selectedShow?.title ?? 'Random practice',
+    scopeTitleAr:selectedEpisode?undefined:selectedShow?.titleAr,
     selectedShowId: selectedEpisode?.showId ?? selectedShow?.id,
     selectedEpisodeId: selectedEpisode?.id,
     missingScope: Boolean((input.episodeId || input.showId) && (sourceRows ?? []).length === 0),

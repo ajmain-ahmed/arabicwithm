@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { Close, EmailSharp } from '@mui/icons-material'
 import { Box, Dialog, IconButton, Typography } from '@mui/material'
@@ -42,9 +44,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                     <Close sx={{ fontSize: 18 }} />
                 </IconButton>
                 <Box sx={{ mb: 3, textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ color: 'var(--awm-bark)', lineHeight: 1.1, mb: 1 }}>
-                        Get in Touch
-                    </Typography>
+                    <Typography variant="h3" sx={{ color: 'var(--awm-bark)', lineHeight: 1.1, mb: 1 }}><UiText>{"Get in Touch"}</UiText></Typography>
                     <Box
                         sx={{
                             height: '1px',
@@ -54,9 +54,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                             mb: 1.5,
                         }}
                     />
-                    <Typography variant="body2" sx={{ color: 'var(--awm-muted)', lineHeight: 1.7 }}>
-                        Have questions about learning Arabic? Reach out anytime.
-                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'var(--awm-muted)', lineHeight: 1.7 }}><UiText>{"Have questions about learning Arabic? Reach out anytime."}</UiText></Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     <Box
@@ -93,9 +91,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                             <EmailSharp sx={{ fontSize: 20, color: 'var(--awm-gold-light)' }} />
                         </Box>
                         <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>
-                                Email Us
-                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}><UiText>{"Email Us"}</UiText></Typography>
                             <Typography variant="caption" sx={{ color: 'var(--awm-muted)' }}>
                                 support@arabicwithm.com
                             </Typography>

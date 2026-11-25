@@ -1,4 +1,9 @@
 'use client'
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -63,6 +68,8 @@ function ExploreVideo({
   onNext?: () => void
   onStarted?: () => void
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
   const soundBlockedRef = useRef(false)
@@ -159,10 +166,10 @@ function ExploreVideo({
         {/* Prev/next chevrons at the left midpoint of the video (desktop). */}
         {(onPrev || onNext) && (
           <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: 1.25, alignItems: 'center', alignSelf: 'center', flexShrink: 0 }}>
-            <Tooltip title="Previous video" placement="right">
+            <Tooltip title={awmT("Previous video")} placement="right">
               <IconButton
                 onClick={onPrev}
-                aria-label="Previous video"
+                aria-label={awmT("Previous video")}
                 sx={{
                   width: 50, height: 50,
                   color: '#fff',
@@ -175,10 +182,10 @@ function ExploreVideo({
                 <KeyboardArrowUp />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Next video" placement="right">
+            <Tooltip title={awmT("Next video")} placement="right">
               <IconButton
                 onClick={onNext}
-                aria-label="Next video"
+                aria-label={awmT("Next video")}
                 sx={{
                   width: 50, height: 50,
                   color: '#fff',
@@ -262,20 +269,19 @@ function ExploreVideo({
             {episode.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.16)', color: '#fff', height: 22, fontSize: 11 }} />)}
           </Box>
           <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 19, fontWeight: 600, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
-            {episode.title}
+            <LocalisedContent original={episode.title} arabic={episode.titleAr}/>
           </Typography>
           <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
-            {episode.showTitle}
+            <LocalisedContent original={episode.showTitle} arabic={episode.showTitleAr}/>
           </Typography>
         </Box>
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', zIndex: 5, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>
-              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>This video cannot be played here.</Typography>
-              <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.78 }}>It may be unavailable or restricted from embedded playback.</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}><UiText>{"This video cannot be played here."}</UiText></Typography>
+              <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.78 }}><UiText>{"It may be unavailable or restricted from embedded playback."}</UiText></Typography>
               <Button component="a" href={`https://www.youtube.com/watch?v=${encodeURIComponent(source.id)}`} target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none' }}>
-                Open on YouTube
-              </Button>
+                <UiText>{"Open on YouTube"}</UiText></Button>
             </Box>
           </Box>
         )}
@@ -313,12 +319,12 @@ function ExploreVideo({
               <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{soundMuted ? 'Sound' : 'Mute'}</Typography>
             </Box>
           </Tooltip>}
-          <Tooltip title="Go to episode" placement="left">
+          <Tooltip title={awmT("Go to episode")} placement="left">
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <IconButton
                 component={Link}
                 href={`/cartoons/${episode.showSlug}/${episode.slug}`}
-                aria-label={`Go to episode: ${episode.title}`}
+                aria-label={awmT('Go to episode: {title}',{title:episode.title})}
                 sx={{
                   width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
                   color: { xs: 'var(--awm-gold-light)', md: '#fff' },
@@ -331,15 +337,15 @@ function ExploreVideo({
               >
                 <PlayCircleOutlineRounded />
               </IconButton>
-              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Full episode</Typography>
+              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}><UiText>{"Full episode"}</UiText></Typography>
             </Box>
           </Tooltip>
-          <Tooltip title="Practise this episode in Memory" placement="left">
+          <Tooltip title={awmT("Practise this episode in Memory")} placement="left">
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <IconButton
                 component={Link}
                 href={`/memory?episode=${encodeURIComponent(episode.id)}`}
-                aria-label={`Practise ${episode.title} in Memory`}
+                aria-label={awmT('Practise {title} in Memory',{title:episode.title})}
                 sx={{
                   width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
                   color: { xs: 'var(--awm-gold-light)', md: '#fff' },
@@ -352,7 +358,7 @@ function ExploreVideo({
               >
                 <PsychologyOutlined />
               </IconButton>
-              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Memory</Typography>
+              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}><UiText>{"Memory"}</UiText></Typography>
             </Box>
           </Tooltip>
         </Box>
@@ -622,15 +628,15 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
   if (items.length === 0) {
     return (
       <Box sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' } }}>
-        <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography component="h1" sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}>No videos to explore yet</Typography></Box>
+        <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography component="h1" sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}><UiText>{"No videos to explore yet"}</UiText></Typography></Box>
       </Box>
     )
   }
 
   return (
       <Box sx={{ position: 'relative', height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, '@supports (height: 100dvh)': { height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }, minHeight: { xs: 0, md: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }}>
-      <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>Explore Arabic</Typography>
-      {loadError && <Box role="alert" sx={{position:'absolute',top:8,left:8,right:8,zIndex:20,bgcolor:'var(--awm-white)',color:'var(--awm-bark)',p:1.5,borderRadius:'10px'}}>More content could not load. <Button onClick={()=>void loadNextBatch()}>Retry</Button></Box>}
+      <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}><UiText>{"Explore Arabic"}</UiText></Typography>
+      {loadError && <Box role="alert" sx={{position:'absolute',top:8,left:8,right:8,zIndex:20,bgcolor:'var(--awm-white)',color:'var(--awm-bark)',p:1.5,borderRadius:'10px'}}><UiText>{"More content could not load."}</UiText>{' '}<Button onClick={()=>void loadNextBatch()}><UiText>{"Retry"}</UiText></Button></Box>}
       <Box
         id="explore-feed"
         ref={feedRef}
@@ -698,7 +704,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
         <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: 'transparent' } }}>
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress size={34} sx={{ color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: { xs: 'var(--awm-muted)', md: 'rgba(245,237,224,0.7)' } }}>Loading more…</Typography>
+            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: { xs: 'var(--awm-muted)', md: 'rgba(245,237,224,0.7)' } }}><UiText>{"Loading more…"}</UiText></Typography>
           </Box>
         </Box>
       )}
@@ -706,8 +712,8 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
         <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: 'transparent' } }}>
           <Box>
             <ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}>You&apos;ve explored it all</Typography>
-            <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, color: { xs: 'var(--awm-muted)', md: 'rgba(245,237,224,0.7)' } }}>Keep scrolling to start back at the beginning.</Typography>
+            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}><UiText>{"You've explored it all"}</UiText></Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, color: { xs: 'var(--awm-muted)', md: 'rgba(245,237,224,0.7)' } }}><UiText>{"Keep scrolling to start back at the beginning."}</UiText></Typography>
           </Box>
         </Box>
       )}

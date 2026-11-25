@@ -1,7 +1,12 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Alert, Box, Button, Collapse, IconButton, Menu, MenuItem, Paper, Slider, Typography } from '@mui/material'
+import {Alert,Box,Button,Collapse,IconButton,Menu,MenuItem,Paper,Typography} from '@mui/material'
+import LtrSlider from '@/app/components/LtrSlider'
 import { FastForwardRounded, PauseRounded, PlayArrowRounded, RefreshRounded, VolumeUp } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import { bilingualItemAtTime, bilingualTimelinePosition, buildBilingualTimeline, type BilingualTimelineItem } from '@/app/lib/bilingualAudio'
@@ -24,6 +29,8 @@ export default function BilingualAudioPlayer({ arabic, english, render, onPositi
   blockCount?: number
   preferredLanguage?: 'ar' | 'en'
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user, loading: authLoading } = useAuth()
   const authKey = user?.id ?? 'signed-out'
   const signedIn = Boolean(user)
@@ -184,21 +191,21 @@ export default function BilingualAudioPlayer({ arabic, english, render, onPositi
   function formatTime(seconds: number) { return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` }
 
   const button = <Button data-reader-audio-trigger aria-expanded={expanded} aria-controls="reader-audio-panel" disabled={loading || authLoading} onClick={() => setExpanded(value => !value)} startIcon={<VolumeUp />} sx={{ minHeight: 44, px: 2, color: expanded ? '#fff' : { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: expanded ? '#b8860b' : { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' }, border: '1px solid', borderColor: expanded ? '#b8860b' : { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
-    {authLoading ? 'Checking account…' : 'Audio'}
+    {authLoading ? awmT("Checking account…") : awmT("Audio")}
   </Button>
 
   const player = (<Collapse in={expanded} timeout={260} unmountOnExit={false}>
-    <Paper id="reader-audio-panel" component="section" aria-label="Chapter audio" elevation={0} sx={{ mt: 1.5, mb: 0.5, mx: { xs: 0.75, md: 1.5 }, p: { xs: 1, md: 1.25 }, borderRadius: { xs: '10px', md: '9999px' }, bgcolor: 'var(--awm-white)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: { xs: 1, md: 1.5 }}}>
-      <IconButton aria-label={playing ? 'Pause audio' : 'Play audio'} onClick={togglePlayback} disabled={loading || authLoading} sx={{ width: 36, height: 36, color: 'var(--awm-gold)' }}>
+    <Paper id="reader-audio-panel" component="section" aria-label={awmT("Chapter audio")} elevation={0} sx={{ mt: 1.5, mb: 0.5, mx: { xs: 0.75, md: 1.5 }, p: { xs: 1, md: 1.25 }, borderRadius: { xs: '10px', md: '9999px' }, bgcolor: 'var(--awm-white)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: { xs: 1, md: 1.5 }}}>
+      <IconButton aria-label={playing ? awmT("Pause audio") : awmT("Play audio")} onClick={togglePlayback} disabled={loading || authLoading} sx={{ width: 36, height: 36, color: 'var(--awm-gold)' }}>
         {loading ? <RefreshRounded /> : playing ? <PauseRounded /> : <PlayArrowRounded />}
       </IconButton>
-      <Slider aria-label="Audio position" min={0} max={(timeline?.timings.durationMs ?? 1000) / 1000} step={1} marks={pageMarkers.map(marker => ({ value: marker.seconds, label: `P${marker.page}` }))} value={Math.min(position, (timeline?.timings.durationMs ?? 1000) / 1000)} disabled={!timeline} onChange={(_, value) => seekTimeline(value as number)} onChangeCommitted={() => savePosition()} sx={{ flex: 1, minWidth: 120, color: '#b8860b', py: 0.5 }} />
+      <LtrSlider aria-label={awmT("Audio position")} min={0} max={(timeline?.timings.durationMs ?? 1000) / 1000} step={1} marks={pageMarkers.map(marker => ({ value: marker.seconds, label: `P${marker.page}` }))} value={Math.min(position, (timeline?.timings.durationMs ?? 1000) / 1000)} disabled={!timeline} onChange={(_, value) => seekTimeline(value as number)} onChangeCommitted={() => savePosition()} sx={{ flex: 1, minWidth: 120, color: '#b8860b', py: 0.5 }} />
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>{formatTime(position)} / {formatTime((timeline?.timings.durationMs ?? 0) / 1000)}</Typography>
-      <Button aria-label={`Audiobook playback speed: ${rate}×`} aria-haspopup="menu" onClick={event => setSpeedAnchor(event.currentTarget)} sx={{ width: 40, minWidth: 40, height: 32, p: 0, borderRadius: '50%', border: '1px solid var(--awm-gold)', color: 'inherit', fontSize: 11, textTransform: 'none' }}>{rate}×</Button>
-      <Menu anchorEl={speedAnchor} open={Boolean(speedAnchor)} onClose={() => setSpeedAnchor(null)} slotProps={{ list: { 'aria-label': 'Audiobook playback speed' } }}>
+      <Button aria-label={awmT('Audiobook playback speed: {rate}\u00d7',{rate})} aria-haspopup="menu" onClick={event => setSpeedAnchor(event.currentTarget)} sx={{ width: 40, minWidth: 40, height: 32, p: 0, borderRadius: '50%', border: '1px solid var(--awm-gold)', color: 'inherit', fontSize: 11, textTransform: 'none' }}>{rate}×</Button>
+      <Menu anchorEl={speedAnchor} open={Boolean(speedAnchor)} onClose={() => setSpeedAnchor(null)} slotProps={{ list: { 'aria-label': awmT("Audiobook playback speed") } }}>
         {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map(value => <MenuItem key={value} selected={rate === value} onClick={() => { usePlayerStore.getState().setAudiobookRate(value); setSpeedAnchor(null) }}>{value}×</MenuItem>)}
       </Menu>
-      {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>}
+      {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}><UiText>{"Retry audio"}</UiText></Button>}><UiText>{error}</UiText></Alert>}
     </Paper>
   </Collapse>)
 

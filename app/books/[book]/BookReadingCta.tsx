@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import Link from 'next/link'
 import { useEffect, type MouseEvent } from 'react'
@@ -32,6 +36,8 @@ function progressForBook(metadata: Record<string, unknown>, bookSlug: string): B
 }
 
 export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlug: string; bookId: string; chapters: PublicChapter[] }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user, loading } = useAuth()
   /* The session store updates as the reader tracks pages; metadata is the
      fallback from the last synced session. */
@@ -69,11 +75,11 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
     <>
       {currentChapter ? (
         <Box sx={{ mb: 2 }}>
-          <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>Currently reading</Typography>
-          <Typography sx={{ mt: 0.4, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, fontWeight: 600 }}>{currentChapter.title} · Chapter {currentChapter.chapterNumber} of {chapters.length}</Typography>
+          <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}><UiText>{"Currently reading"}</UiText></Typography>
+          <Typography sx={{ mt: 0.4, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, fontWeight: 600 }}>{currentChapter.title}{' '}<UiText>{"· Chapter"}</UiText>{' '}{currentChapter.chapterNumber}{' '}<UiText>{"of"}</UiText>{' '}{chapters.length}</Typography>
         </Box>
       ) : (
-        <Typography sx={{ mb: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>Choose a language to begin reading.</Typography>
+        <Typography sx={{ mb: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}><UiText>{"Choose a language to begin reading."}</UiText></Typography>
       )}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, width: '100%' }}>
@@ -98,14 +104,13 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
               '&:hover': { bgcolor: '#174832' },
             }}
           >
-            Continue
-          </Button>
+            <UiText>{"Continue"}</UiText></Button>
         )}
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage,savedBlock)} variant="contained" startIcon={<AutoStories />} sx={languageButtonSx}>Arabic</Button>
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage,savedBlock)} variant="contained" startIcon={<Translate />} sx={languageButtonSx}>English</Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage,savedBlock)} variant="contained" startIcon={<AutoStories />} sx={languageButtonSx}><UiText>{"Arabic"}</UiText></Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage,savedBlock)} variant="contained" startIcon={<Translate />} sx={languageButtonSx}><UiText>{"English"}</UiText></Button>
       </Box>
       {/* Secondary actions share a row so the wide desktop box breathes. */}
-      <Box role="group" aria-label="Book actions" sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, mt: 1.25, width: '100%', alignItems: 'start',
+      <Box role="group" aria-label={awmT("Book actions")} sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, mt: 1.25, width: '100%', alignItems: 'start',
         '& .book-detail-action': { width:'100%',minWidth:0,height:48,minHeight:48,px:1,py:1,borderRadius:'9px',border:'1px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)',bgcolor:'transparent',color:'var(--awm-bark)',boxShadow:'none',fontFamily:'var(--font-sans), sans-serif',fontSize:13,fontWeight:600,textTransform:'none',whiteSpace:'nowrap','& .MuiButton-startIcon':{mr:.5,ml:0},'& .MuiSvgIcon-root':{fontSize:18},'&:hover':{bgcolor:'color-mix(in srgb, var(--awm-gold) 8%, transparent)',boxShadow:'none'},'&:active':{bgcolor:'color-mix(in srgb, var(--awm-gold) 16%, transparent)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2} },
         '& .book-detail-action[aria-pressed="true"]':{bgcolor:'var(--awm-forest)',color:'var(--awm-white)','&:hover':{bgcolor:'var(--awm-forest)'}},
       }}>

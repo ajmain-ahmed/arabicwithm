@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { motion, useDragControls, useMotionValue } from 'framer-motion'
@@ -26,6 +28,8 @@ interface SavedSize {
 }
 
 export default function FloatingVideoPlayer() {
+ const {t:awmT}=useWebsiteLocale()
+
   const router = useRouter()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -324,7 +328,7 @@ export default function FloatingVideoPlayer() {
           </Typography>
           <IconButton
             size="small"
-            aria-label={isPlaying ? 'Pause video' : 'Play video'}
+            aria-label={isPlaying ? awmT("Pause video") : awmT("Play video")}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleTogglePlay}
             sx={{ width: 26, height: 26, color: '#fff' }}
@@ -333,7 +337,7 @@ export default function FloatingVideoPlayer() {
           </IconButton>
           <IconButton
             size="small"
-            aria-label="Toggle mini player size"
+            aria-label={awmT("Toggle mini player size")}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleExpand}
             sx={{ width: 26, height: 26, color: '#fff' }}
@@ -342,7 +346,7 @@ export default function FloatingVideoPlayer() {
           </IconButton>
           <IconButton
             size="small"
-            aria-label="Close mini player"
+            aria-label={awmT("Close mini player")}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleClose}
             sx={{ width: 26, height: 26, color: '#fff' }}
@@ -374,7 +378,7 @@ export default function FloatingVideoPlayer() {
           <Box sx={{ position: 'absolute', zIndex: 4, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.78)', p: 2, textAlign: 'center' }}>
             <Box>
               <Typography sx={{ mb: 1.25, color: '#fff', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, fontWeight: 700 }}>
-                {errorCode != null ? `YouTube player error ${errorCode}` : 'Your browser blocked playback with sound.'}
+                {errorCode != null ? `YouTube player error ${errorCode}` : awmT("Your browser blocked playback with sound.")}
               </Typography>
               <Button
                 size="small"
@@ -383,7 +387,7 @@ export default function FloatingVideoPlayer() {
                 onClick={errorCode != null ? retry : playWithSound}
                 sx={{ bgcolor: '#d4a843', color: '#0e2e1f', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#e2bd62' } }}
               >
-                {errorCode != null ? 'Retry video' : 'Play with sound'}
+                {errorCode != null ? awmT("Retry video") : awmT("Play with sound")}
               </Button>
             </Box>
           </Box>

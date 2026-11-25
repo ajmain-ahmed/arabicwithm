@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -15,6 +19,8 @@ export interface LibraryBook {
   id: string
   slug: string
   title: string
+  titleAr?: string
+  descriptionAr?: string
   author?: string | null
   description?: string | null
   level?: string | null
@@ -51,6 +57,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function BooksLibrary({ books, audioLanguagesByBook }: { books: LibraryBook[]; audioLanguagesByBook: Record<string, AudioLanguage[]> }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const [changingMode, startModeTransition] = useTransition()
   useBookCatalogueRefresh(!changingMode)
   const searchParams = useSearchParams()
@@ -116,13 +124,12 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
       {/* Header row: title + filters, aligned */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: { xs: 2, sm: 3 } }}>
         <Typography component="h1" sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
-          Library
-        </Typography>
+          <UiText>{"Library"}</UiText></Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}>
         <TextField
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search books"
+          placeholder={awmT("Search books")}
           size="small"
           sx={{
             width: { xs: '100%', sm: 210, md: 300, lg: 420 },
@@ -139,14 +146,14 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
             },
           }}
           slotProps={{
-            htmlInput: { 'aria-label': 'Search books' },
+            htmlInput: { 'aria-label': awmT("Search books") },
             input: {
               startAdornment: (
                 <InputAdornment position="start"><Search sx={{ fontSize: 17, color: 'var(--awm-muted)' }} /></InputAdornment>
               ),
               endAdornment: query ? (
                 <InputAdornment position="end">
-                  <IconButton aria-label="Clear search" onClick={() => setQuery('')} sx={{ width: 26, height: 26, color: 'var(--awm-muted)' }}>
+                  <IconButton aria-label={awmT("Clear search")} onClick={() => setQuery('')} sx={{ width: 26, height: 26, color: 'var(--awm-muted)' }}>
                     <Close sx={{ fontSize: 15 }} />
                   </IconButton>
                 </InputAdornment>
@@ -154,8 +161,8 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
             },
           }}
         />
-        <ToggleButtonGroup exclusive value={mode} onChange={(_, value) => { if (value) setMode(value) }} aria-label="Library mode" sx={{ bgcolor: 'var(--awm-white)', border: {md:'1px solid color-mix(in srgb, var(--awm-bark) 16%, transparent)'}, boxSizing:'border-box', height:{md:52}, borderRadius: '999px', p: .5, '& .MuiToggleButton-root': { border: 0, borderRadius: '999px !important', px: { xs: 2.25, sm: 3 }, minHeight: 44, textTransform: 'none', color: 'var(--awm-muted)' }, '& .Mui-selected': { bgcolor: 'var(--awm-forest) !important', color: 'var(--awm-white) !important' } }}>
-          <ToggleButton value="read">Read</ToggleButton><ToggleButton value="listen">Listen</ToggleButton>
+        <ToggleButtonGroup exclusive value={mode} onChange={(_, value) => { if (value) setMode(value) }} aria-label={awmT("Library mode")} sx={{ bgcolor: 'var(--awm-white)', border: {md:'1px solid color-mix(in srgb, var(--awm-bark) 16%, transparent)'}, boxSizing:'border-box', height:{md:52}, borderRadius: '999px', p: .5, '& .MuiToggleButton-root': { border: 0, borderRadius: '999px !important', px: { xs: 2.25, sm: 3 }, minHeight: 44, textTransform: 'none', color: 'var(--awm-muted)' }, '& .Mui-selected': { bgcolor: 'var(--awm-forest) !important', color: 'var(--awm-white) !important' } }}>
+          <ToggleButton value="read"><UiText>{"Read"}</UiText></ToggleButton><ToggleButton value="listen"><UiText>{"Listen"}</UiText></ToggleButton>
         </ToggleButtonGroup>
         <Button
           onClick={() => setDialogOpen(true)}
@@ -175,7 +182,7 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
             '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 },
           }}
         >
-          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          <UiText>{"Filters"}</UiText>{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </Button>
         </Box>
       </Box>
@@ -189,14 +196,13 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
         slotProps={{ paper: { sx: { borderRadius: '16px', backgroundImage: 'none' } } }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--font-heading)', fontWeight: 600, color: 'var(--awm-bark)', pb: 1 }}>
-          Filters
-          <IconButton onClick={() => setDialogOpen(false)} aria-label="Close filters" sx={{ color: 'var(--awm-muted)' }}>
+          <UiText>{"Filters"}</UiText><IconButton onClick={() => setDialogOpen(false)} aria-label={awmT("Close filters")} sx={{ color: 'var(--awm-muted)' }}>
             <Close />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)', py: 3 }}>
           <Box sx={{ mb: 4 }}>
-            <SectionLabel>Difficulty</SectionLabel>
+            <SectionLabel><UiText>{"Difficulty"}</UiText></SectionLabel>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}>
               <Button
                 className={level === '' ? 'Mui-selected' : ''}
@@ -204,8 +210,7 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
                 onClick={() => setLevel('')}
                 sx={FILTER_BUTTON_SX}
               >
-                All
-              </Button>
+                <UiText>{"All"}</UiText></Button>
               {LEVELS.map((option) => (
                 <Button
                   key={option}
@@ -221,14 +226,14 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
           </Box>
           {allCategories.length > 0 && (
             <Box sx={{ mb: 4 }}>
-              <SectionLabel>Genre</SectionLabel>
+              <SectionLabel><UiText>{"Genre"}</UiText></SectionLabel>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {allCategories.map((tag) => {
                   const active = categories.some((c) => c.toLowerCase() === tag.toLowerCase())
                   return (
                     <Chip
                       key={tag}
-                      label={tag}
+                      label={awmT(tag)}
                       clickable
                       disabled={disabledCategories.includes(tag)}
                       onClick={() => toggleCategory(tag)}
@@ -250,10 +255,10 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
             </Box>
           )}
           <Box>
-            <SectionLabel>More</SectionLabel>
+            <SectionLabel><UiText>{"More"}</UiText></SectionLabel>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               <Chip
-                label="Has audiobook"
+                label={awmT("Has audiobook")}
                 clickable
                 disabled={audioDisabled}
                 onClick={() => setAudioOnly((v) => !v)}
@@ -275,31 +280,28 @@ export default function BooksLibrary({ books, audioLanguagesByBook }: { books: L
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'space-between', px: 2.5, py: 1.75 }}>
           <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>
-            {visible.length} of {books.length} books
-          </Typography>
+            {visible.length}{' '}<UiText>{"of"}</UiText>{' '}{books.length}{' '}<UiText>{"books"}</UiText></Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               onClick={() => { setLevel(''); setCategories([]); setAudioOnly(false) }}
               disabled={activeFilterCount === 0}
               sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}
             >
-              Clear all
-            </Button>
+              <UiText>{"Clear all"}</UiText></Button>
             <Button
               onClick={() => setDialogOpen(false)}
               variant="contained"
               sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, borderRadius: '8px', px: 2.5, '&:hover': { bgcolor: '#174832' } }}
             >
-              Done
-            </Button>
+              <UiText>{"Done"}</UiText></Button>
           </Box>
         </DialogActions>
       </Dialog>
 
-      {mode === 'read' && <Typography component="h2" sx={{ display: { xs: 'block', sm: 'none' }, fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>All Books</Typography>}
-      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'All Books'} sx={LIBRARY_GRID_SX}>
+      {mode === 'read' && <Typography component="h2" sx={{ display: { xs: 'block', sm: 'none' }, fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}><UiText>{"All Books"}</UiText></Typography>}
+      <Box component="section" aria-label={mode === 'listen' ? awmT('Audiobook library') : awmT("All Books")} sx={LIBRARY_GRID_SX}>
         {visible.map(book => <LibraryBookCard key={book.id} book={book} listen={mode === 'listen'} compact={mode === 'read'} audioLanguages={audioLanguagesByBook[book.id]} />)}
-        {!visible.length && <Typography sx={{ gridColumn: '1 / -1' }}>{query.trim() ? `No books match "${query.trim()}".` : mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
+        {!visible.length && <Typography sx={{ gridColumn: '1 / -1' }}>{query.trim() ? `No books match "${query.trim()}".` : mode === 'listen' ? awmT("No audiobooks match these filters.") : awmT("No books match these filters.")}</Typography>}
       </Box>
     </Box>
   )

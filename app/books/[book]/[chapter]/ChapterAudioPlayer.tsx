@@ -1,7 +1,12 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { Alert, Box, Button, CircularProgress, Collapse, IconButton, Menu, MenuItem, Paper, Slider, Typography } from '@mui/material'
+import {Alert,Box,Button,CircularProgress,Collapse,IconButton,Menu,MenuItem,Paper,Typography} from '@mui/material'
+import LtrSlider from '@/app/components/LtrSlider'
 import { PauseRounded, PlayArrowRounded, RefreshRounded, VolumeUp } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import { chapterAudioPageMarkers, type ChapterAudioTimings } from '@/app/lib/chapterAudioTimings'
@@ -37,8 +42,8 @@ function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, ra
       : 'YouTube could not play this video. Try again.'
   return <>
     <Box ref={wrapRef} sx={{ display: hideFrame ? 'none' : undefined, width: '100%', maxWidth: 480, aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: '10px' }} />
-    {errorCode !== null && <Alert severity="warning" action={<Button onClick={retry}>Retry YouTube</Button>}>{message}</Alert>}
-    {unsupportedRate && <Alert severity="info">This YouTube source does not support {rate}× playback.</Alert>}
+    {errorCode !== null && <Alert severity="warning" action={<Button onClick={retry}><UiText>{"Retry YouTube"}</UiText></Button>}><UiText>{message}</UiText></Alert>}
+    {unsupportedRate && <Alert severity="info"><UiText>{"This YouTube source does not support"}</UiText>{' '}{rate}<UiText>{"× playback."}</UiText></Alert>}
   </>
 }
 
@@ -99,6 +104,8 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play 
 }
 
 function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositionChange, seekRequest, pageStarts, blockCount, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const rate = usePlayerStore(state => state.audiobookRate)
   const setRate = usePlayerStore(state => state.setAudiobookRate)
   const cachePlayback = useAudiobookStore(state => state.cachePlayback)
@@ -149,18 +156,18 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
   }, [rate, playback])
 
   const speedControl = <>
-    <Button aria-label={`Audiobook playback speed: ${rate}×`} aria-haspopup="menu" aria-expanded={Boolean(speedAnchor)} onClick={event => setSpeedAnchor(event.currentTarget)} sx={{order:8,width:{xs:32,md:52},minWidth:{xs:32,md:52},height:{xs:32,md:36},minHeight:{xs:32,md:36},p:0,borderRadius:{xs:'50%',md:'9999px'},border:'1px solid var(--awm-gold)',color:'inherit',fontSize:{xs:11,md:13},lineHeight:1,fontWeight:600,textTransform:'none',alignSelf:'center'}}>{rate}×</Button>
-    <Menu anchorEl={speedAnchor} open={Boolean(speedAnchor)} onClose={() => setSpeedAnchor(null)} slotProps={{list:{'aria-label':'Audiobook playback speed'}}}>
+    <Button aria-label={awmT('Audiobook playback speed: {rate}\u00d7',{rate})} aria-haspopup="menu" aria-expanded={Boolean(speedAnchor)} onClick={event => setSpeedAnchor(event.currentTarget)} sx={{order:8,width:{xs:32,md:52},minWidth:{xs:32,md:52},height:{xs:32,md:36},minHeight:{xs:32,md:36},p:0,borderRadius:{xs:'50%',md:'9999px'},border:'1px solid var(--awm-gold)',color:'inherit',fontSize:{xs:11,md:13},lineHeight:1,fontWeight:600,textTransform:'none',alignSelf:'center'}}>{rate}×</Button>
+    <Menu anchorEl={speedAnchor} open={Boolean(speedAnchor)} onClose={() => setSpeedAnchor(null)} slotProps={{list:{'aria-label':awmT("Audiobook playback speed")}}}>
       {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map(value => <MenuItem key={value} disabled={playback?.sourceType==='youtube'&&!youtubeRates.includes(value)} selected={rate === value} onClick={() => { setRate(value); setSpeedAnchor(null) }}>{value}×</MenuItem>)}
     </Menu>
   </>
 
   const timedMeta = pageMarkers.length > 0 ? <Box sx={{ order: { xs: 2, md: 3 }, flex: { xs: '1 1 100%', md: '0 0 auto' }, display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', md: 'flex-start' }, gap: 1, minWidth: 0 }}>
-    <Button aria-label="Choose audiobook page" aria-haspopup="menu" aria-expanded={Boolean(pageAnchor)} onClick={event => setPageAnchor(event.currentTarget)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 26, px: 0.75, py: 0.25, borderRadius: '6px', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 600, textTransform: 'none' }}>
-      Page {currentPage} of {pageStarts?.length ?? pageMarkers.length}
+    <Button aria-label={awmT("Choose audiobook page")} aria-haspopup="menu" aria-expanded={Boolean(pageAnchor)} onClick={event => setPageAnchor(event.currentTarget)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 26, px: 0.75, py: 0.25, borderRadius: '6px', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 600, textTransform: 'none' }}>
+      <UiText>{"Page"}</UiText>{' '}{currentPage}{' '}<UiText>{"of"}</UiText>{' '}{pageStarts?.length ?? pageMarkers.length}
     </Button>
-    <Menu anchorEl={pageAnchor} open={Boolean(pageAnchor)} onClose={() => setPageAnchor(null)} slotProps={{ list: { 'aria-label': 'Audiobook pages' } }}>
-      {pageMarkers.map(marker => <MenuItem key={marker.page} selected={marker.page === currentPage} onClick={() => { seekTo(marker.seconds); persistSeek(marker.seconds); setPageAnchor(null) }}>Page {marker.page}</MenuItem>)}
+    <Menu anchorEl={pageAnchor} open={Boolean(pageAnchor)} onClose={() => setPageAnchor(null)} slotProps={{ list: { 'aria-label': awmT("Audiobook pages") } }}>
+      {pageMarkers.map(marker => <MenuItem key={marker.page} selected={marker.page === currentPage} onClick={() => { seekTo(marker.seconds); persistSeek(marker.seconds); setPageAnchor(null) }}><UiText>{"Page"}</UiText>{' '}{marker.page}</MenuItem>)}
     </Menu>
     <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>{formatTime(position)} / {formatTime(duration)}</Typography>
   </Box> : null
@@ -297,7 +304,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
     ? <Button data-reader-audio-trigger disabled={loading || authLoading} onClick={togglePlayback}
         startIcon={playing ? <PauseRounded /> : <PlayArrowRounded />}
         sx={{ minHeight: 44, width: '100%', px: 2, color: 'var(--awm-white)', bgcolor: 'var(--awm-forest)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
-        {authLoading ? 'Checking account…' : loading ? 'Preparing audio…' : playing ? 'Pause Audio' : label}
+        {authLoading ? awmT("Checking account…") : loading ? awmT("Preparing audio…") : playing ? awmT("Pause Audio") : label}
       </Button>
     : <Button data-reader-audio-trigger aria-expanded={expanded} aria-controls="reader-audio-panel" disabled={loading || authLoading} onClick={() => onExpandedChange(!expanded)}
         startIcon={<VolumeUp />}
@@ -310,7 +317,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
           borderColor: expanded ? '#b8860b' : { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' },
           textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif',
         }}>
-        {authLoading ? 'Checking account…' : 'Audio'}
+        {authLoading ? awmT("Checking account…") : awmT("Audio")}
       </Button>
 
   const mediaAudio = playback?.sourceType === 'supabase_storage'
@@ -343,17 +350,17 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
     : null
 
   const player = dedicated
-    ? (playback || error) ? <Paper component="section" aria-label="Chapter audio" elevation={0} sx={{ p: 1.5, minWidth: 0, borderRadius: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'var(--awm-white)' }}>
+    ? (playback || error) ? <Paper component="section" aria-label={awmT("Chapter audio")} elevation={0} sx={{ p: 1.5, minWidth: 0, borderRadius: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'var(--awm-white)' }}>
         {mediaAudio}
         {mediaYouTube}
         {speedControl}
         {dedicated && <Box sx={{ px: 1, pt: 1 }}>
-          <Slider aria-label="Audiobook position" min={0} max={duration || 1} step={1} marks={pageMarkers.map(marker=>({value:marker.seconds,label:`P${marker.page}`}))} value={Math.min(position, duration || 1)} disabled={!playback || !duration} onChange={(_, value) => {
+          <LtrSlider aria-label={awmT("Audiobook position")} min={0} max={duration || 1} step={1} marks={pageMarkers.map(marker=>({value:marker.seconds,label:`P${marker.page}`}))} value={Math.min(position, duration || 1)} disabled={!playback || !duration} onChange={(_, value) => {
             seekTo(value as number)
           }} onChangeCommitted={(_, value) => persistSeek(value as number)} sx={{ color: 'var(--awm-gold)', py: 2, ...(pageMarkers.length ? PAGE_MARKER_SX : {}) }} />
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 13 }}>{formatTime(position)}</Typography><Typography sx={{ fontSize: 13 }}>{formatTime(duration)}</Typography></Box>
         </Box>}
-        {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>}
+        {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}><UiText>{"Retry audio"}</UiText></Button>}><UiText>{error}</UiText></Alert>}
       </Paper> : null
     : <Collapse in={expanded} timeout={260} unmountOnExit={false}>
         {/* Compact control bar under the reader controls. Mobile: two tidy
@@ -363,7 +370,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
         <Box
           id="reader-audio-panel"
           component="section"
-          aria-label="Chapter audio"
+          aria-label={awmT("Chapter audio")}
           sx={{
             mt: 1.5, mb: 0.5, mx: { xs: 0.75, md: 1.5 }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 0.75, md: 1.25 },
             rowGap: { xs: 1, md: 1.25 },
@@ -377,13 +384,13 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
           {/* Transport trio grouped as one control on mobile (contents on
               desktop so each button joins the single pill row). */}
           <Box sx={{ order: { xs: 4, md: 0 }, display: { xs: 'inline-flex', md: 'contents' }, gap: { xs: 1, md: 0 }, alignItems: 'center', alignSelf: 'center' }}>
-            <IconButton aria-label={playing ? 'Pause audio' : 'Play audio'} onClick={togglePlayback} disabled={loading || authLoading} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 4, md: 1 } }}>
+            <IconButton aria-label={playing ? awmT("Pause audio") : awmT("Play audio")} onClick={togglePlayback} disabled={loading || authLoading} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 4, md: 1 } }}>
               {loading ? <CircularProgress size={16} sx={{ color: 'currentColor' }} /> : playing ? <PauseRounded /> : <PlayArrowRounded />}
             </IconButton>
           </Box>
           {timedMeta}
-          <Slider
-            aria-label="Audio position"
+          <LtrSlider
+            aria-label={awmT("Audio position")}
             min={0}
             max={duration || 1}
             step={1}
@@ -399,7 +406,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, onPositio
           </Typography>}
           {error && (
             <Box sx={{ flexBasis: '100%', minWidth: 0 }}>
-              <Alert severity="info" sx={{ py: 0, alignItems: 'center' }} action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>
+              <Alert severity="info" sx={{ py: 0, alignItems: 'center' }} action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}><UiText>{"Retry audio"}</UiText></Button>}><UiText>{error}</UiText></Alert>
             </Box>
           )}
         </Box>

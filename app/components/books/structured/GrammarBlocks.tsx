@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import type { CSSProperties } from 'react'
 import { items, record, text, type StructuredRecord } from '@/app/lib/structuredChapter'
 import { Label, TextPair, Notice } from './StructuredText'
@@ -10,12 +12,12 @@ const highlights: Record<string, { label: string; accent: string }> = {
 }
 export function HighlightedSentence({ block }: { block: StructuredRecord }) {
   const segments = items(block.segments)
-  if (!segments.length) return <Notice>This sentence analysis is unavailable.</Notice>
+  if (!segments.length) return <Notice><UiText>{"This sentence analysis is unavailable."}</UiText></Notice>
   return <div className={styles.card}>
     <div className={styles.segments} dir="rtl" aria-label="Arabic sentence analysis">
       {segments.map((value, index) => {
         const segment = record(value)
-        if (!segment) return <Notice key={index}>A sentence segment is unavailable.</Notice>
+        if (!segment) return <Notice key={index}><UiText>{"A sentence segment is unavailable."}</UiText></Notice>
         const key = text(segment.highlight_key)
         const treatment = Object.hasOwn(highlights, key) ? highlights[key] : { label: 'Sentence segment', accent: 'var(--awm-muted)' }
         return <div className={styles.segment} key={index} style={{ '--segment-accent': treatment.accent } as CSSProperties}>
@@ -33,7 +35,7 @@ export function HighlightedSentence({ block }: { block: StructuredRecord }) {
 
 export function StructuredTable({ block }: { block: StructuredRecord }) {
   const columns = items(block.columns), rows = items(block.rows)
-  if (!columns.length) return <Notice>This lesson table is unavailable.</Notice>
+  if (!columns.length) return <Notice><UiText>{"This lesson table is unavailable."}</UiText></Notice>
   return <div className={styles.scroll} role="region" aria-label={text(block.caption_en) || 'Lesson table'} tabIndex={0}>
     <table className={styles.table} dir="ltr">
       {(text(block.caption_en) || text(block.caption_ar)) && <caption><TextPair value={block} arabic="caption_ar" english="caption_en" /></caption>}

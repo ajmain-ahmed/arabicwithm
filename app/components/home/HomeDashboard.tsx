@@ -1,10 +1,14 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import PhraseOfTheDay from './PhraseOfTheDay'
 import type { DailyPhrase } from '@/app/lib/dailyPhrase'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import {
   ExploreOutlined,
   GridOnRounded,
@@ -31,12 +35,14 @@ import type { PublicBook } from '@/app/actions/books'
    already limit to 12; books are sliced here to match so the homepage's
    image count stays flat as the catalogue grows. */
 const HOME_ROW_LIMIT = 12
+const subscribeHydration=()=>()=>{}
 
 export function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
   return shows.map((show) => ({
     key: show.id,
     href: `/cartoons/${encodeURIComponent(show.slug)}`,
     title: show.title,
+    titleAr:show.titleAr,
     level: show.level,
     imageSrc: show.cover ?? `/api/covers/shows/${show.id}`,
     imageCrop: show.coverCrop,
@@ -48,7 +54,9 @@ export function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
     key: episode.id,
     href: `/cartoons/${encodeURIComponent(episode.showSlug)}/${encodeURIComponent(episode.slug)}`,
     title: episode.title,
+    titleAr:episode.titleAr,
     meta: episode.showTitle,
+    metaAr:episode.showTitleAr,
     level: episode.level,
     imageSrc: episode.cover ?? `/api/covers/episodes/${episode.id}`,
     imageCrop: episode.coverCrop,
@@ -92,8 +100,10 @@ function DeferredSection({ placeholder, children }: { placeholder: React.ReactNo
 }
 
 function DeferredRowPlaceholder() {
+ const {t:awmT}=useWebsiteLocale()
+
   return (
-    <Box role="status" aria-label="Loading content">
+    <Box role="status" aria-label={awmT("Loading content")}>
       <Skeleton variant="text" width={140} height={28} />
       <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, overflow: 'hidden', mt: 0.5 }}>
         {Array.from({ length: 6 }).map((_, index) => (
@@ -105,8 +115,13 @@ function DeferredRowPlaceholder() {
 }
 
 export default function HomeDashboard({ books, homepageBooks = books, newShows, newEpisodes, featured, showFeatured = true, spotlight, spotlightArea, dailyPhrase = null }: { showFeatured?: boolean; spotlightArea?: React.ReactNode; dailyPhrase?: DailyPhrase | null; books: PublicBook[]; homepageBooks?: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; spotlight?:{clip:ForYouClip|null;error:boolean}; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const featuredItems=Array.isArray(featured)?featured:featured?[featured]:[]
-  const { user, loading: authLoading } = useAuth()
+  const auth=useAuth(),hydrated=useSyncExternalStore(subscribeHydration,()=>true,()=>false)
+  // This Suspense boundary may hydrate after the parent has resolved Auth.
+  // Match its server snapshot before inserting signed-in/guest-only sections.
+  const user=hydrated?auth.user:null,authLoading=!hydrated||auth.loading
   // Membership alone defines active reading. Positions remain resume history.
   const myListCacheItems = useMyListCache((state) => state.items)
   const setMyListCache = useMyListCache((state) => state.set)
@@ -175,7 +190,7 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
         }}
       >
         {showFeatured && <>
-          <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}>Learn Arabic through cartoons and books</Typography>
+          <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}><UiText>{"Learn Arabic through cartoons and books"}</UiText></Typography>
           <FeaturedCarousel key={featuredItems.map(item => item.show.id).join(':')} items={featuredItems} />
         </>}
 
@@ -183,12 +198,12 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
           {user && <CheckoutReturnNotice userId={user.id} />}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}><UiText>{"My List"}</UiText></Typography>
               <NewOnRow items={myListRowItems} ariaLabel="My List" compact scrollHint />
             </Container>
           )}
           {user && myListLoading && myListRowItems.length === 0 && (
-            <Container maxWidth={false} aria-label="Loading My List">
+            <Container maxWidth={false} aria-label={awmT("Loading My List")}>
               <Skeleton variant="text" width={110} height={28} />
               <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, overflow: 'hidden', mt: 0.5 }}>
                 {Array.from({ length: 8 }).map((_, index) => (
@@ -199,7 +214,7 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
           )}
           {user && !myListLoading && myListRowItems.length === 0 && (
             <Container maxWidth={false}>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}><UiText>{"My List"}</UiText></Typography>
               <Box
                 component={Link} prefetch={false}
                 href="/cartoons?view=shows"
@@ -226,29 +241,27 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
                   <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 21, md: 26 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>
-                    Start adding shows to your list!
-                  </Typography>
+                    <UiText>{"Start adding shows to your list!"}</UiText></Typography>
                   <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.55 }}>
-                    Tap to explore the catalogue and keep every show you love one click away.
-                  </Typography>
+                    <UiText>{"Tap to explore the catalogue and keep every show you love one click away."}</UiText></Typography>
                 </Box>
               </Box>
             </Container>
           )}
           <Container maxWidth={false} sx={user ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
             {newEpisodeItems.length > 0 && <>
-              <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
+              <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}><UiText>{"Latest Episodes"}</UiText></Typography>
               <DeferredSection placeholder={<DeferredRowPlaceholder />}>
                 <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" compact viewAllHref="/cartoons" />
               </DeferredSection>
             </>}
             {spotlightArea ?? <HomeForYouSpotlight initialClip={spotlight?.clip??null} initialError={spotlight?.error}/>}
             {newShowItems.length > 0 && <>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}><UiText>{"Shows"}</UiText></Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" compact viewAllHref="/cartoons?view=shows" />
             </>}
             {bookRowItems.length > 0 && <>
-              <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
+              <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}><UiText>{"Books"}</UiText></Typography>
               <DeferredSection placeholder={<DeferredRowPlaceholder />}>
                 <DeferredNewOnRow items={bookRowItems} ariaLabel="Books" compact viewAllHref="/books" />
               </DeferredSection>
@@ -258,14 +271,14 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
           <Box sx={{display:'flex',flexDirection:'column'}}>
           {/* Mobile-only Quick Actions. */}
           <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
-            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
-            <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'1fr',gap:1.5,mt:1.5 }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}><UiText>{"Quick Actions"}</UiText></Typography>
+            <Box component="nav" aria-label={awmT("Quick Actions")} data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'1fr',gap:1.5,mt:1.5 }}>
               {[
-                { title: 'Memory', href: '/memory', Icon: PsychologyOutlined },
-                { title: 'Grammar', href: '/grammar', Icon: AccountTreeOutlined },
-                { title: 'Word Search', href: '/word-search', Icon: GridOnRounded },
-                { title: 'Explore', href: '/explore', Icon: ExploreOutlined },
-              ].map(({ title, href, Icon }) => <Paper key={href} component={Link} prefetch={false} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
+                { title: "Memory", href: '/memory', Icon: PsychologyOutlined },
+                { title: "Grammar", href: '/grammar', Icon: AccountTreeOutlined },
+                { title: "Word Search", href: '/word-search', Icon: GridOnRounded },
+                { title: "Explore", href: '/explore', Icon: ExploreOutlined },
+              ].map(({ title, href, Icon }) => <Paper key={href} component={Link} prefetch={false} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}><UiText>{title}</UiText></Typography></Paper>)}
             </Box>
           </Container>
           <Container maxWidth={false} sx={{ display: { xs: 'block', sm: 'none' } }}>

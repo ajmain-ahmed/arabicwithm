@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import React from 'react'
 import { Box, Typography, Chip } from '@mui/material'
@@ -22,6 +26,8 @@ export default function WordTooltip({
   entry: VocabEntry
   textScale?: number
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const grammaticalCase = readGrammaticalCase(entry.grammatical_case)
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200, position: 'relative', pt: 0.5 }}>
@@ -76,8 +82,8 @@ export default function WordTooltip({
       </Box>
 
       {grammaticalCase && (
-        <Box aria-label="Grammatical case" sx={{ textAlign: 'center', overflowWrap: 'anywhere', minWidth: 0 }}>
-          <Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--awm-muted)' }}>Case</Typography>
+        <Box aria-label={awmT("Grammatical case")} sx={{ textAlign: 'center', overflowWrap: 'anywhere', minWidth: 0 }}>
+          <Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--awm-muted)' }}><UiText>{"Case"}</UiText></Typography>
           {grammaticalCase.arabic && <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-serif)', fontSize: `calc(1.1rem * ${textScale})` }}>{grammaticalCase.arabic}</Typography>}
           {grammaticalCase.english && <Typography lang="en" dir="ltr" sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.8rem * ${textScale})` }}>{grammaticalCase.english}</Typography>}
         </Box>

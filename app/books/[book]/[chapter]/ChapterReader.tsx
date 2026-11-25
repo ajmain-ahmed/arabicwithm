@@ -1,4 +1,9 @@
 'use client'
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type CSSProperties } from 'react'
 import { Box, Button, ButtonGroup, Paper, Typography, useMediaQuery } from '@mui/material'
@@ -233,7 +238,9 @@ function ArabicTokens({
 export default function ChapterReader({
   bookSlug,
   bookTitle,
+  bookTitleAr,
   chapterTitle,
+  chapterTitleAr,
   chapterSlug,
   content,
   structuredPages,
@@ -246,7 +253,9 @@ export default function ChapterReader({
 }: {
   bookSlug: string
   bookTitle: string
+  bookTitleAr?: string
   chapterTitle: string
+  chapterTitleAr?: string
   chapterSlug: string
   content: PublicBookBlock[]
   structuredPages?: ReactNode[]
@@ -257,6 +266,8 @@ export default function ChapterReader({
   adminPreview?: boolean
   audio?: ChapterAudioSummary[]
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user } = useAuth()
   const audioRate = usePlayerStore(state => state.audiobookRate)
   const setAudioRate = usePlayerStore(state => state.setAudiobookRate)
@@ -435,11 +446,11 @@ export default function ChapterReader({
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
           <Box sx={{ textAlign: 'center', minWidth: 0 }}>
             <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
-              {bookTitle} · {language === 'ar' ? 'Arabic' : 'English'}
+              <LocalisedContent original={bookTitle} arabic={bookTitleAr}/> · {language === 'ar' ? awmT("Arabic") : awmT("English")}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 1.5 }}>
             <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 31 }, lineHeight: 1.15, fontWeight: 600 }}>
-              {chapterTitle}
+              <LocalisedContent original={chapterTitle} arabic={chapterTitleAr}/>
             </Typography>
             </Box>
           </Box>
@@ -448,7 +459,7 @@ export default function ChapterReader({
             {/* Audio + Settings joined as one pill; the reading-view toggle
                lives in the settings dialog. */}
             <ButtonGroup
-              aria-label="Reader controls"
+              aria-label={awmT("Reader controls")}
               sx={{
                 borderRadius: '9999px',
                 width: 'min(100%, 280px)',
@@ -463,8 +474,7 @@ export default function ChapterReader({
                 aria-expanded={settingsOpen}
                 sx={{ color: { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: { xs: 'var(--awm-white)', md: 'transparent' }, borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, '&:hover': { bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,0.1)' } } }}
               >
-                Settings
-              </Button>
+                <UiText>{"Settings"}</UiText></Button>
             </ButtonGroup>
 
           </Box>
@@ -530,30 +540,28 @@ export default function ChapterReader({
         </Box>
       )}
       <Box sx={{px:{xs:2,md:4},pb:3}}>          {totalPages > 1 && (
-            <Box component="nav" aria-label="Chapter pages" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, sm: 2 }, mt: { xs: 3, md: 4 } }}>
+            <Box component="nav" aria-label={awmT("Chapter pages")} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, sm: 2 }, mt: { xs: 3, md: 4 } }}>
               <Button
-                aria-label="Previous Page"
+                aria-label={awmT("Previous Page")}
                 onClick={() => goToPage(page - 1)}
                 disabled={page <= 1}
                 startIcon={<ChevronLeft sx={{ display: { xs: 'none', md: 'inline-flex' } }} />}
                 variant="outlined"
                 sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, borderColor: 'rgba(44,26,14,0.15)', color: 'var(--awm-bark)', '&:hover': { borderColor: 'var(--awm-gold)', background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' }, '&.Mui-disabled': { color: 'var(--awm-muted-light)', borderColor: 'color-mix(in srgb, var(--awm-muted) 40%, transparent)' } }}
               >
-                Prev
-              </Button>
+                <UiText>{"Prev"}</UiText></Button>
               <Typography aria-live="polite" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 13.5 }, fontWeight: 600, color: 'var(--awm-muted)', minWidth: 84, textAlign: 'center' }}>
-                Page {page} of {totalPages}
+                <UiText>{"Page"}</UiText>{' '}{page}{' '}<UiText>{"of"}</UiText>{' '}{totalPages}
               </Typography>
               {page<totalPages&&<Button
-                aria-label="Next Page"
+                aria-label={awmT("Next Page")}
                 onClick={() => goToPage(page + 1)}
                 disabled={page >= totalPages}
                 endIcon={<ChevronRight sx={{ display: { xs: 'none', md: 'inline-flex' } }} />}
                 variant="contained"
                 sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, bgcolor: '#b8860b', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#946c08', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--awm-muted) 28%, transparent)', color: 'var(--awm-muted-light)' } }}
               >
-                Next
-              </Button>}
+                <UiText>{"Next"}</UiText></Button>}
             </Box>
           )}</Box>
       </Paper>

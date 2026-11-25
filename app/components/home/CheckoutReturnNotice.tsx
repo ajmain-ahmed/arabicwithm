@@ -1,4 +1,8 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useRef, useState } from 'react'
 import { Box, Button, Container, Typography } from '@mui/material'
@@ -17,6 +21,8 @@ const ACTIVE_DISMISS_MS = 5000
    access exists. The parameter is consumed immediately so refreshes and
    shared links don't replay the notice. */
 export default function CheckoutReturnNotice({ userId }: { userId: string }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const [state, setState] = useState<NoticeState | null>(null)
   const dismissTimer = useRef<number | null>(null)
 
@@ -94,10 +100,10 @@ export default function CheckoutReturnNotice({ userId }: { userId: string }) {
       <Box role="status" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, px: { xs: 2, md: 2.5 }, py: 1.75, borderRadius: '10px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', boxShadow: '0 6px 18px rgba(44,26,14,0.06)' }}>
         <Icon aria-hidden="true" sx={{ mt: 0.2, fontSize: 20, color: copy.color, flexShrink: 0 }} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 14, color: 'var(--awm-bark)' }}>{copy.title}</Typography>
-          <Typography sx={{ mt: 0.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)', lineHeight: 1.55 }}>{copy.body}</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 14, color: 'var(--awm-bark)' }}><UiText>{copy.title}</UiText></Typography>
+          <Typography sx={{ mt: 0.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)', lineHeight: 1.55 }}><UiText>{copy.body}</UiText></Typography>
         </Box>
-        <Button onClick={() => setState(null)} aria-label="Dismiss notice" sx={{ minWidth: 0, p: 0.5, color: 'var(--awm-muted-light)', '&:hover': { color: 'var(--awm-bark)', bgcolor: 'transparent' } }}>
+        <Button onClick={() => setState(null)} aria-label={awmT("Dismiss notice")} sx={{ minWidth: 0, p: 0.5, color: 'var(--awm-muted-light)', '&:hover': { color: 'var(--awm-bark)', bgcolor: 'transparent' } }}>
           <Close sx={{ fontSize: 18 }} />
         </Button>
       </Box>

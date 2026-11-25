@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import { items, record, text, structuredWarning, type StructuredRecord } from '@/app/lib/structuredChapter'
 import { Label, Notice, TextPair } from './StructuredText'
 import styles from './StructuredChapter.module.css'
@@ -17,7 +19,7 @@ export default function StructuredDiagram({ block }: { block: StructuredRecord }
     if (!byId.has(source) || !byId.has(target)) { structuredWarning('Diagram edge has an unknown node.'); return [] }
     return [{ ...edge, source, target }]
   })
-  if (!nodes.length) return <Notice>This lesson diagram is unavailable.</Notice>
+  if (!nodes.length) return <Notice><UiText>{"This lesson diagram is unavailable."}</UiText></Notice>
   const remaining = new Map(byId), levels: typeof nodes[] = []
   const degree = new Map(nodes.map(node => [node.id, 0]))
   const children = new Map<string, string[]>()

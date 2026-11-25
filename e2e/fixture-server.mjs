@@ -285,6 +285,12 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return json(res,{attempts:bookCoverAttempts,contentDigest:createHash('sha256').update(JSON.stringify({chapters:tables.chapters,audio:tables.book_chapter_audio})).digest('hex'),writes:bookCoverWrites,objects:[...bookCoverObjects].map(([name,value])=>({name,hash:createHash('sha256').update(value.bytes).digest('hex')})),books:tables.books.map(({id,slug,cover,is_completed,title,description})=>({id,slug,cover,is_completed,title,description}))})
   }
   if(url.pathname==='/fixture/metadata-localisation'){tables.content_localisations=[];return json(res,{})}
+  if(url.pathname==='/fixture/localisation'){
+    tables.books[0].title_ar='كِتَابُ الْأَمْثَالِ'
+    tables.books[0].category='Non-Fiction'
+    tables.shows[0].category='Action'
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/member-branding'){brandMembership=body.state||'active';return json(res,{})}
   if(url.pathname==='/fixture/expired-membership'){expiredMembership=Boolean(body.expired);return json(res,{})}
   if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;englishSubtitleLayout=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
@@ -1005,6 +1011,12 @@ if (process.env.AWM_TEST_PHRASE_PAGINATION === '1') tables.phrases = Array.from(
   cefr: 'B1', notes: 'Synthetic pagination fixture', word_glosses: [{ arabic: 'عَلَى', english: 'on' }, { arabic: 'الْفَوْرِ', english: 'the instant' }],
 }))
 if (process.env.AWM_TEST_LEARN_PROFILE === '1' || process.env.AWM_TEST_LEARN_CONTINUITY === '1') for (const episode of tables.episodes) episode.transcript = [{ timestamp: '0:00', translation: 'A book, a pen, the sun, the sea, a house and a flower.', tokens: ['كِتَابٌ','قَلَمٌ','شَمْسٌ','بَحْرٌ','بَيْتٌ','وَرْدٌ'].map((arabic, index) => ({ arabic, english: ['book','pen','sun','sea','house','flower'][index], pos: 'noun', cefr: 'A1', headword: arabic })) }]
+
+if(process.env.AWM_TEST_LOCALISATION==='1'){
+ tables.books[0].title_ar='كِتَابُ الْأَمْثَالِ'
+ tables.books[0].category='Non-Fiction'
+ tables.shows[0].category='Action'
+}
 
 if(process.env.AWM_TEST_LEARN_CONTINUITY==='1')for(const episode of tables.episodes){
  const tokens=episode.transcript[0].tokens

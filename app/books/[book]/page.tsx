@@ -1,3 +1,6 @@
+import LocalisedContent from '@/app/components/LocalisedContent'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import Link from 'next/link'
 import BookCoverImage from '@/app/books/BookCoverImage'
 import { notFound } from 'next/navigation'
@@ -48,13 +51,13 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const infoFields = (
     <>
       <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.1 }}>
-        {book.title}
+        <LocalisedContent original={book.title} arabic={book.titleAr}/>
       </Typography>
-      <Typography color="text.secondary" sx={{ mt: 1 }}>By {book.author}</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1 }}><UiText>{"By"}</UiText>{' '}{book.author}</Typography>
       {!completed && book.category && <Typography sx={{ mt: .5, fontSize: 13, color: 'var(--awm-muted)' }}>{book.category}</Typography>}
       {book.description && (
         <Typography
-          dir="ltr"
+          dir="auto"
           sx={{
             mt: 1.25,
             maxWidth: 600,
@@ -63,15 +66,15 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
             fontSize: { xs: 17, md: 19 },
             lineHeight: 1.5,
             color: '#b8860b',
-            direction: 'ltr',
+
             unicodeBidi: 'plaintext',
-            textAlign: 'left',
+            textAlign: 'start',
           }}
         >
-          {book.description}
+          <LocalisedContent original={book.description} arabic={book.descriptionAr}/>
         </Typography>
       )}
-      {admin && book.isCompleted === false && <Typography role="status" sx={{ mt: 2, color: 'var(--awm-gold)', fontWeight: 600 }}>In progress — Admin preview</Typography>}
+      {admin && book.isCompleted === false && <Typography role="status" sx={{ mt: 2, color: 'var(--awm-gold)', fontWeight: 600 }}><UiText>{"In progress — Admin preview"}</UiText></Typography>}
       <BookDetailMetadata level={book.level} readingTimeMinutes={book.readingTimeMinutes} tags={book.tags} audioChapterCount={audioChapterIds.size}/>
       <Box sx={{ mt: 3 }}>
         {completed ? <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} /> : <BookInProgress bookId={book.id} />}
@@ -81,15 +84,14 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   const coverImage = (
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
-      <BookCoverImage src={book.cover!} title={book.title} />
+      <BookCoverImage src={book.cover!} title={book.title} titleAr={book.titleAr} />
     </Box>
   )
 
   const chaptersList = (
     <>
       <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
-        Chapters
-      </Typography>
+        <UiText>{"Chapters"}</UiText></Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
         {chapters.map((chapter) => (
           <Box key={chapter.id}>
@@ -98,12 +100,12 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
               chapterNumber={chapter.chapterNumber}
             >
-              <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
+              <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'start', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
                 <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
                   {chapter.chapterNumber}
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
+                  <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}><LocalisedContent original={chapter.title} arabic={chapter.titleAr}/></Typography>
                   {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                 </Box>
                 <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
@@ -133,8 +135,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
       <Container maxWidth="xl">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
-            <ArrowBack sx={{ fontSize: 18 }} /> Back to books
-          </Box>
+            <ArrowBack sx={{ fontSize: 18 }} /> {' '}<UiText>{"Back to books"}</UiText></Box>
         </Link>
 
         <Box sx={{

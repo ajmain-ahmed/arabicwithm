@@ -1,5 +1,10 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 import dynamic from 'next/dynamic'
+import LocalisedProgress from '@/app/components/LocalisedProgress'
 import { Alert, Button, LinearProgress } from '@mui/material'
 import { Component, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '@/app/AuthContext'
@@ -11,17 +16,19 @@ import { fetchLearnMemoryClient as fetchLearnMemory, fetchLearnPuzzleClient as f
 import { boundedRead } from '@/app/lib/readRecovery'
 import { generateWordSearch, type PuzzleVocabularySource, type WordSearchPuzzle } from '@/app/lib/transcriptPuzzles'
 import { websiteQuestions, type WebsiteQuestion } from '@/app/grammar/websiteQuestions'
-const WordSearch = dynamic(() => import('@/app/word-search/WordSearchGame'),{loading:()=> <LinearProgress aria-label="Loading Word Search"/>})
-const Memory = dynamic(() => import('@/app/memory/MemoryPage'),{loading:()=> <LinearProgress aria-label="Loading Memory"/>})
-const Ordering = dynamic(() => import('./OrderingActivity'),{loading:()=> <LinearProgress aria-label="Loading Grammar activity"/>})
-const Matching = dynamic(() => import('@/app/grammar/GrammarPage').then(m=>m.LearnMappingActivity),{loading:()=> <LinearProgress aria-label="Loading Grammar activity"/>})
-const Activity = dynamic(() => import('@/app/grammar/WebsiteActivity'),{loading:()=> <LinearProgress aria-label="Loading Grammar activity"/>})
+const WordSearch = dynamic(() => import('@/app/word-search/WordSearchGame'),{loading:()=> <LocalisedProgress label="Loading Word Search"/>})
+const Memory = dynamic(() => import('@/app/memory/MemoryPage'),{loading:()=> <LocalisedProgress label="Loading Memory"/>})
+const Ordering = dynamic(() => import('./OrderingActivity'),{loading:()=> <LocalisedProgress label="Loading Grammar activity"/>})
+const Matching = dynamic(() => import('@/app/grammar/GrammarPage').then(m=>m.LearnMappingActivity),{loading:()=> <LocalisedProgress label="Loading Grammar activity"/>})
+const Activity = dynamic(() => import('@/app/grammar/WebsiteActivity'),{loading:()=> <LocalisedProgress label="Loading Grammar activity"/>})
 class ActivityBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
  state = { failed: false }
  static getDerivedStateFromError() { return { failed: true } }
- render() { return this.state.failed ? <Alert severity="warning">This activity could not load. <Button onClick={()=>this.setState({failed:false})}>Retry</Button></Alert> : this.props.children }
+ render() { return this.state.failed ? <Alert severity="warning"><UiText>{"This activity could not load."}</UiText>{' '}<Button onClick={()=>this.setState({failed:false})}><UiText>{"Retry"}</UiText></Button></Alert> : this.props.children }
 }
 function RemoteActivity<T>({load,children}:{load:()=>Promise<T>;children:(props:{data:T;onNext:()=>void})=>ReactNode}){
+ const {t:awmT}=useWebsiteLocale()
+
  const [data,setData]=useState<T|null>(null),[busy,setBusy]=useState(true),[error,setError]=useState('')
  const locked=useRef(false),active=useRef(true),loader=useRef(load)
  useEffect(()=>{loader.current=load},[load])
@@ -33,8 +40,8 @@ function RemoteActivity<T>({load,children}:{load:()=>Promise<T>;children:(props:
   finally{locked.current=false;if(active.current)setBusy(false)}
  }
  useEffect(()=>{active.current=true;void next();return()=>{active.current=false}},[])
- if(busy)return <LinearProgress aria-label="Loading activity"/>
- if(error)return <Alert severity="warning">{error}<Button onClick={()=>void next()}>Retry</Button></Alert>
+ if(busy)return <LinearProgress aria-label={awmT("Loading activity")}/>
+ if(error)return <Alert severity="warning"><UiText>{error}</UiText><Button onClick={()=>void next()}><UiText>{"Retry"}</UiText></Button></Alert>
  const Content=children
  return data===null?null:<ActivityBoundary><Content data={data} onNext={()=>void next()}/></ActivityBoundary>
 }
@@ -50,6 +57,8 @@ export function PuzzleActivity(){
  return <RemoteActivity load={async()=>{const source=await fetchLearnPuzzle();if(!source)throw new Error('No puzzle');const puzzle=generateWordSearch(source.words,{difficulty:'easy'});if(!puzzle)throw new Error('No puzzle');return {source,puzzle}}}>{PuzzleContent}</RemoteActivity>
 }
 export function GrammarActivity({question}:{question:WebsiteQuestion}){
+ const {t:awmT}=useWebsiteLocale()
+
  const [current,setCurrent]=useState(question)
  const [ordering,setOrdering]=useState(false)
  const remaining=useRef<WebsiteQuestion[]>([])
@@ -75,7 +84,7 @@ export function GrammarActivity({question}:{question:WebsiteQuestion}){
   }catch{setError('This Grammar activity could not load. Please retry.')}
   finally{pending.current=false;setBusy(false)}
  }
- return <ActivityBoundary><GrammarProvider>{busy?<LinearProgress aria-label="Loading Grammar activity"/>:error?<Alert severity="warning">{error}<Button onClick={()=>void next()}>Retry</Button><Button onClick={()=>{setError('');foundation()}}>Reviewed foundations</Button></Alert>:mapping?<Matching row={mapping.row} mode={mapping.mode} onNext={()=>void next()}/>:ordering?<Ordering key={current.id} question={current} onNext={()=>void next()}/>:<Activity key={current.id} activity={current.activity} suppliedQuestions={[current]} manualProgress onRestart={()=>void next()}/>}</GrammarProvider></ActivityBoundary>
+ return <ActivityBoundary><GrammarProvider>{busy?<LinearProgress aria-label={awmT("Loading Grammar activity")}/>:error?<Alert severity="warning"><UiText>{error}</UiText><Button onClick={()=>void next()}><UiText>{"Retry"}</UiText></Button><Button onClick={()=>{setError('');foundation()}}><UiText>{"Reviewed foundations"}</UiText></Button></Alert>:mapping?<Matching row={mapping.row} mode={mapping.mode} onNext={()=>void next()}/>:ordering?<Ordering key={current.id} question={current} onNext={()=>void next()}/>:<Activity key={current.id} activity={current.activity} suppliedQuestions={[current]} manualProgress onRestart={()=>void next()}/>}</GrammarProvider></ActivityBoundary>
 }
 export function MemoryActivity(){
  const previous=useRef<string|undefined>(undefined)

@@ -1,4 +1,9 @@
 'use client'
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 import AwmPageError from '@/app/components/AwmPageError'
 import {boundedRead} from '@/app/lib/readRecovery'
 import EnglishForYouSegment from '@/app/explore/EnglishForYouSegment'
@@ -10,6 +15,8 @@ import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import {downloadAdminTranscriptJson,loadAdminTranscript,loadPublicTranscript,type TranscriptRow,type TranscriptSegment} from '@/app/actions/transcripts'
 import {transcriptReturn,transcriptTime,type TranscriptOrigin} from '@/app/lib/transcriptNavigation'
 export default function TranscriptViewer({video,initialSegments,start,origin='search'}:{video:TranscriptRow;initialSegments:TranscriptSegment[];start:number;origin?:TranscriptOrigin}){
+ const {t:awmT}=useWebsiteLocale()
+
  const englishSource=sourceLanguage(video.source_language)==='en'
  const [downloading,setDownloading]=useState(false)
  const back=transcriptReturn(origin),loader=origin==='admin'?loadAdminTranscript:loadPublicTranscript
@@ -25,12 +32,12 @@ export default function TranscriptViewer({video,initialSegments,start,origin='se
   const link=document.createElement('a');link.href=url;link.download=result.filename;document.body.appendChild(link);link.click();link.remove()
   setTimeout(()=>URL.revokeObjectURL(url),1000)
  }catch(e){console.error('[transcript download]',e);setError('Unable to download transcript. Please retry.')}finally{setDownloading(false)}}
- return <Container maxWidth="md" sx={{py:4}}><Stack spacing={2}><Button component={Link} href={back.href} sx={{alignSelf:'flex-start'}}>{back.label}</Button><Typography component="h1" variant="h4">{video.title}</Typography>{origin==='admin'&&<Button disabled={downloading} onClick={()=>void download()} sx={{alignSelf:'flex-start'}}>{downloading?'Downloading...':'Download JSON'}</Button>}<Typography>{video.channel}</Typography>
- <Box ref={wrapRef} sx={{width:'100%',aspectRatio:'16/9'}}/>{errorCode&&<Alert severity="warning" action={<Button onClick={retry}>Retry</Button>}>Unable to load YouTube playback.</Alert>}
- <Typography variant="body2">{englishSource?'Arabic':'English'} translation: {video.translation_status}</Typography>
- {(segments[0]?.position??0)>0&&<Button disabled={busy} onClick={()=>void loadEarlier()}>Load earlier transcript</Button>}
+ return <Container maxWidth="md" sx={{py:4}}><Stack spacing={2}><Button component={Link} href={back.href} sx={{alignSelf:'flex-start'}}><UiText>{back.label}</UiText></Button><Typography component="h1" variant="h4"><LocalisedContent original={video.title} arabic={video.titleAr}/></Typography>{origin==='admin'&&<Button disabled={downloading} onClick={()=>void download()} sx={{alignSelf:'flex-start'}}>{downloading?awmT("Downloading..."):awmT("Download JSON")}</Button>}<Typography>{video.channel}</Typography>
+ <Box ref={wrapRef} sx={{width:'100%',aspectRatio:'16/9'}}/>{errorCode&&<Alert severity="warning" action={<Button onClick={retry}><UiText>{"Retry"}</UiText></Button>}><UiText>{"Unable to load YouTube playback."}</UiText></Alert>}
+ <Typography variant="body2">{englishSource?awmT("Arabic"):awmT("English")}{' '}<UiText>{"translation:"}</UiText>{' '}{awmT(video.translation_status)}</Typography>
+ {(segments[0]?.position??0)>0&&<Button disabled={busy} onClick={()=>void loadEarlier()}><UiText>{"Load earlier transcript"}</UiText></Button>}
  {segments.map(segment=>{const startMs=segment.start_ms??Math.round(segment.start_seconds*1000),endMs=segment.end_seconds===null?null:segment.end_ms??Math.round(segment.end_seconds*1000);return <Box key={segment.id} sx={{p:2,borderRadius:2,bgcolor:Math.round(time*1000)>=startMs&&(endMs===null?segment.position===segments.filter(s=>s.start_seconds<=time).at(-1)?.position:Math.round(time*1000)<endMs)?'var(--awm-cream)':'transparent'}}>
  <Button disabled={!isReady} onClick={()=>seekTo(startMs/1000)}>{transcriptTime(startMs)}</Button>{englishSource?<EnglishForYouSegment line={{tokens:segment.tokens??[],translation:segment.translation}} settings={{meanings:true,sentence:true}} time={time}/>:<><Typography dir="rtl" sx={{fontSize:'1.5rem',whiteSpace:'pre-wrap'}}>{segment.original_text}</Typography>{segment.english_text&&<Typography sx={{whiteSpace:'pre-wrap'}}>{segment.english_text}</Typography>}</>}
- </Box>})}{error&&<AwmPageError/>}{more&&<Button disabled={busy} onClick={()=>void loadMore()}>{busy?'Loading...':'Load more transcript'}</Button>}
+ </Box>})}{error&&<AwmPageError/>}{more&&<Button disabled={busy} onClick={()=>void loadMore()}>{busy?awmT("Loading..."):awmT("Load more transcript")}</Button>}
  </Stack></Container>
 }

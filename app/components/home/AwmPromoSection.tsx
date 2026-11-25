@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import {HOME_PROMO_MAX_WIDTH} from './promoLayout'
 import { useState } from 'react'
@@ -15,6 +19,8 @@ import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
    with their benefits and renewal/cancellation dates; cancelled members get a
    management button into the existing billing portal. */
 export default function AwmPromoSection({ userId, placement='home' }: { userId?: string; placement?:'home'|'profile' }) {
+ const {t:awmT,locale}=useWebsiteLocale()
+
   const membership = usePremiumStatus(userId)
   const [busy, setBusy] = useState(false)
   const [resumeBusy, setResumeBusy] = useState(false)
@@ -39,19 +45,19 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to open billing. Please try again.'); setResumeBusy(false) }
   }
 
-  const endDate = formatMembershipDate(status.periodEnd)
+  const endDate = formatMembershipDate(status.periodEnd,locale)
   const statusLine = active ? (
     status.paymentIssue && endDate ? (
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14 }, color: '#f0a3a3' }}>
-        Your last payment didn&rsquo;t go through — update your payment method in your profile to keep AWM+ after {endDate}.
+        <UiText>{"Your last payment didn’t go through — update your payment method in your profile to keep AWM+ after"}</UiText>{' '}{endDate}.
       </Typography>
     ) : status.cancelAtPeriodEnd && endDate ? (
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14 }, color: 'rgba(245,237,224,0.75)' }}>
-        Cancellation scheduled —<br />you have access until {endDate}.
+        <UiText>{"Cancellation scheduled —"}</UiText><br /><UiText>{"you have access until"}</UiText>{' '}{endDate}.
       </Typography>
     ) : endDate ? (
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14 }, color: 'rgba(245,237,224,0.75)' }}>
-        Renews on {endDate}.
+        <UiText>{"Renews on"}</UiText>{' '}{endDate}.
       </Typography>
     ) : null
   ) : null
@@ -84,23 +90,21 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
             AWM+
           </Typography>
           <Typography component="h2" sx={{ maxWidth: 460, mx: 'auto', mt: 1, color: '#f5ede0', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 42 }, fontWeight: 600, lineHeight: 1.12 }}>
-            {active ? 'Your AWM+ subscription is active.' : 'Upgrade to AWM+'}
+            {active ? awmT("Your AWM+ subscription is active.") : awmT("Upgrade to AWM+")}
           </Typography>
           {!active && (
             <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: 'auto' }}>
-              Support ArabicWithM and unlock exclusive benefits with AWM+!<br />Your support enables us to continue maintaining and expanding our library of interactive Arabic learning resources.<br />Cancel anytime with just a click in your account settings.
-            </Typography>
+              <UiText>{"Support ArabicWithM and unlock exclusive benefits with AWM+!"}</UiText><br /><UiText>{"Your support enables us to continue maintaining and expanding our library of interactive Arabic learning resources."}</UiText><br /><UiText>{"Cancel anytime with just a click in your account settings."}</UiText></Typography>
           )}          {active && (
             <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: 'auto' }}>
-              Thank you for supporting ArabicWithM.
-            </Typography>
+              <UiText>{"Thank you for supporting ArabicWithM."}</UiText></Typography>
           )}
 
           <Box component="ul" sx={{ m: 0, p: 0, mt: 2.25, listStyle: 'none', display: 'grid', gap: 1, maxWidth: 460, mx: 'auto' }}>
             {PREMIUM_BENEFITS.map(benefit => (
               <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.1, borderRadius: '10px', bgcolor: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.22)' }}>
                 <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', fontSize: 19, color: '#d4a843' }} />
-                <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, fontWeight: 600, color: '#f5ede0', whiteSpace: 'normal' }}>{benefit.label}</Typography>
+                <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, fontWeight: 600, color: '#f5ede0', whiteSpace: 'normal' }}><UiText>{benefit.label}</UiText></Typography>
               </Box>
             ))}
           </Box>
@@ -123,7 +127,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
                     '&:hover': { background: 'linear-gradient(135deg, #e2b95c, #c8962a)', boxShadow: '0 12px 30px rgba(184,134,11,0.45)' },
                   }}
                 >
-                  {resumeBusy ? 'Opening…' : 'Manage membership'}
+                  {resumeBusy ? awmT("Opening…") : awmT("Manage membership")}
                 </Button>
               )}
             </Box>
@@ -131,7 +135,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
             <>
               <Box sx={{ mt: 2.5, display: 'flex', alignItems: 'baseline', gap: 1, justifyContent: 'center' }}>
                 <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 36 }, fontWeight: 700, color: '#d4a843', lineHeight: 1 }}>{PREMIUM.price}</Typography>
-                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.7)' }}>/ month · cancel anytime</Typography>
+                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.7)' }}><UiText>{"/ month · cancel anytime"}</UiText></Typography>
               </Box>
 
               <Box sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', md: 'center' }, gap: 1.25, maxWidth: 460, mx: 'auto' }}>
@@ -149,13 +153,13 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
                     '&:hover': { background: 'linear-gradient(135deg, #e2b95c, #c8962a)', boxShadow: '0 12px 30px rgba(184,134,11,0.45)' },
                   }}
                 >
-                  {busy ? 'Opening…' : 'Get AWM+'}
+                  {busy ? awmT("Opening…") : awmT("Get AWM+")}
                 </Button>
               </Box>
-              {error && <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: '#f0a3a3' }}>{error}</Typography>}
+              {error && <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: '#f0a3a3' }}><UiText>{error}</UiText></Typography>}
             </>
           )}
-          {active && error && <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: '#f0a3a3' }}>{error}</Typography>}
+          {active && error && <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: '#f0a3a3' }}><UiText>{error}</UiText></Typography>}
         </Box>
 
         {/* artwork: transparent cutout — natural aspect, silhouette shadow
@@ -164,7 +168,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
           <Box
             component="img"
             src="/homepage/vegeta.avif"
-            alt={active ? 'Your AWM+ membership is active' : 'Upgrade to AWM+'}
+            alt={active ? awmT("Your AWM+ membership is active") : awmT("Upgrade to AWM+")}
             sx={{
               height: { xs: 340, md: 520 },
               width: 'auto',

@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { Box, Container } from '@mui/material'
@@ -19,7 +21,7 @@ export default async function ListenPage({ params }: { params: Promise<{ book: s
   const [chapters, audio] = await Promise.all([fetchChaptersForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
   if (!audio.length) notFound()
   return <Container maxWidth="sm" sx={{ py: { xs: 2, md: 4 }, pb: 10 }}>
-    <Box sx={{ mb: 2 }}><Link href="/books?mode=listen" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: 'var(--awm-forest)' }}>Back to Listen library</Link></Box>
+    <Box sx={{ mb: 2 }}><Link href="/books?mode=listen" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, color: 'var(--awm-forest)' }}><UiText>{"Back to Listen library"}</UiText></Link></Box>
     <AudiobookPlayer book={book} chapters={chapters} audio={audio} />
   </Container>
 }

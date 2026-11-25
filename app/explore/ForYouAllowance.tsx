@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react'
 import {Alert,Box,Button,CircularProgress,Dialog,DialogActions,DialogContent,DialogTitle,Typography} from '@mui/material'
@@ -12,6 +16,8 @@ import {AdvanceContext,MeterContext,type PlayerSample} from './ForYouMeterContex
 
 /** One account lease and clock across clips and Short/Full. No visible timer. */
 export default function ForYouAllowance({children,onExplore}:{children:ReactNode;onExplore:()=>void}){
+ const {t:awmT}=useWebsiteLocale()
+
  const [admitted,setAdmitted]=useState(false)
  const [ready,setReady]=useState(false),[limited,setLimited]=useState(false),[error,setError]=useState(''),[upgrade,setUpgrade]=useState(false)
  const meter=useRef({lease:'',total:0,remaining:Infinity,unlimited:false,previous:null as PlaybackSample|null,pause:null as (()=>void)|null,blocked:true,busy:false})
@@ -70,13 +76,13 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
  },[pausePlayback])
  return <AdvanceContext.Provider value={canAdvance}><MeterContext.Provider value={sample}>
   <Box sx={{position:'relative',minHeight:'calc(100dvh - var(--awm-navbar-height))'}}>
-   {!ready?<Box sx={{minHeight:'60dvh',display:'grid',placeItems:'center'}}><CircularProgress aria-label="Loading For You"/></Box>:admitted?children:null}
-   {error&&<Box sx={{position:'absolute',inset:0,zIndex:20,bgcolor:'background.default',p:3}}><Alert severity="info">{error}</Alert><Button onClick={()=>window.dispatchEvent(new Event('account-access-changed'))}>Retry</Button><Button onClick={onExplore}>Continue on Explore</Button></Box>}
+   {!ready?<Box sx={{minHeight:'60dvh',display:'grid',placeItems:'center'}}><CircularProgress aria-label={awmT("Loading For You")}/></Box>:admitted?children:null}
+   {error&&<Box sx={{position:'absolute',inset:0,zIndex:20,bgcolor:'background.default',p:3}}><Alert severity="info"><UiText>{error}</UiText></Alert><Button onClick={()=>window.dispatchEvent(new Event('account-access-changed'))}><UiText>{"Retry"}</UiText></Button><Button onClick={onExplore}><UiText>{"Continue on Explore"}</UiText></Button></Box>}
   </Box>
   <Dialog open={limited&&!upgrade} aria-labelledby="for-you-limit-title" maxWidth="xs" fullWidth>
-   <DialogTitle id="for-you-limit-title">Unlock unlimited For You</DialogTitle>
-   <DialogContent><Typography>Upgrade to AWM Plus for unlimited For You viewing.</Typography></DialogContent>
-   <DialogActions sx={{flexDirection:'column',gap:1,p:3,'& > :not(style) ~ :not(style)':{ml:0}}}><UpgradeButton onClick={()=>setUpgrade(true)}/><Button fullWidth onClick={onExplore}>Continue on Explore</Button></DialogActions>
+   <DialogTitle id="for-you-limit-title"><UiText>{"Unlock unlimited For You"}</UiText></DialogTitle>
+   <DialogContent><Typography><UiText>{"Upgrade to AWM Plus for unlimited For You viewing."}</UiText></Typography></DialogContent>
+   <DialogActions sx={{flexDirection:'column',gap:1,p:3,'& > :not(style) ~ :not(style)':{ml:0}}}><UpgradeButton onClick={()=>setUpgrade(true)}/><Button fullWidth onClick={onExplore}><UiText>{"Continue on Explore"}</UiText></Button></DialogActions>
   </Dialog>
   <PremiumPrompt open={upgrade} onClose={()=>setUpgrade(false)}/>
  </MeterContext.Provider></AdvanceContext.Provider>

@@ -1,4 +1,9 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { ImageOutlined, AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
@@ -45,6 +50,9 @@ export default function MobileDrawer({
     onLogout,
     navigate,
 }: MobileDrawerProps) {
+ const {t:awmT}=useWebsiteLocale()
+
+
 
     const pushAndClose = (url: string) => {
         navigate(url)
@@ -69,7 +77,7 @@ export default function MobileDrawer({
             onClose={onClose}
             slotProps={{
                 paper: {
-                    'aria-label': 'Site navigation',
+                    'aria-label': awmT("Site navigation"),
                     sx: {
                         width: 280,
                         background: 'var(--awm-cream-light)',
@@ -131,8 +139,7 @@ export default function MobileDrawer({
                             },
                         }}
                     >
-                        Register / Login
-                    </Button>
+                        <UiText>{"Register / Login"}</UiText></Button>
                 </Box>
             )}
 
@@ -140,14 +147,14 @@ export default function MobileDrawer({
                 <GoldLine />
 
                 {[
-                    ...(isLoggedIn && user ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(profileRoute(user!.id)) }] : []),
-                    ...(['Home', 'Explore', 'Watch', 'Read', 'Learn'] as const).map(label => {
+                    ...(isLoggedIn && user ? [{ label: "My Profile", icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(profileRoute(user!.id)) }] : []),
+                    ...(["Home", "Explore", "Watch", "Read", "Learn"] as const).map(label => {
                         const Icon = primaryIcons[label]
                         return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(NAV_ROUTES[label]) }
                     }),
                     ...managementItems,
-                    { label: 'Contact Us', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-contact-dialog')) } },
-                    { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-support-dialog')) } },
+                    { label: "Contact Us", icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-contact-dialog')) } },
+                    { label: "Support Us", icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-support-dialog')) } },
                 ].map((item) => (
                     <Fragment key={item.label}>
                     <ListItem disablePadding>
@@ -161,13 +168,13 @@ export default function MobileDrawer({
                             <ListItemText
                                 primary={
                                     <Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-bark)' }}>
-                                        {item.label}
+                                        <UiText>{item.label}</UiText>
                                     </Typography>
                                 }
                             />
                         </ListItemButton>
                     </ListItem>
-                    {isLoggedIn && (item.label === 'My Profile' || item.label === 'Learn' || item.label === managementEnd) && <Divider component="li" role="separator" data-nav-divider={item.label} sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />}
+                    {isLoggedIn && (item.label === "My Profile" || item.label === "Learn" || item.label === managementEnd) && <Divider component="li" role="separator" data-nav-divider={item.label} sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />}
                     </Fragment>
                 ))}
                 {isLoggedIn && user && (
@@ -180,7 +187,7 @@ export default function MobileDrawer({
                                 sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
                             >
                                 <ListItemIcon sx={{ color: 'var(--awm-gold)' }}><SettingsOutlined sx={{ fontSize: 18 }} /></ListItemIcon>
-                                <ListItemText primary={<Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-bark)' }}>Settings</Typography>} />
+                                <ListItemText primary={<Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-bark)' }}><UiText>{"Settings"}</UiText></Typography>} />
                             </ListItemButton>
                         </ListItem>
                         <ListItem disablePadding>
@@ -190,7 +197,7 @@ export default function MobileDrawer({
                                 sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
                             >
                                 <ListItemIcon sx={{ color: 'var(--awm-error)' }}><LogoutSharp sx={{ fontSize: 18 }} /></ListItemIcon>
-                                <ListItemText primary={<Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-error)' }}>Sign Out</Typography>} />
+                                <ListItemText primary={<Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-error)' }}><UiText>{"Sign Out"}</UiText></Typography>} />
                             </ListItemButton>
                         </ListItem>
                     </Fragment>

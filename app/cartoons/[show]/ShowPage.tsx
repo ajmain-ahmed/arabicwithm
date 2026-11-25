@@ -1,4 +1,9 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import {
@@ -45,6 +50,8 @@ interface ShowPageProps {
 }
 
 export default function ShowPage({ show, episodes }: ShowPageProps) {
+ const {t:awmT}=useWebsiteLocale()
+
   const isAdmin = useIsAdmin()
   const router = useRouter()
   const { user } = useAuth()
@@ -137,7 +144,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         '&:hover': { bgcolor: '#1a6b3a' },
       }}
     >
-      {inMyList ? 'In My List' : 'Add to List'}
+      {inMyList ? awmT("In My List") : awmT("Add to List")}
     </Button>
   )
 
@@ -176,8 +183,8 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
             }}
           >
             <Box sx={{ minWidth: 0 }}>
-              <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}>{show.title}</Typography>
-              {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'var(--font-sans), sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
+              <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}><LocalisedContent original={show.title} arabic={show.titleAr}/></Typography>
+              {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'var(--font-sans), sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}><LocalisedContent original={show.description} arabic={show.descriptionAr}/></Typography>}
             </Box>
           </Box>
           {/* Breadcrumbs */}
@@ -193,16 +200,14 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               onClick={() => router.push('/')}
               sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
-              Home
-            </Typography>
+              <UiText>{"Home"}</UiText></Typography>
             <Typography
               onClick={() => router.push('/cartoons')}
               sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
-              Cartoons
-            </Typography>
+              <UiText>{"Cartoons"}</UiText></Typography>
             <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-bark)', fontWeight: 600 }}>
-              {show.title}
+              <LocalisedContent original={show.title} arabic={show.titleAr}/>
             </Typography>
           </Breadcrumbs>
 
@@ -225,8 +230,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               '&:hover': { backgroundColor: 'rgba(44,26,14,0.04)' },
             }}
           >
-            Filters
-            {activeFilterCount > 0 && (
+            <UiText>{"Filters"}</UiText>{activeFilterCount > 0 && (
               <Box
                 component="span"
                 sx={{
@@ -249,7 +253,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
           </Button>
           {user ? myListButton : (
             <Typography sx={{ fontSize: 13, color: MUTED }}>
-              {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
+              {filteredEpisodes.length} {filteredEpisodes.length === 1 ? awmT("episode") : awmT("episodes")}
             </Typography>
           )}
         </Box>
@@ -257,10 +261,10 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         {filteredEpisodes.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 12 }}>
             <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 18, md: 20 }, color: BARK, mb: 1 }}>
-              {episodes.length === 0 ? 'No episodes yet' : 'No episodes match your filters'}
+              {episodes.length === 0 ? awmT("No episodes yet") : awmT("No episodes match your filters")}
             </Typography>
             <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: MUTED, mb: 2 }}>
-              {episodes.length === 0 ? 'Check back soon for new episodes.' : 'Try adjusting your filters or search.'}
+              {episodes.length === 0 ? awmT("Check back soon for new episodes.") : awmT("Try adjusting your filters or search.")}
             </Typography>
           </Box>
         ) : (
@@ -295,7 +299,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
                 {user ? myListButton : (
                   <Typography sx={{ fontSize: 13, color: MUTED }}>
-                    {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
+                    {filteredEpisodes.length} {filteredEpisodes.length === 1 ? awmT("episode") : awmT("episodes")}
                   </Typography>
                 )}
               </Box>
@@ -423,8 +427,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               color: BARK,
             }}
           >
-            Filters
-          </Typography>
+            <UiText>{"Filters"}</UiText></Typography>
           <IconButton onClick={() => setFilterDrawerOpen(false)} size="small">
             <Close sx={{ fontSize: 20, color: MUTED }} />
           </IconButton>

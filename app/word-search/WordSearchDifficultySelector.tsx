@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { WORD_SEARCH_DIFFICULTIES, type WordSearchDifficulty } from '@/app/lib/transcriptPuzzles'
@@ -17,18 +19,20 @@ export default function WordSearchDifficultySelector({
   disabled?: boolean
   onChange: (difficulty: WordSearchDifficulty) => void
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   return (
     <ToggleButtonGroup
       exclusive
       value={value}
       disabled={disabled}
       onChange={(_, next: WordSearchDifficulty | null) => { if (next) onChange(next) }}
-      aria-label="Word Search difficulty"
+      aria-label={awmT("Word Search difficulty")}
       sx={{ width: { xs: '100%', sm: 'auto' }, '& .MuiToggleButton-root': { minWidth: { xs: 0, sm: 104 }, flex: { xs: 1, sm: 'none' }, minHeight: 44, px: { xs: 1.25, sm: 2 }, borderColor: 'divider', color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 800, textTransform: 'none', '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } } } }}
     >
       {DIFFICULTIES.map(([key, config]) => (
-        <ToggleButton key={key} value={key} aria-label={`${config.label} difficulty, ${config.gridSize} by ${config.gridSize} grid`}>
-          {config.label}
+        <ToggleButton key={key} value={key} aria-label={awmT('{level} difficulty, {size} by {size} grid',{level:awmT(config.label),size:config.gridSize})}>
+          {awmT(config.label)}
         </ToggleButton>
       ))}
     </ToggleButtonGroup>

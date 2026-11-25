@@ -1,3 +1,6 @@
+import LocalisedRegion from '@/app/components/LocalisedRegion'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Container, Typography } from '@mui/material'
@@ -59,12 +62,12 @@ async function renderLevel(params: Promise<{ level: string }>) {
       },
     ]} />
     <Container maxWidth="xl">
-      <Link href="/books" style={{ display: 'inline-block', marginBottom: 16, color: 'var(--awm-muted)' }}>← All Arabic books</Link>
-      <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 32, md: 46 }, color: 'var(--awm-bark)' }}>{upper} Arabic Books</Typography>
+      <Link href="/books" style={{ display: 'inline-block', marginBottom: 16, color: 'var(--awm-muted)' }}><UiText>{"← All Arabic books"}</UiText></Link>
+      <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 32, md: 46 }, color: 'var(--awm-bark)' }}>{upper}{' '}<UiText>{"Arabic Books"}</UiText></Typography>
       <Typography sx={{ mt: 1.5, mb: 3, maxWidth: 760, color: 'var(--awm-muted)', fontSize: { xs: 16, md: 18 }, lineHeight: 1.65 }}>{introductions[level]}</Typography>
-      <Box component="section" aria-label={`${upper} Arabic Books`} sx={LIBRARY_GRID_SX}>
+      <LocalisedRegion component="section" aria-label={`${upper} Arabic Books`} sx={LIBRARY_GRID_SX}>
         {books.map(book => <LibraryBookCard key={book.id} book={book} compact />)}
-      </Box>
+      </LocalisedRegion>
     </Container>
   </Box>
 }

@@ -1,3 +1,7 @@
+import LocalisedRegion from '@/app/components/LocalisedRegion'
+import LocalisedContent from '@/app/components/LocalisedContent'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { Box, Button, Container, Typography } from '@mui/material'
@@ -80,13 +84,11 @@ export default async function ChapterPage({
         <Container maxWidth="sm">
           <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }}>
             <Typography component="h1" sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 36 }, fontWeight: 600 }}>
-              Chapter content is unavailable
-            </Typography>
+              <UiText>{"Chapter content is unavailable"}</UiText></Typography>
             <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.65 }}>
-              We found {listed.title}, but its reading content could not be loaded. Please return to the book and choose the chapter again.
-            </Typography>
+              <UiText>{"We found"}</UiText>{' '}{listed.title}<UiText>{", but its reading content could not be loaded. Please return to the book and choose the chapter again."}</UiText></Typography>
             <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<ArrowBack />} variant="contained" sx={{ mt: 3, bgcolor: 'var(--awm-gold)', textTransform: 'none', '&:hover': { bgcolor: '#946c08' } }}>
-              Back to {book.title}
+              <UiText>{"Back to"}</UiText>{' '}<LocalisedContent original={book.title} arabic={book.titleAr}/>
             </Button>
           </Box>
         </Container>
@@ -122,21 +124,21 @@ export default async function ChapterPage({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: '#b8860b' } }}>
-              <ArrowBack sx={{ fontSize: 18 }} /> {book.title}
+              <ArrowBack sx={{ fontSize: 18 }} /> <LocalisedContent original={book.title} arabic={book.titleAr}/>
             </Box>
           </Link>
           <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>
-            {chapter.chapterNumber} of {chapters.length}
+            {chapter.chapterNumber}{' '}<UiText>{"of"}</UiText>{' '}{chapters.length}
           </Typography>
         </Box>
 
-        {admin && <Box component="nav" aria-label="Admin chapter navigation" sx={{ my: 2 }}>
-          {chapterIndex > 0 && <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapters[chapterIndex - 1].slug)}`}>Previous chapter</Button>}
-          {nextChapter && <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`}>Next chapter</Button>}
-          <Typography component="h2">All Chapters ({chapters.length})</Typography>
+        {admin && <LocalisedRegion component="nav" aria-label="Admin chapter navigation" sx={{ my: 2 }}>
+          {chapterIndex > 0 && <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapters[chapterIndex - 1].slug)}`}><UiText>{"Previous chapter"}</UiText></Button>}
+          {nextChapter && <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`}><UiText>{"Next chapter"}</UiText></Button>}
+          <Typography component="h2"><UiText>{"All Chapters ("}</UiText>{chapters.length})</Typography>
           <ul>{chapters.map(item => <li key={item.id}><Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(item.slug)}`} aria-current={item.id === chapter.id ? 'page' : undefined}>{item.title}</Link></li>)}</ul>
-        </Box>}
-        <ChapterReader adminPreview={admin} structuredPages={structuredPages} key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
+        </LocalisedRegion>}
+        <ChapterReader adminPreview={admin} structuredPages={structuredPages} key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} bookTitleAr={book.titleAr} chapterTitle={chapter.title} chapterTitleAr={chapter.titleAr} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
 
       </Container>

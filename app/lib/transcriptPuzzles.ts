@@ -9,7 +9,9 @@ export interface PuzzleSourceReference {
   bookId?: string
   chapterNumber?: number
   title: string
+  titleAr?: string
   subtitle: string
+  subtitleAr?: string
   href: string
   level?: string
 }

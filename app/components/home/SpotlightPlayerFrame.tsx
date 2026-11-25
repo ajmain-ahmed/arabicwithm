@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
 import {Box} from '@mui/material'
@@ -16,6 +18,8 @@ export default function SpotlightPlayerFrame({videoId, children, subtitle}: {
   children: ReactNode
   subtitle: ReactNode
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const [size, setSize] = useState(DEFAULT_SIZE)
   const [dragging, setDragging] = useState(false)
   const layout = useRef<HTMLDivElement>(null)
@@ -86,17 +90,17 @@ export default function SpotlightPlayerFrame({videoId, children, subtitle}: {
       <Box data-spotlight-video={videoId} sx={{width:'100%', aspectRatio:'16 / 9', position:'relative', bgcolor:'#000', borderRadius:'10px', overflow:'hidden', '& iframe':{width:'100%',height:'100%'}}}>
         {children}
       </Box>
-      <Box component="div" role="slider" tabIndex={0} aria-label="Resize For You player" aria-orientation="vertical"
+      <Box component="div" role="slider" tabIndex={0} aria-label={awmT("Resize For You player")} aria-orientation="vertical"
         aria-valuemin={MIN_SIZE} aria-valuemax={MAX_SIZE} aria-valuenow={Math.round(size)}
         aria-valuetext={`${Math.round((size - MIN_SIZE) / (MAX_SIZE - MIN_SIZE) * 100)}% of adjustable size range`}
-        title="Drag up to enlarge, down to shrink. Arrow keys also resize."
+        title={awmT("Drag up to enlarge, down to shrink. Arrow keys also resize.")}
         onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end} onKeyDown={keyboard}
         data-spotlight-resize data-dragging={dragging ? 'true' : 'false'}
         sx={{display:{xs:'none',sm:'flex'}, position:'absolute', left:'calc(100% + 4px)', top:'50%', transform:'translateY(-50%)', alignItems:'center', justifyContent:'center', width:28, height:64, borderRadius:'999px', cursor:'ns-resize', touchAction:'none', userSelect:'none', color:'var(--awm-muted)', bgcolor:dragging?'color-mix(in srgb, var(--awm-gold) 20%, transparent)':'transparent', '&:hover':{color:'var(--awm-gold)',bgcolor:'color-mix(in srgb, var(--awm-gold) 12%, transparent)'}, '&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}, '& svg':{pointerEvents:'none'}}}>
         <DragIndicator fontSize="small"/>
       </Box>
     </Box>
-    <Box data-spotlight-subtitle aria-label="Current subtitle" sx={{width:{xs:'100%',sm:`${Math.min(96,tabletSize+12)}%`,md:`${Math.min(88,size+24)}%`}, boxSizing:'border-box', mx:'auto', mt:2, minHeight:80, px:2, py:1.25, borderRadius:'10px', bgcolor:'var(--awm-cream-light)', border:'1px solid color-mix(in srgb, var(--awm-gold) 20%, transparent)', overflowWrap:'anywhere', textAlign:'center'}}>
+    <Box data-spotlight-subtitle aria-label={awmT("Current subtitle")} sx={{width:{xs:'100%',sm:`${Math.min(96,tabletSize+12)}%`,md:`${Math.min(88,size+24)}%`}, boxSizing:'border-box', mx:'auto', mt:2, minHeight:80, px:2, py:1.25, borderRadius:'10px', bgcolor:'var(--awm-cream-light)', border:'1px solid color-mix(in srgb, var(--awm-gold) 20%, transparent)', overflowWrap:'anywhere', textAlign:'center'}}>
       {subtitle}
     </Box>
   </Box>

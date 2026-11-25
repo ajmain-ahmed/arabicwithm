@@ -10,6 +10,7 @@ export interface ShowMeta {
   slug: string
   title: string
   titleAr?: string
+  descriptionAr?: string
   description?: string
   cover: string
   coverCrop?: ThumbnailCrop
@@ -26,6 +27,8 @@ export interface EpisodeMeta {
   id: string
   slug: string
   title: string
+  titleAr?: string
+  descriptionAr?: string
   level: string
   tags: string[]
   description?: string
@@ -62,6 +65,7 @@ export interface ExploreTranscriptLine {
 export interface ExploreEpisode extends EpisodeMeta {
   showSlug: string
   showTitle: string
+  showTitleAr?: string
   transcriptLines: ExploreTranscriptLine[]
 }
 

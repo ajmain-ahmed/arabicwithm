@@ -1,0 +1,23 @@
+import {test,expect} from '@playwright/test'
+import {installYouTubeFixture} from './helpers/youtube'
+
+for(const width of [390,1440])test(`Arabic watch settings preserve the player at ${width}px`,async({page,context},info)=>{
+ await context.addCookies([{name:'awm-website-locale',value:'ar',domain:'127.0.0.1',path:'/'}])
+ await installYouTubeFixture(page)
+ await page.setViewportSize({width,height:1000})
+ await page.goto('/cartoons/test-show/clip-0')
+ await expect(page.locator('html')).toHaveAttribute('lang','ar')
+ const player=page.locator('iframe').first()
+ await expect(player).toBeAttached()
+ await player.evaluate(el=>el.setAttribute('data-settings-identity','retained'))
+ await page.getByRole(width<900?'tab':'button',{name:'الإعدادات',exact:true}).filter({visible:true}).first().click()
+ const dialog=page.getByRole('dialog')
+ await expect(dialog).toContainText('إظهار الحركات على الكلمات العربية')
+ await expect(dialog).toContainText('ضبط حجم النص العربي والترجمة والمفردات والقواعد')
+ await expect(dialog.getByRole('button',{name:'النسخ',exact:true})).toBeVisible()
+ await expect(dialog.getByRole('button',{name:'الأميري',exact:true})).toBeVisible()
+ expect(await dialog.innerText()).not.toMatch(/Display vowel|When enabled|Adjust Arabic|Text Size|Show Diacritics/)
+ await dialog.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-watch-settings-ar.png`})
+ await dialog.getByRole('button',{name:'إغلاق الإعدادات',exact:true}).click()
+ await expect(player).toHaveAttribute('data-settings-identity','retained')
+})

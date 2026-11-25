@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import React from 'react'
 import { Box, Typography, Button, Divider, OutlinedInput, InputAdornment } from '@mui/material'
@@ -50,6 +54,7 @@ function FilterButtonGroup({
   onMobileClose?: () => void
   disabledOptions?: string[]
 }) {
+  const {t}=useWebsiteLocale()
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
       {options.map((opt) => {
@@ -77,7 +82,7 @@ function FilterButtonGroup({
               color: active === opt ? BARK : MUTED,
               backgroundColor: active === opt ? 'rgba(184,134,11,0.06)' : WARM_WHITE,
               border: `1px solid ${active === opt ? GOLD : 'rgba(44,26,14,0.1)'}`,
-              borderLeft: active === opt ? `3px solid ${GOLD}` : `1px solid rgba(44,26,14,0.1)`,
+              borderInlineStart: active === opt ? `3px solid ${GOLD}` : `1px solid rgba(44,26,14,0.1)`,
               '&:hover': { backgroundColor: 'rgba(184,134,11,0.04)' },
               '&:disabled': {
                 color: 'color-mix(in srgb, var(--awm-muted) 55%, transparent)',
@@ -88,7 +93,7 @@ function FilterButtonGroup({
               transition: 'all 0.15s',
             }}
           >
-            {opt}
+            {t(opt)}
           </Button>
         )
       })}
@@ -137,6 +142,8 @@ export default function FilterSidebar({
   onMobileClose,
   hideTitle,
 }: FilterSidebarProps) {
+ const {t:awmT}=useWebsiteLocale()
+
   const hasFilters = Boolean((activeCategory && activeCategory !== categories[0]) || activeLevel || activeGenre || activeLanguage || searchQuery)
   const clearAll = () => {
     /* Route through the setters: on /cartoons they navigate (clearing the
@@ -149,7 +156,7 @@ export default function FilterSidebar({
   }
   return (
     <Box>
-      {hasFilters && <Button variant="outlined" fullWidth onClick={clearAll} sx={{ mb: 2 }}>Clear all</Button>}
+      {hasFilters && <Button variant="outlined" fullWidth onClick={clearAll} sx={{ mb: 2 }}><UiText>{"Clear all"}</UiText></Button>}
       {!hideTitle && (
         <>
           <Typography
@@ -160,22 +167,21 @@ export default function FilterSidebar({
               mb: 1.5,
             }}
           >
-            Filters
-          </Typography>
+            <UiText>{"Filters"}</UiText></Typography>
           <Divider sx={{ borderColor: 'rgba(184,134,11,0.2)', mb: 2.5 }} />
         </>
       )}
 
       {/* ── Search ── */}
       {onSearchChange && (
-        <FilterSection label="Search">
+        <FilterSection label={awmT("Search")}>
           <OutlinedInput
             fullWidth
             type="search"
             value={searchQuery ?? ''}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder ?? 'Search'}
-            aria-label={searchPlaceholder ?? 'Search'}
+            placeholder={awmT(searchPlaceholder ?? "Search")}
+            aria-label={awmT(searchPlaceholder ?? "Search")}
             startAdornment={
               <InputAdornment position="start">
                 <Search sx={{ fontSize: 18, color: MUTED }} />
@@ -197,7 +203,7 @@ export default function FilterSidebar({
 
       {/* ── Category ── */}
       {categories.length > 1 && (
-        <FilterSection label="Category">
+        <FilterSection label={awmT("Category")}>
           <FilterButtonGroup
             options={categories}
             active={activeCategory}
@@ -210,7 +216,7 @@ export default function FilterSidebar({
 
       {/* ── Genre ── */}
       {genres && genres.length > 0 && (
-        <FilterSection label="Genre">
+        <FilterSection label={awmT("Genre")}>
           <FilterButtonGroup
             options={genres}
             active={activeGenre ?? ''}
@@ -221,7 +227,7 @@ export default function FilterSidebar({
       )}
 
       {/* ── Level ── */}
-      <FilterSection label="Level">
+      <FilterSection label={awmT("Level")}>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75 }}>
           {levels.map((lvl) => {
             const disabled = Boolean(disabledLevels?.includes(lvl)) && activeLevel !== lvl
@@ -264,7 +270,7 @@ export default function FilterSidebar({
 
       {/* ── Language ── */}
       {languages && languages.length > 0 && (
-        <FilterSection label="Language">
+        <FilterSection label={awmT("Language")}>
           <FilterButtonGroup
             options={languages}
             active={activeLanguage ?? ''}
@@ -291,8 +297,7 @@ export default function FilterSidebar({
           '&:hover': { backgroundColor: 'rgba(44,26,14,0.04)' },
         }}
       >
-        Reset Filters
-      </Button>
+        <UiText>{"Reset Filters"}</UiText></Button>
     </Box>
   )
 }

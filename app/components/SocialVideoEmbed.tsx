@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { Box, Typography } from '@mui/material'
 import {
@@ -25,8 +27,7 @@ export default function SocialVideoEmbed({
     return (
       <Box sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 3, bgcolor: '#090909' }}>
         <Typography sx={{ color: '#fff', fontFamily: 'var(--font-sans), sans-serif', textAlign: 'center' }}>
-          This video source could not be embedded.
-        </Typography>
+          <UiText>{"This video source could not be embedded."}</UiText></Typography>
       </Box>
     )
   }

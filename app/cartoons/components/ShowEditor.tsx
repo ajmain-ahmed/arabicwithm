@@ -1,5 +1,7 @@
 "use client"
 
+
+
 import React, { useState } from "react"
 import { Box, Button, Paper, Typography } from "@mui/material"
 import { Save, Cancel, Delete } from "@mui/icons-material"
@@ -30,6 +32,7 @@ const emptyShow: ShowMeta = {
 }
 
 export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps) {
+
   const isNew = !show || !show.id
   const initial = show ?? emptyShow
 
@@ -102,17 +105,17 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
         <NativeField label="Slug" value={slug} onChange={setSlug} disabled={saving} />
-        <NativeField label="Title" value={title} onChange={setTitle} disabled={saving} />
+        <NativeField label={"Title"} value={title} onChange={setTitle} disabled={saving} />
       </Box>
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
         <NativeField label="Title Arabic" value={titleAr} onChange={setTitleAr} rtl disabled={saving} />
-        <NativeField label="Level" value={level} onChange={setLevel} disabled={saving} />
+        <NativeField label={"Level"} value={level} onChange={setLevel} disabled={saving} />
       </Box>
 
-      <NativeField label="Category" value={category} onChange={setCategory} disabled={saving} />
+      <NativeField label={"Category"} value={category} onChange={setCategory} disabled={saving} />
       <ImageUploadField
-        label="Cover image"
+        label={"Cover image"}
         bucket="covers"
         path={slug ? `cartoons/${slug}.webp` : ""}
         previewUrl={slug ? getShowCoverUrl(slug) : null}
@@ -121,7 +124,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
         onCropChange={setCoverCrop}
         onUploaded={() => setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })}
       />
-      <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
+      <NativeField label={"Description"} value={description} onChange={setDescription} textarea disabled={saving} />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>
         {!isNew && (
@@ -138,8 +141,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
               borderColor: "rgba(192,57,43,0.3)",
             }}
           >
-            Delete
-          </Button>
+            {"Delete"}</Button>
         )}
         <Box sx={{ flex: 1 }} />
         <Button
@@ -155,8 +157,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
             color: "#7a6e65",
           }}
         >
-          Cancel
-        </Button>
+          {"Cancel"}</Button>
         <Button
           variant="contained"
           size="small"
@@ -171,8 +172,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
             "&:hover": { bgcolor: "#1a0f08" },
           }}
         >
-          Save
-        </Button>
+          {"Save"}</Button>
       </Box>
     </Paper>
   )

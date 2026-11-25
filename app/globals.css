@@ -278,3 +278,11 @@ h6 {
 .awm-site-footer {
   background-image: var(--awm-site-texture);
 }
+/* Website chrome uses the existing local Arabic UI face. Root scale and
+   educational-language settings remain independent of the website locale. */
+html[dir='rtl'] body {
+  --font-sans: 'AWM Arabic Sans', sans-serif;
+  --font-heading: 'AWM Arabic Sans', sans-serif;
+}
+html[dir='rtl'] .MuiButton-root { letter-spacing: normal; }
+[data-for-you-source] { direction: ltr; }

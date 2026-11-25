@@ -1,10 +1,12 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import { items, record, text, safeReferenceUrl, type StructuredChapter, type StructuredRecord } from '@/app/lib/structuredChapter'
 import { TextPair, Label } from './StructuredText'
 import styles from './StructuredChapter.module.css'
 import StructuredActivity from './StructuredActivity'
 
 export function Practice({ chapter }: { chapter: StructuredChapter }) {
-  return <section aria-label="Practice"><h2>Practice</h2><div className={styles.blocks}>
+  return <section aria-label="Practice"><h2><UiText>{"Practice"}</UiText></h2><div className={styles.blocks}>
     {items(chapter.activities).map((value, index) => {
       const activity = record(value)
       if (!activity) return null
@@ -12,7 +14,7 @@ export function Practice({ chapter }: { chapter: StructuredChapter }) {
       const choices = items(activity.choices), id = text(activity.id) || String(index + 1)
       const inputName = `practice-${text(chapter.id)}-${id}`
       return <fieldset className={styles.activity} id={`question-${id}`} key={index}>
-        <legend>Question {index + 1}{text(activity.level) ? ` / ${text(activity.level)}` : ''}</legend>
+        <legend><UiText>{"Question"}</UiText>{' '}{index + 1}{text(activity.level) ? ` / ${text(activity.level)}` : ''}</legend>
         <TextPair value={activity} arabic="prompt_ar" english="prompt_en" />
         <TextPair value={activity} arabic="stimulus_ar" english="stimulus_en" />
         {!!choices.length && <div className={styles.choices}>{choices.map((choice, choiceIndex) => <label className={styles.choice} key={choiceIndex}>
@@ -32,8 +34,8 @@ function AnswerList({ value, heading }: { value: unknown; heading: string }) {
 }
 export function Answers({ chapter }: { chapter: StructuredChapter }) {
   const activities = items(chapter.activities).map(record)
-  return <section aria-label="Answers"><h2>Answers / Check your answers</h2>
-    <details><summary>Show answers</summary><div className={styles.blocks}>
+  return <section aria-label="Answers"><h2><UiText>{"Answers / Check your answers"}</UiText></h2>
+    <details><summary><UiText>{"Show answers"}</UiText></summary><div className={styles.blocks}>
       {items(chapter.answers).map((value, index) => {
         const answer = record(value)
         if (!answer) return null
@@ -52,7 +54,7 @@ export function Answers({ chapter }: { chapter: StructuredChapter }) {
   </section>
 }
 export function References({ chapter }: { chapter: StructuredChapter }) {
-  return <section aria-label="References"><h2>References</h2><ol className={styles.references}>
+  return <section aria-label="References"><h2><UiText>{"References"}</UiText></h2><ol className={styles.references}>
     {items(chapter.references).map((value, index) => {
       const reference = record(value)
       if (!reference) return null
@@ -65,7 +67,7 @@ export function References({ chapter }: { chapter: StructuredChapter }) {
 }
 export function ChapterTitle({ chapter }: { chapter: StructuredRecord }) {
   return <header className={styles.title}>
-    {typeof chapter.chapter_number === 'number' && Number.isFinite(chapter.chapter_number) && <p className={styles.eyebrow}>Chapter {chapter.chapter_number}</p>}
+    {typeof chapter.chapter_number === 'number' && Number.isFinite(chapter.chapter_number) && <p className={styles.eyebrow}><UiText>{"Chapter"}</UiText>{' '}{chapter.chapter_number}</p>}
     {text(chapter.title_ar) && <h2 lang="ar" dir="rtl">{text(chapter.title_ar)}</h2>}
     {text(chapter.title_en) && <h2 lang="en" dir="ltr">{text(chapter.title_en)}</h2>}
   </header>

@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+import {localisedText} from '@/app/lib/localisation/locale'
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -6,6 +8,7 @@ import { Box, Skeleton, Typography } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
 import LibraryBookCard from '@/app/books/LibraryBookCard'
+import LocalisedContent from '@/app/components/LocalisedContent'
 import type { LibraryBook } from '@/app/books/BooksLibrary'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
@@ -16,8 +19,10 @@ export interface CatalogueRowItem {
   key: string
   href: string
   title: string
+  titleAr?: string
   /** Small context line above the title, e.g. the show name for an episode. */
   meta?: string
+  metaAr?: string
   level?: string
   imageSrc: string
   imageCrop?: ThumbnailCrop
@@ -83,6 +88,8 @@ function ArtworkTile({
   mobileWidth: string | number
   compact: boolean
 }) {
+ const {locale}=useWebsiteLocale()
+
   const [loaded, setLoaded] = useState(false)
   const { ref: nearRef, near } = useNearViewport<HTMLAnchorElement>()
   /* SSR'd images can finish before hydration attaches onLoad, which would
@@ -101,7 +108,7 @@ function ArtworkTile({
       href={item.href}
       prefetch={false}
       draggable={false}
-      aria-label={item.title}
+      aria-label={localisedText(locale,item.title,item.titleAr)}
       sx={{
         position: 'relative',
         flex: '0 0 auto',
@@ -162,12 +169,12 @@ function ArtworkTile({
       <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: compact ? { xs: 0.9, md: 1.05 } : { xs: 1.25, md: 1.5 } }}>
         {item.meta && (
           <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', textShadow: '0 1px 8px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {item.meta}
+            <LocalisedContent original={item.meta} arabic={item.metaAr}/>
           </Typography>
         )}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: item.meta ? 0.25 : 0 }}>
           <Typography sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: compact ? { xs: '0.9rem', md: '1rem' } : { xs: '1.05rem', md: '1.2rem' }, fontWeight: 600, textShadow: '0 2px 10px rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {item.title}
+            <LocalisedContent original={item.title} arabic={item.titleAr}/>
           </Typography>
           {item.level && (
             <CefrChip
@@ -203,6 +210,8 @@ export default function NewOnRow({
      overflows the viewport. */
   scrollHint?: boolean
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const dragStartXRef = useRef<number | null>(null)
   const dragStartYRef = useRef<number | null>(null)
@@ -231,8 +240,10 @@ export default function NewOnRow({
   const scrollForward = () => {
     const scroller = scrollerRef.current
     if (!scroller) return
-    const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 8
-    scroller.scrollTo({ left: atEnd ? 0 : scroller.scrollLeft + scroller.clientWidth, behavior: 'smooth' })
+    const rtl=getComputedStyle(scroller).direction==='rtl'
+    const progress=Math.max(0,rtl?-scroller.scrollLeft:scroller.scrollLeft)
+    const atEnd=progress+scroller.clientWidth>=scroller.scrollWidth-8
+    scroller.scrollTo({left:atEnd?0:scroller.scrollLeft+(rtl?-1:1)*scroller.clientWidth,behavior:'smooth'})
   }
 
   return (
@@ -241,7 +252,7 @@ export default function NewOnRow({
         <Box
           component={Link}
           href={viewAllHref}
-          aria-label={`See all: ${ariaLabel}`}
+          aria-label={awmT('See all: {label}',{label:awmT(ariaLabel)})}
           sx={SEE_ALL_SX}
         >
           <ChevronRight sx={{ fontSize: 26 }} />
@@ -252,7 +263,7 @@ export default function NewOnRow({
           component="button"
           type="button"
           onClick={scrollForward}
-          aria-label={`Scroll ${ariaLabel}`}
+          aria-label={awmT('Scroll {label}',{label:awmT(ariaLabel)})}
           sx={{ ...SEE_ALL_SX, border: 0, p: 0, cursor: 'pointer' }}
         >
           <ChevronRight sx={{ fontSize: 26 }} />
@@ -308,7 +319,7 @@ export default function NewOnRow({
           draggedRef.current = false
         }}
         role="region"
-        aria-label={ariaLabel}
+        aria-label={awmT(ariaLabel)}
         sx={{
           display: 'flex',
           gap: compact ? { xs: 1, md: 1.5 } : { xs: 1.25, md: 2 },

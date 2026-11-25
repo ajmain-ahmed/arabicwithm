@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useState } from 'react'
 import { Alert, Box, Button } from '@mui/material'
@@ -55,7 +57,6 @@ export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
         '&:hover': { bgcolor: inList ? '#1a6b3a' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)', boxShadow: 'none' },
       }}
     >
-      My List
-    </Button>{error&&<Alert severity="error" sx={{mt:1}}>{error}</Alert>}</Box>
+      <UiText>{"My List"}</UiText></Button>{error&&<Alert severity="error" sx={{mt:1}}><UiText>{error}</UiText></Alert>}</Box>
   )
 }

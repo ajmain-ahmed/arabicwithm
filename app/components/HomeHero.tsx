@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { ArrowForwardSharp } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
@@ -118,8 +120,7 @@ export default function HomeHero() {
             mb: { xs: 0.75, md: 1 },
           }}
         >
-          Learn Arabic
-        </Typography>
+          <UiText>{"Learn Arabic"}</UiText></Typography>
 
         {/* Animated rotating second line */}
         <Box
@@ -178,9 +179,7 @@ export default function HomeHero() {
             mb: { xs: 3, md: 4 },
             textShadow: '0 1px 8px rgba(0,0,0,0.4)',
           }}
-        >
-          CEFR-based cartoons with interactive Arabic subtitles.
-        </Typography>
+        ><UiText>{"CEFR-based cartoons with interactive Arabic subtitles."}</UiText></Typography>
 
         {/* CTA pill button — fixed width, dynamic label + route */}
         <Button

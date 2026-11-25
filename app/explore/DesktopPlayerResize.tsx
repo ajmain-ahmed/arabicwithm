@@ -1,9 +1,13 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 import { useRef, type RefObject } from 'react'
 import { IconButton, Tooltip } from '@mui/material'
 import { Height } from '@mui/icons-material'
 
 export default function DesktopPlayerResize({playerRef,onResize}:{playerRef:RefObject<HTMLDivElement|null>;onResize:(width:number)=>void}) {
+ const {t:awmT}=useWebsiteLocale()
+
   const drag=useRef<{pointer:number;y:number;height:number;min:number;max:number}|null>(null)
   function bounds(){
     const player=playerRef.current
@@ -13,7 +17,7 @@ export default function DesktopPlayerResize({playerRef,onResize}:{playerRef:RefO
     return {height:player.getBoundingClientRect().height,min:Math.min(270,max),max}
   }
   function resize(height:number,min:number,max:number){onResize(Math.min(max,Math.max(min,height))*16/9)}
-  return <Tooltip title="Resize player"><IconButton aria-label="Resize video player" aria-description="Drag vertically, or use Arrow Up to shrink and Arrow Down to enlarge." sx={{cursor:'ns-resize',touchAction:'none',userSelect:'none'}}
+  return <Tooltip title={awmT("Resize player")}><IconButton aria-label={awmT("Resize video player")} aria-description="Drag vertically, or use Arrow Up to shrink and Arrow Down to enlarge." sx={{cursor:'ns-resize',touchAction:'none',userSelect:'none'}}
     onPointerDown={event=>{
       if(event.button!==0)return
       const size=bounds();if(!size)return

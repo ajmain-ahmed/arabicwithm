@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useState } from 'react'
 import { Box } from '@mui/material'
@@ -13,6 +15,8 @@ interface BrandLogoProps {
 }
 
 export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false, activeMember = false }: BrandLogoProps) {
+ const {t:awmT}=useWebsiteLocale()
+
     /* Gate the entrance animation on post-hydration state: server and first
        client render must produce identical markup or hydration fails (which
        cascades into the image rows never revealing). */
@@ -26,9 +30,10 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
     return (
         <Box
             component="button"
+            dir="ltr"
             type="button"
             onClick={onClick}
-            aria-label={activeMember ? "ArabicWithM Plus home" : "ArabicWithM home"}
+            aria-label={activeMember ? awmT("ArabicWithM Plus home") : awmT("ArabicWithM home")}
             sx={{
                 m: 0,
                 p: 0,

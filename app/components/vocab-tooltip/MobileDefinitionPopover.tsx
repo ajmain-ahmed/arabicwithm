@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useEffect, useRef } from 'react'
 import { Fade, Paper, Popper, useMediaQuery } from '@mui/material'
@@ -17,6 +19,8 @@ export default function MobileDefinitionPopover({
   onClose: () => void
   textScale?: number
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const paperRef = useRef<HTMLDivElement | null>(null)
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const open = Boolean(anchor && entry)
@@ -62,7 +66,7 @@ export default function MobileDefinitionPopover({
           <Paper
             ref={paperRef}
             role="dialog"
-            aria-label="Word definition"
+            aria-label={awmT("Word definition")}
             elevation={0}
             onPointerDown={(event) => event.stopPropagation()}
             sx={{

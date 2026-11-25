@@ -3,6 +3,9 @@
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from "@mui/material";
 import { createAwmTheme, type AwmColorMode } from "@/app/theme";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider';
+import {createTheme} from '@mui/material/styles';
+import {arSA} from '@mui/material/locale';
 
 interface ColorModeContextValue {
   mode: AwmColorMode;
@@ -23,6 +26,7 @@ export function useColorMode(): ColorModeContextValue {
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
+  const {direction}=useWebsiteLocale();
   const [mode, setMode] = useState<AwmColorMode>("dark");
   const [preferenceLoaded, setPreferenceLoaded] = useState(false);
 
@@ -62,7 +66,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     setMode((current) => current === "light" ? "dark" : "light");
   }, []);
 
-  const theme = useMemo(() => createAwmTheme(mode), [mode]);
+  const theme = useMemo(() => createTheme(createAwmTheme(mode),{direction},direction==='rtl'?arSA:{}), [mode,direction]);
   const contextValue = useMemo(() => ({ mode, toggleColorMode }), [mode, toggleColorMode]);
 
   return (

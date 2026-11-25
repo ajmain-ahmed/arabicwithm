@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
@@ -26,6 +30,8 @@ const PremiumPromptLazy = dynamic(loadPremiumPrompt, { ssr: false })
 const PILL_HEIGHT = 34
 
 export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()=>void}={}) {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user } = useAuth()
   /* Seed from the tracker's latest snapshot when this component mounts after
      the publish (mobile drawer); metadata is the fallback for never-synced
@@ -77,7 +83,7 @@ export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-      <Tooltip title="AWM Plus">
+      <Tooltip title={awmT("AWM Plus")}>
         <Button
           onClick={() => setPremiumOpen(true)}
           onMouseEnter={() => void loadPremiumPrompt()}
@@ -98,16 +104,16 @@ export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()
             color: '#fff',
             whiteSpace: 'nowrap',
             '&:hover': { bgcolor: '#a07c0a' },
-            '& .MuiButton-startIcon': { mr: 0.5, ml: 0 },
+            '& .MuiButton-startIcon': { margin:0 },
           }}
         >
           AWM+
         </Button>
       </Tooltip>
-      <Tooltip title={`${streak} day streak`}>
+      <Tooltip title={awmT('{count} day streak',{count:streak})}>
         <Box
           component="span"
-          aria-label={`${streak} day streak`}
+          aria-label={awmT('{count} day streak',{count:streak})}
           sx={{
             height: PILL_HEIGHT,
             px: 1.25,
@@ -125,8 +131,7 @@ export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()
           }}
         >
           <LocalFireDepartmentRounded sx={{ fontSize: 15 }} />
-          {streak} Streak
-        </Box>
+          {streak} <UiText>{"Streak"}</UiText></Box>
       </Tooltip>
       {premiumOpen && <PremiumPromptLazy open membershipSummary onProfileNavigate={onProfileNavigate} onClose={() => setPremiumOpen(false)} />}
     </Box>

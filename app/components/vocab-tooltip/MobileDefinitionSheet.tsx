@@ -1,4 +1,6 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { Box, SwipeableDrawer, useMediaQuery } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -19,6 +21,8 @@ export default function MobileDefinitionSheet({
   onExited?: () => void
   textScale?: number
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const stopBackdropEvent = (event: SyntheticEvent) => {
     event.stopPropagation()
@@ -58,7 +62,7 @@ export default function MobileDefinitionSheet({
         paper: {
           role: 'dialog',
           'aria-modal': true,
-          'aria-label': 'Word definition',
+          'aria-label': awmT("Word definition"),
           sx: {
             width: '100%',
             maxWidth: 680,

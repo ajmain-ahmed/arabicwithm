@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { AdminPanelSettings, LogoutSharp, AccountCircleOutlined, RateReviewOutlined } from '@mui/icons-material'
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
@@ -56,8 +58,8 @@ export default function UserMenu({ anchorEl, onClose, user, displayName, onLogou
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
-            {user && <MenuItem component={Link} href={profileRoute(user.id)} prefetch={false} onClick={onClose} sx={navigationItemSx}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={navigationTextSx}>My Profile</Typography></MenuItem>}
-            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={navigationItemSx}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={navigationTextSx}>Reviewer</Typography></MenuItem>}
+            {user && <MenuItem component={Link} href={profileRoute(user.id)} prefetch={false} onClick={onClose} sx={navigationItemSx}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={navigationTextSx}><UiText>{"My Profile"}</UiText></Typography></MenuItem>}
+            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={navigationItemSx}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={navigationTextSx}><UiText>{"Reviewer"}</UiText></Typography></MenuItem>}
             {user && isAdmin && (
                 <MenuItem
                     component={Link}
@@ -67,8 +69,7 @@ export default function UserMenu({ anchorEl, onClose, user, displayName, onLogou
                 >
                     <AdminPanelSettings sx={{ fontSize: 18, color: 'var(--awm-gold)' }} />
                     <Typography variant="body2" sx={navigationTextSx}>
-                        Admin
-                    </Typography>
+                        <UiText>{"Admin"}</UiText></Typography>
                 </MenuItem>
             )}
             <MenuItem
@@ -81,8 +82,7 @@ export default function UserMenu({ anchorEl, onClose, user, displayName, onLogou
             >
                 <LogoutSharp sx={{ fontSize: 18, color: 'var(--awm-error)' }} />
                 <Typography variant="body2" sx={{ color: 'var(--awm-error)' }}>
-                    Sign Out
-                </Typography>
+                    <UiText>{"Sign Out"}</UiText></Typography>
             </MenuItem>
         </Menu>
     )

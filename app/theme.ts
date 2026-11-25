@@ -173,7 +173,10 @@ export const baseTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: awmTokens.shape.pill,
+          columnGap:6,
         },
+        startIcon:{margin:0},
+        endIcon:{margin:0},
       },
     },
     MuiPaper: {

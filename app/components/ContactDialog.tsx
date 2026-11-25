@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { EmailOutlined, Instagram, YouTube } from '@mui/icons-material'
 import { Box, Button, Dialog, DialogContent, DialogTitle, Typography } from '@mui/material'
@@ -24,13 +26,12 @@ export default function ContactDialog({ open, onClose }: { open: boolean; onClos
       boxShadow: '0 24px 60px rgba(10,33,22,0.35)',
     } } }}>
       <DialogTitle sx={{ px: { xs: 3, sm: 4, md: 5 }, pt: { xs: 3, sm: 4, md: 6 }, pb: 0, color: '#f5ede0 !important', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 40 }, fontWeight: 600 }}>
-        Contact Us
-      </DialogTitle>
+        <UiText>{"Contact Us"}</UiText></DialogTitle>
       <DialogContent sx={{ overflow: 'visible', px: { xs: 3, sm: 4, md: 5 }, pr: { md: 5 }, pb: { xs: 3, sm: 4, md: 7 } }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 270px', md: '380px 398px' }, justifyContent: { md: 'start' }, alignItems: 'center', gap: { xs: 1, sm: 4, md: 1.5 } }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ mt: 1, mb: 2.5, color: 'rgba(245,237,224,0.78) !important', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 16 }, lineHeight: 1.65 }}>
-              Questions, feedback or suggestions?<Box component="span" sx={{ display: 'block' }}>We would love to hear from you.</Box>
+              <UiText>{"Questions, feedback or suggestions?"}</UiText><Box component="span" sx={{ display: 'block' }}><UiText>{"We would love to hear from you."}</UiText></Box>
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1.25 }}>
               {contacts.map(contact => {

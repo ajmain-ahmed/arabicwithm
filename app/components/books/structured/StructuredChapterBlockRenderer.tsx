@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import { items, record, text, structuredWarning } from '@/app/lib/structuredChapter'
 import { TextPair, Titles, Notice } from './StructuredText'
 import { HighlightedSentence, StructuredTable, Example } from './GrammarBlocks'
@@ -8,10 +10,10 @@ export default function StructuredChapterBlockRenderer({ value, depth = 0, ances
   const block = record(value)
   if (!block || depth >= 20 || ancestors.has(block)) {
     structuredWarning(`Unreadable or excessively nested block at depth ${depth}.`)
-    return <Notice>This part of the lesson could not be displayed.</Notice>
+    return <Notice><UiText>{"This part of the lesson could not be displayed."}</UiText></Notice>
   }
   switch (block.type) {
-    case 'paragraph': return text(block.text_ar) || text(block.text_en) ? <div><TextPair value={block} /></div> : <Notice>This paragraph is unavailable.</Notice>
+    case 'paragraph': return text(block.text_ar) || text(block.text_en) ? <div><TextPair value={block} /></div> : <Notice><UiText>{"This paragraph is unavailable."}</UiText></Notice>
     case 'highlighted-sentence': return <HighlightedSentence block={block} />
     case 'table': return <StructuredTable block={block} />
     case 'example': return <Example block={block} />
@@ -25,6 +27,6 @@ export default function StructuredChapterBlockRenderer({ value, depth = 0, ances
     }
     default:
       structuredWarning(`Unsupported block type: ${text(block.type) || '(missing type)'}.`)
-      return <div><Titles value={block} /><Notice>This part of the lesson is not supported yet.</Notice></div>
+      return <div><Titles value={block} /><Notice><UiText>{"This part of the lesson is not supported yet."}</UiText></Notice></div>
   }
 }

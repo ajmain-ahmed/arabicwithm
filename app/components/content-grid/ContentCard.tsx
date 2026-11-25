@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 import React, { useEffect, useRef, useState } from 'react'
 import { Box, Typography, Chip, Paper, Skeleton } from '@mui/material'
 import Link from 'next/link'
@@ -20,6 +22,7 @@ const LABEL = 'var(--awm-muted-light)'
 export interface ContentCardMetaItem {
   icon: React.ReactNode
   label: string
+  labelAr?: string
 }
 
 /* Covers mount only when the card scrolls near the viewport (native lazy
@@ -54,6 +57,7 @@ export interface ContentCardProps {
   title: string
   titleAr?: string
   description?: string
+  descriptionAr?: string
   category?: string
   tags?: string[]
   level?: string
@@ -87,6 +91,7 @@ export default function ContentCard({
   title,
   titleAr,
   description,
+  descriptionAr,
   category,
   tags = [],
   level,
@@ -106,6 +111,7 @@ export default function ContentCard({
   showTags = true,
   maxVisibleTags,
 }: ContentCardProps) {
+  const {locale,t}=useWebsiteLocale()
   const [hovered, setHovered] = useState(false)
   const [imgLoading, setImgLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
@@ -229,7 +235,7 @@ export default function ContentCard({
                 lineHeight: 1.25,
               }}
             >
-              {title}
+              <LocalisedContent original={title} arabic={titleAr}/>
             </Typography>
           </Box>
         )}
@@ -313,9 +319,9 @@ export default function ContentCard({
             whiteSpace: denseMobileTile || compactMobileRow ? { xs: 'normal', sm: 'nowrap' } : 'nowrap',
           }}
         >
-          {title}
+          <LocalisedContent original={title} arabic={titleAr}/>
         </Typography>
-        {titleAr && (
+        {titleAr && locale==='en' && (
           <Typography
             sx={{
               display: denseMobileTile ? { xs: 'none', sm: 'block' } : 'block',
@@ -344,7 +350,7 @@ export default function ContentCard({
               WebkitBoxOrient: 'vertical',
             }}
           >
-            {description}
+            <LocalisedContent original={description} arabic={descriptionAr}/>
           </Typography>
         )}
         {/* Tags */}
@@ -365,7 +371,7 @@ export default function ContentCard({
           {displayTags.map((tag) => (
             <Chip
               key={tag}
-              label={tag}
+              label={t(tag)}
               size="small"
               sx={{
                 height: compactMobileRow ? { xs: 21, sm: 24 } : 24,
@@ -396,7 +402,7 @@ export default function ContentCard({
               WebkitBoxOrient: 'vertical',
             }}
           >
-            {description}
+            <LocalisedContent original={description} arabic={descriptionAr}/>
           </Typography>
         )}
         {/* Meta row */}
@@ -414,7 +420,7 @@ export default function ContentCard({
               <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 {item.icon}
                 <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: LABEL }}>
-                  {item.label}
+                  <LocalisedContent original={item.label} arabic={item.labelAr??t(item.label)}/>
                 </Typography>
               </Box>
             ))}

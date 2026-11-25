@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 # ArabicWithM — Agent Guide
@@ -314,6 +318,22 @@ chapter, read and follow `docs/content-ingestion.md`. Treat it as the canonical
 schema, Hans Wehr matching policy, validation checklist, and Supabase routing
 guide. Do not guess ambiguous dictionary senses, and do not mutate content until
 the user identifies the target and explicitly asks for it to be added or updated.
+
+## Website localisation
+
+Use `WebsiteLocaleProvider`, `UiText` and its `t` function for learner interface
+text. Preserve English defaults and canonical filter keys. The validated EN/AR
+preference is stored locally and in a preference cookie so server HTML matches
+the selected direction. Admin CMS chrome remains English. Keep the MUI locale,
+theme direction and streaming Emotion registries in sync; never key players or
+activity providers by website locale.
+
+Use curated `title_ar` first, then approved metadata matching the source hash.
+Call `enrichEligibleMetadata` only after existing publication/access checks.
+Website language must never rewrite educational tokens, chapter JSON or source
+translations, and must never change publication state. Rendering and language
+switches make no translation-provider requests. The zero-cost metadata workflow
+is documented in [docs/metadata-translation.md](docs/metadata-translation.md).
 
 ## Reusable chapter imports
 

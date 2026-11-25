@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { PlayArrow } from '@mui/icons-material'
 import { Box, Typography } from '@mui/material'
@@ -8,11 +12,13 @@ import type { EpisodeMeta } from '@/app/lib/cartoons'
 export type RelatedEpisode = EpisodeMeta & { showSlug: string; showTitle?: string }
 
 export function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisode[]; currentSlug: string; variant: 'rail' | 'strip' }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const isStrip = variant === 'strip'
   return (
     <Box
       component={isStrip ? 'section' : 'aside'}
-      aria-label="Up next"
+      aria-label={awmT("Up next")}
       sx={{
         flexDirection: 'column',
         gap: 1.1,
@@ -45,12 +51,10 @@ export function RelatedRail({ related, currentSlug, variant }: { related: Relate
       }}
     >
       <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold-text)', mb: 0.5, px: 0.5, flexShrink: 0 }}>
-        Up next
-      </Typography>
+        <UiText>{"Up next"}</UiText></Typography>
       {related.length === 0 && (
         <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.6)', px: 0.5 }}>
-          No other episodes in this show yet.
-        </Typography>
+          <UiText>{"No other episodes in this show yet."}</UiText></Typography>
       )}
       <Box
         sx={{

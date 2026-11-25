@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import AwmPageError from './AwmPageError'
 import {useAuth} from '@/app/AuthContext'
@@ -54,7 +56,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           },
         }}
       >
-        {authError && <Alert severity="warning" action={<Button onClick={() => window.location.reload()}>Reload</Button>}>We couldn&apos;t restore your session. Reload to reconnect your account.</Alert>}
+        {authError && <Alert severity="warning" action={<Button onClick={() => window.location.reload()}><UiText>{"Reload"}</UiText></Button>}><UiText>{"We couldn't restore your session. Reload to reconnect your account."}</UiText></Alert>}
         <ErrorBoundary key={pathname}>
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>

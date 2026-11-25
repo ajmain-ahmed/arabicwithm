@@ -1,4 +1,6 @@
 'use client'
+import {UiText,useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
 
 import {
   ArrowForward,
@@ -109,6 +111,8 @@ function GoldDivider() {
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function AuthDialog({ open, onClose, purpose, initialMode = 'signin' }: AuthDialogProps) {
+
+  const {t}=useWebsiteLocale()
   const {establishSession}=useAuth()
   const [authMode, setAuthMode] = useState<'register' | 'signin'>(initialMode)
   const [forgotPassword, setForgotPassword] = useState(false)
@@ -269,7 +273,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
           variant="filled"
           sx={{ width: '100%', fontFamily: 'var(--font-sans), sans-serif' }}
         >
-          {snackbar?.text}
+          {snackbar?.text&&t(snackbar.text)}
         </Alert>
       </Snackbar>
 
@@ -296,7 +300,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
           <IconButton
             onClick={handleClose}
             size="small"
-            aria-label="Close"
+            aria-label={t("Close")}
             sx={{
               position: 'absolute',
               top: 14,
@@ -316,7 +320,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
             lineHeight: 1.15,
             mb: 0.5,
           }}>
-            {title}
+            {t(title)}
           </Typography>
           <Typography sx={{
             fontFamily: 'var(--font-sans), sans-serif',
@@ -324,7 +328,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
             color: 'var(--muted)',
             lineHeight: 1.6,
           }}>
-            {subtitle}
+            {t(subtitle)}
           </Typography>
         </Box>
 
@@ -332,7 +336,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
 
         {/* ── Body ── */}
         <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, pt: 3, pb: 4 }}>
-          {confirmationNotice&&<Alert severity="info" icon={false} sx={{mb:2}}>Check your inbox — verify your email before signing in.</Alert>}
+          {confirmationNotice&&<Alert severity="info" icon={false} sx={{mb:2}}><UiText>{"Check your inbox — verify your email before signing in."}</UiText></Alert>}
 
           {/* Mode toggle (only when not in forgot-password flow) */}
           {!forgotPassword && (
@@ -364,8 +368,8 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                 },
               }}
             >
-              <ToggleButton value="signin">Sign In</ToggleButton>
-              <ToggleButton value="register">Register</ToggleButton>
+              <ToggleButton value="signin"><UiText>{"Sign In"}</UiText></ToggleButton>
+              <ToggleButton value="register"><UiText>{"Register"}</UiText></ToggleButton>
             </ToggleButtonGroup>
           )}
 
@@ -375,7 +379,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
             <TextField
               className="auth-input-awm"
               disabled={loading}
-              label="Email address"
+              label={t("Email address")}
               type="email"
               variant="filled"
               size="small"
@@ -390,7 +394,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
               <TextField
                 className="auth-input-awm"
                 disabled={loading}
-                label="Password"
+                label={t("Password")}
                 type={showPassword ? 'text' : 'password'}
                 variant="filled"
                 size="small"
@@ -404,7 +408,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                     endAdornment: (
                       <IconButton
                         size="small"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        aria-label={t(showPassword ? 'Hide password' : 'Show password')}
                         onClick={() => setShowPassword(p => !p)}
                         sx={{ color: 'var(--muted)', mr: -0.5 }}
                       >
@@ -454,7 +458,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                 '&:disabled': { background: 'rgba(0,0,0,0.08)', color: 'rgba(0,0,0,0.3)', boxShadow: 'none' },
               }}
             >
-              {loading ? 'Please wait…' : ctaLabel}
+              {t(loading ? "Please wait…" : ctaLabel)}
             </Button>
 
             {/* Forgot password link */}
@@ -471,8 +475,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                     '&:hover': { textDecoration: 'underline' },
                   }}
                 >
-                  Forgot password?
-                </Typography>
+                  <UiText>{"Forgot password?"}</UiText></Typography>
               </Box>
             )}
 
@@ -490,7 +493,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                     '&:hover': { textDecoration: 'underline' },
                   }}
                 >
-                  ← Back to sign in
+                  {t("← Back to sign in")}
                 </Typography>
               </Box>
             )}
@@ -507,7 +510,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                     '&::before, &::after': { borderColor: 'color-mix(in srgb, var(--awm-black) 12%, transparent)' },
                   }}
                 >
-                  or
+                  {t("or")}
                 </Divider>
 
                 <Button
@@ -532,7 +535,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                     },
                   }}
                 >
-                  Continue with Google
+                  {t("Continue with Google")}
                 </Button>
               </>
             )}

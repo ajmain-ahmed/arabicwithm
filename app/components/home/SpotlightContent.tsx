@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import EnglishForYouSegment from '@/app/explore/EnglishForYouSegment'
 import {useCallback,useEffect,useRef,useState,useSyncExternalStore} from 'react'
@@ -33,10 +37,12 @@ function SpotlightPlayer({clip,onUnavailable,onSound}:{clip:ForYouClip;onUnavail
    <Typography lang="ar" dir="rtl" sx={{fontFamily:'var(--font-serif)',fontSize:{xs:22,md:26},lineHeight:1.6,textAlign:'center'}}>{line?.original_text??'\u00a0'}</Typography>
    {line?.english_text&&<Typography lang="en" sx={{fontSize:13,color:'var(--awm-muted)',mt:.5,textAlign:'center'}}>{line.english_text}</Typography>}
   </>}><Box ref={wrapRef} data-spotlight-ready={isReady} data-spotlight-playing={isPlaying} data-spotlight-time={time} data-spotlight-start={clip.clip_start_ms/1000} data-spotlight-end={clip.clip_end_ms/1000} sx={{position:'absolute',inset:0}}/></SpotlightPlayerFrame>
-  {errorCode&&<Box role="alert" sx={{mt:2,textAlign:'center'}}><Typography>The YouTube preview could not load (error {errorCode}).</Typography><Button onClick={retry}>Retry player</Button></Box>}
+  {errorCode&&<Box role="alert" sx={{mt:2,textAlign:'center'}}><Typography><UiText>{"The YouTube preview could not load (error"}</UiText>{' '}{errorCode}).</Typography><Button onClick={retry}><UiText>{"Retry player"}</UiText></Button></Box>}
  </>
 }
 function SpotlightContent({initialClip,initialError=false,discover=false,onSound}:{initialClip:ForYouClip|null;initialError?:boolean;discover?:boolean;onSound:SoundReporter}){
+ const {t:awmT}=useWebsiteLocale()
+
  const [clip,setClip]=useState(initialClip),[error,setError]=useState(initialError),[busy,setBusy]=useState(discover&&!initialClip)
  const discovery=useRef<Promise<ForYouClip|null>|null>(null)
  useEffect(()=>{
@@ -55,7 +61,7 @@ function SpotlightContent({initialClip,initialError=false,discover=false,onSound
   void fetchHomeForYouSpotlight(id).then(next=>{setClip(next);setError(!next)}).catch(()=>setError(true)).finally(()=>setBusy(false))
  },[])
  async function retry(){setBusy(true);try{setClip(await fetchHomeForYouSpotlight());setError(false)}catch{setError(true)}finally{setBusy(false)}}
- return clip?<SpotlightPlayer key={`${clip.video.id}:${clip.clip_start_ms}`} clip={clip} onUnavailable={replaceUnavailable} onSound={onSound}/>:<Box role={error?'alert':'status'} sx={{py:2,textAlign:'center'}}>{busy?'Loading a preview\u2026':error?'The preview could not load. Please retry or explore For You.':'No eligible Arabic preview is available right now. Explore more in For You.'}{error&&<Button disabled={busy} onClick={()=>void retry()}>Retry preview</Button>}</Box>
+ return clip?<SpotlightPlayer key={`${clip.video.id}:${clip.clip_start_ms}`} clip={clip} onUnavailable={replaceUnavailable} onSound={onSound}/>:<Box role={error?'alert':'status'} sx={{py:2,textAlign:'center'}}>{busy?awmT("Loading a preview…"):error?awmT("The preview could not load. Please retry or explore For You."):awmT("No eligible Arabic preview is available right now. Explore more in For You.")}{error&&<Button disabled={busy} onClick={()=>void retry()}><UiText>{"Retry preview"}</UiText></Button>}</Box>
 }
 export default function DeferredSpotlightContent({ guest, ...props }: { guest: boolean; initialClip: ForYouClip | null; initialError?: boolean; discover?: boolean; onSound: SoundReporter }) {
  return guest ? <GuestForYouAllowance home><SpotlightContent {...props}/></GuestForYouAllowance> : <SpotlightContent {...props}/>

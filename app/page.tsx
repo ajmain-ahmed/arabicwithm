@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import { Suspense } from 'react'
 import { connection } from 'next/server'
 import type { Metadata, ResolvingMetadata } from 'next'
@@ -45,7 +47,7 @@ export default async function HomePage() {
     fetchNewOnEpisodes().catch(() => []), loadDailyPhrase(now),
   ]))
   return <>
-    <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}>Learn Arabic through cartoons and books</Typography>
+    <Typography component="h1" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}><UiText>{"Learn Arabic through cartoons and books"}</UiText></Typography>
     <Suspense fallback={<FeaturedCarousel items={[]} loading />}><FeaturedSection selection={featured} /></Suspense>
     <Suspense fallback={<HomePageLoading rowsOnly />}><CatalogueSection data={data} now={now} /></Suspense>
   </>

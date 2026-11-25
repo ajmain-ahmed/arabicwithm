@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 import { useEffect, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
 import { AutoAwesome, CheckCircleRounded } from '@mui/icons-material'
@@ -22,6 +26,8 @@ export default function PremiumPrompt(props:PremiumPromptProps){
   return props.open?<PremiumPromptContent key={user?.id??'signed-out'} {...props}/>:null
 }
 function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,onProfileNavigate }:PremiumPromptProps) {
+ const {t:awmT,locale}=useWebsiteLocale()
+
   const { user } = useAuth()
   const statusKey = user?.id ?? 'signed-out'
   /* A fresh snapshot renders immediately; the effect below still re-verifies
@@ -59,35 +65,35 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
   if (status?.admin) return null
   if (!status) return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
-      <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>AWM Plus</DialogTitle>
+      <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}><UiText>{"AWM Plus"}</UiText></DialogTitle>
       <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, minHeight: 100, display: 'grid', placeItems: 'center' }}>
-        {error?<Alert severity="error">{error}</Alert>:<CircularProgress aria-label="Checking AWM Plus status" sx={{ color: 'var(--awm-gold)' }} />}
+        {error?<Alert severity="error"><UiText>{error}</UiText></Alert>:<CircularProgress aria-label={awmT("Checking AWM Plus status")} sx={{ color: 'var(--awm-gold)' }} />}
       </DialogContent>
-      <DialogActions sx={{px:3,pb:2}}><Button onClick={onClose}>Close</Button>{error&&<Button variant="contained" onClick={retry}>Retry</Button>}</DialogActions>
+      <DialogActions sx={{px:3,pb:2}}><Button onClick={onClose}><UiText>{"Close"}</UiText></Button>{error&&<Button variant="contained" onClick={retry}><UiText>{"Retry"}</UiText></Button>}</DialogActions>
     </Dialog>
   )
   return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
-    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
+    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>{premium ? awmT("AWM+ active") : awmT("Upgrade to AWM+")}</DialogTitle>
     <DialogContent sx={{ px: { xs: 2.5, sm: 4 } }}>
-      <Typography color="text.secondary">More stories. More practice. Take your learning with you.</Typography>
-      {!premium && <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>{PREMIUM.price}<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}>GBP / month</Typography></Typography></Box>}
+      <Typography color="text.secondary"><UiText>{"More stories. More practice. Take your learning with you."}</UiText></Typography>
+      {!premium && <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>{PREMIUM.price}<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}><UiText>{"GBP / month"}</UiText></Typography></Typography></Box>}
       {reason && <Typography sx={{ mb: 2 }}>{reason}</Typography>}
       <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1 }}>
         {PREMIUM_BENEFITS.map((benefit) => <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.25, borderRadius: '10px', bgcolor: 'background.default', textAlign: 'left' }}>
           <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', color: 'primary.main', fontSize: 21 }} />
-          <Typography sx={{ minWidth: 0, flex: 1, fontWeight: 700 }}>{benefit.label}</Typography>
+          <Typography sx={{ minWidth: 0, flex: 1, fontWeight: 700 }}>{awmT(benefit.label)}</Typography>
         </Box>)}
       </Box>
-      <Typography sx={{ mt: 2 }} color="text.secondary">New books and features as they arrive.</Typography>
-      {!premium ? <Typography variant="body2" sx={{ mt: 2 }}>{PREMIUM.price} GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography> : (
+      <Typography sx={{ mt: 2 }} color="text.secondary"><UiText>{"New books and features as they arrive."}</UiText></Typography>
+      {!premium ? <Typography variant="body2" sx={{ mt: 2 }}>{PREMIUM.price}{' '}<UiText>{"GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period."}</UiText></Typography> : (
         <>
-          <Typography variant="body2" sx={{mt:2}}>{status.paymentIssue && status.periodEnd ? `Your last payment didn't go through — update your payment method to keep AWM+ after ${formatMembershipDate(status.periodEnd)}.` : status.cancelAtPeriodEnd && status.periodEnd ? `Cancellation scheduled — you have AWM+ access until ${formatMembershipDate(status.periodEnd)}.` : 'Your account has AWM+ access.'}</Typography>
-          {!status.paymentIssue && !status.cancelAtPeriodEnd && status.periodEnd ? <Typography variant="body2" sx={{mt:.5,color:'text.secondary'}}>Renews on {formatMembershipDate(status.periodEnd)}.</Typography> : null}
+          <Typography variant="body2" sx={{mt:2}}>{status.paymentIssue && status.periodEnd ? locale==='ar'?awmT('Your last payment did not go through. Update your payment method to keep AWM+ after {date}.',{date:formatMembershipDate(status.periodEnd,locale)}):`Your last payment didn't go through — update your payment method to keep AWM+ after ${formatMembershipDate(status.periodEnd,locale)}.` : status.cancelAtPeriodEnd && status.periodEnd ? locale==='ar'?awmT('Cancellation scheduled. You have AWM+ access until {date}.',{date:formatMembershipDate(status.periodEnd,locale)}):`Cancellation scheduled — you have AWM+ access until ${formatMembershipDate(status.periodEnd,locale)}.` : awmT('Your account has AWM+ access.')}</Typography>
+          {!status.paymentIssue && !status.cancelAtPeriodEnd && status.periodEnd ? <Typography variant="body2" sx={{mt:.5,color:'text.secondary'}}><UiText>{"Renews on"}</UiText>{' '}{formatMembershipDate(status.periodEnd,locale)}.</Typography> : null}
         </>
       )}
-      {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mt: 2 }}><UiText>{error}</UiText></Alert>}
     </DialogContent>
-    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}>{premium?<Button fullWidth sx={{minHeight:52,borderRadius:'12px'}} variant="contained" disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{color:'#fff'}}/>} onClick={()=>void purchase()}>{status.manageable?'Manage AWM+':'Continue learning'}</Button>:<UpgradeButton disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{color:'#fff'}}/>} onClick={()=>void purchase()}/>}</DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}>{premium?<Button fullWidth sx={{minHeight:52,borderRadius:'12px'}} variant="contained" disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{color:'#fff'}}/>} onClick={()=>void purchase()}>{status.manageable?awmT("Manage AWM+"):awmT("Continue learning")}</Button>:<UpgradeButton disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{color:'#fff'}}/>} onClick={()=>void purchase()}/>}</DialogActions>
   </Dialog>
 }
 export function PremiumSection() {
@@ -95,6 +101,8 @@ export function PremiumSection() {
   return <PremiumAccountSection key={user?.id ?? 'signed-out'} />
 }
 function PremiumAccountSection() {
+ const {t:awmT}=useWebsiteLocale()
+
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const statusKey = user?.id ?? 'signed-out'
@@ -114,7 +122,7 @@ function PremiumAccountSection() {
       '&:active': { transform: 'translateY(1px)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,.12)' },
       '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 4 },
       '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&::before': { transition: 'none' }, '&:hover, &:active': { transform: 'none' } },
-    }}>{premium ? status.manageable ? 'AWM+ active - Manage' : 'AWM+ active' : 'Upgrade to AWM+'}</Button>
+    }}>{premium ? status.manageable ? awmT("AWM+ active - Manage") : awmT("AWM+ active") : awmT("Upgrade to AWM+")}</Button>
     <PremiumPrompt open={open} onClose={() => setOpen(false)} />
   </Box>
 

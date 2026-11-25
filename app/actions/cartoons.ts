@@ -1,6 +1,7 @@
 "use server"
 
 import { unstable_cache } from "next/cache"
+import {enrichEligibleMetadata} from '@/app/lib/localisation/metadata.server'
 import { assertPublicRead } from '@/app/lib/publicRead'
 import { createHash } from "node:crypto"
 import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
@@ -82,7 +83,7 @@ export const fetchShowsForPublic = unstable_cache(
       tagsByShow.set(id, [...(tagsByShow.get(id) ?? []), ...episodeTags])
     }
 
-    return (shows ?? []).map((row) => ({
+    return enrichEligibleMetadata('show',(shows ?? []).map((row) => ({
       id: String(row.id),
       slug: String(row.slug),
       title: String(row.title),
@@ -98,7 +99,7 @@ export const fetchShowsForPublic = unstable_cache(
       ]),
       episodeCount: counts.get(String(row.id)) ?? 0,
       updatedAt: row.updated_at ? String(row.updated_at) : undefined,
-    }))
+    })))
   },
   ["cartoons", "shows", "public", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
@@ -156,7 +157,7 @@ export const fetchShowBySlugPublic = unstable_cache(
 
     assertPublicRead(episodesError, 'show episodes')
 
-    return {
+    const result:ShowMeta={
       id: String(data.id),
       slug: String(data.slug),
       title: String(data.title),
@@ -174,6 +175,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       ]),
       episodeCount: episodes?.length ?? 0,
     }
+    return (await enrichEligibleMetadata('show',[result]))[0]
   },
   ["cartoons", "show", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
@@ -211,7 +213,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       throw new Error(error.message)
     }
 
-    return ((data ?? []) as unknown as Record<string, unknown>[]).map((row) => mapEpisodeRow(row))
+    return enrichEligibleMetadata('episode',((data??[]) as unknown as Record<string,unknown>[]).map(row=>mapEpisodeRow(row)))
   },
   ["cartoons", "episodes", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
@@ -238,7 +240,7 @@ export const fetchAllEpisodesForPublic = unstable_cache(
       throw new Error(error.message)
     }
 
-    return ((data ?? []) as unknown as Record<string, unknown>[]).map((row) => ({ ...mapEpisodeRow(row), showId: String(row.show_id) }))
+    return enrichEligibleMetadata('episode',((data??[]) as unknown as Record<string,unknown>[]).map(row=>({...mapEpisodeRow(row),showId:String(row.show_id)})))
   },
   ["cartoons", "all-episodes", "public", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
@@ -374,7 +376,7 @@ export const fetchEpisodeForPublic = unstable_cache(
     })
 
     return {
-      ...meta,
+      ...(await enrichEligibleMetadata('episode',[meta]))[0],
       id: String(data.id),
       show: String(show.slug),
       show_id: String(show.id),
@@ -399,7 +401,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
     }
 
     const [showResult, episodeResult] = await Promise.all([
-      serviceClient.from("shows").select("id, slug, title"),
+      serviceClient.from("shows").select("id, slug, title, title_ar"),
       serviceClient
         .from("episodes")
         .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at, updated_at")
@@ -422,7 +424,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
     const showsById = new Map(
       (shows ?? []).map((show) => [
         String(show.id),
-        { slug: String(show.slug), title: String(show.title) },
+        { slug: String(show.slug), title: String(show.title),titleAr:show.title_ar?String(show.title_ar):undefined },
       ])
     )
 
@@ -431,7 +433,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
       if (!show) return []
       const meta = mapEpisodeRow(row)
       if (getEpisodeVideoSources(meta).length === 0) return []
-      return [{ ...meta, showSlug: show.slug, showTitle: show.title }]
+      return [{ ...meta, showSlug: show.slug, showTitle: show.title,showTitleAr:show.titleAr }]
     })
   },
   ["cartoons", "explore", "episode-metas", "storage-covers-v3-direct"],

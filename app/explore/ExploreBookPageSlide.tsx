@@ -1,4 +1,9 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import LocalisedContent from '@/app/components/LocalisedContent'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -17,6 +22,8 @@ function ExploreDefinitionWord({ entry, context, itemIndex, onOpen, onPeek }: {
   onOpen: OpenDefinition
   onPeek: (itemIndex: number | null) => void
 }) {
+ const {t:awmT}=useWebsiteLocale()
+
   const theme = useTheme()
   const isTouchLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const [hoverOpen, setHoverOpen] = useState(false)
@@ -63,7 +70,7 @@ function ExploreDefinitionWord({ entry, context, itemIndex, onOpen, onPeek }: {
         className="vocab-word"
         role="button"
         tabIndex={0}
-        aria-label={`Show definition for ${entry.arabic}`}
+        aria-label={awmT('Show definition for {word}',{word:entry.arabic})}
         onClick={(event) => {
           event.stopPropagation()
           open(event.currentTarget)
@@ -123,14 +130,14 @@ export function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefi
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <MenuBook sx={{ color: '#d4a843', fontSize: 20 }} />
             <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', color: '#d4a843', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Random reading · Page {page.pageNumber}
+              <UiText>{"Random reading · Page"}</UiText>{' '}{page.pageNumber}
             </Typography>
           </Box>
           <Typography component="h2" sx={{ mt: 0.6, fontFamily: 'var(--font-heading)', fontSize: { xs: 23, md: 30 }, fontWeight: 600, lineHeight: 1.15 }}>
-            {page.bookTitle}
+            <LocalisedContent original={page.bookTitle} arabic={page.bookTitleAr}/>
           </Typography>
           <Typography sx={{ mt: 0.4, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, opacity: 0.76 }}>
-            Chapter {page.chapterNumber}: {page.chapterTitle}
+            <UiText>{"Chapter"}</UiText>{' '}{page.chapterNumber}: {page.chapterTitle}
           </Typography>
         </Box>
 
@@ -168,8 +175,7 @@ export function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefi
             endIcon={<ArrowForward />}
             sx={{ bgcolor: '#0e2e1f', color: '#fff', borderRadius: '10px', py: 1.1, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}
           >
-            Continue to chapter
-          </Button>
+            <UiText>{"Continue to chapter"}</UiText></Button>
         </Box>
       </Box>
     </Box>

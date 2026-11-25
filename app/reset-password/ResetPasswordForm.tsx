@@ -1,4 +1,8 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { ArrowForward, Visibility, VisibilityOff } from '@mui/icons-material'
 import { Alert, Box, Button, IconButton, TextField, Typography } from '@mui/material'
@@ -27,6 +31,8 @@ type ResetPasswordFormProps = {
 }
 
 export default function ResetPasswordForm({ initialError }: ResetPasswordFormProps) {
+ const {t:awmT}=useWebsiteLocale()
+
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -128,24 +134,22 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
               fontFamily: 'var(--font-heading)', fontSize: '1.75rem',
               fontWeight: 600, color: 'var(--bark)', lineHeight: 1.15, mb: 0.5,
             }}>
-              Set New Password
-            </Typography>
+              <UiText>{"Set New Password"}</UiText></Typography>
             <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--muted)' }}>
-              Choose a strong password for your account.
-            </Typography>
+              <UiText>{"Choose a strong password for your account."}</UiText></Typography>
           </Box>
 
           {/* Body */}
           <Box sx={{ px: 4, py: 3.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {message && (
               <Alert severity={message.type} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', borderRadius: '2px' }}>
-                {message.text}
+                <UiText>{message.text}</UiText>
               </Alert>
             )}
 
             <TextField
               className="rp-input"
-              label="New password"
+              label={awmT("New password")}
               type={showPw ? 'text' : 'password'}
               variant="filled"
               size="small"
@@ -157,7 +161,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
                 input: {
                   disableUnderline: true,
                   endAdornment: (
-                    <IconButton size="small" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)} sx={{ color: 'var(--muted)', mr: -0.5 }}>
+                    <IconButton size="small" aria-label={showPw ? awmT("Hide password") : awmT("Show password")} onClick={() => setShowPw(p => !p)} sx={{ color: 'var(--muted)', mr: -0.5 }}>
                       {showPw ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
                     </IconButton>
                   ),
@@ -167,7 +171,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
 
             <TextField
               className="rp-input"
-              label="Confirm new password"
+              label={awmT("Confirm new password")}
               type={showPw ? 'text' : 'password'}
               variant="filled"
               size="small"
@@ -203,7 +207,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
                 '&:disabled': { background: 'rgba(0,0,0,0.08)', color: 'rgba(0,0,0,0.3)', boxShadow: 'none' },
               }}
             >
-              {checkingSession ? 'Verifying link…' : loading ? 'Updating…' : 'Update Password'}
+              {checkingSession ? awmT("Verifying link…") : loading ? awmT("Updating…") : awmT("Update Password")}
             </Button>
           </Box>
         </Box>

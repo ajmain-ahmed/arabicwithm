@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
 import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
@@ -16,6 +18,8 @@ import { fetchMyDisplayName } from '@/app/actions/profiles'
 // mounted on first open for the same reason — it pulls supabase-js too.
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
+import WebsiteLanguageButton from './WebsiteLanguageButton'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
 import UserMenu from './UserMenu'
 import UserAvatar from './UserAvatar'
@@ -32,6 +36,9 @@ const AuthDialog = dynamic(() => import('@/app/components/AuthDialog'), { ssr: f
 const MobileDrawerLazy = dynamic(() => import('./MobileDrawer'), { ssr: false })
 
 export default function Navbar() {
+ const {t:awmT}=useWebsiteLocale()
+
+    const {t}=useWebsiteLocale()
     // Only optional account chrome depends on this client hint; layout is CSS-owned.
     const isMobile = useMediaQuery('(max-width:899.95px)')
     const router = useRouter()
@@ -193,38 +200,41 @@ export default function Navbar() {
                                     center: the hamburger and the icon pair have different
                                     widths, so auto columns hugging their content shoved
                                     the logo left of center on signed-out mobile. */}
+                                <Box sx={{display:'flex',alignItems:'center',justifySelf:'start'}}>
                                 <IconButton
                                     onPointerEnter={() => void import('./MobileDrawer')}
                                     onTouchStart={() => void import('./MobileDrawer')}
                                     onClick={() => { setDrawerMounted(true); setDrawerOpen(true) }}
                                     sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }}
-                                    aria-label="Open menu"
+                                    aria-label={t("Open menu")}
                                 >
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
+                                <WebsiteLanguageButton />
+                                </Box>
 
                                 <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center', pl: 0 }}>
                                     <BrandLogo activeMember={activeMember} isMobile onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
                                 </Box>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifySelf: 'end', gap: 0.25 }}>
-                                    <IconButton onClick={toggleColorMode} sx={{ width: 44, height: 44, p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                    <IconButton onClick={toggleColorMode} sx={{ width: 44, height: 44, p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={t(`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`)}>
                                         {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 20 }} /> : <DarkModeOutlined sx={{ fontSize: 20 }} />}
                                     </IconButton>
                                     {/* Signed-in mobile users reach profile/settings/logout
                                         from the drawer; the bar keeps only the theme toggle. */}
                                     {!isLoggedIn && (
-                                        <IconButton onClick={openSignIn} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
+                                        <IconButton onClick={openSignIn} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label={awmT("Sign in")}>
                                             <Person sx={{ fontSize: 21 }} />
                                         </IconButton>
                                     )}
                                 </Box>
                             </Box>
                             <Box data-navbar-desktop sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
-                                <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
+                                <Box component="nav" aria-label={awmT("Primary navigation")} sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => {
                                       // Watch must still open when a cached/pending RSC transition stalls.
-                                      const Destination = item === 'Watch' ? 'a' : Link
+                                      const Destination = item === "Watch" ? 'a' : Link
                                       return (
                                         <Destination key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
@@ -240,7 +250,7 @@ export default function Navbar() {
                                                     py: 2,
                                                 }}
                                             >
-                                                {item}
+                                                {t(item)}
                                             </Typography>
                                         </Destination>
                                       )
@@ -250,9 +260,10 @@ export default function Navbar() {
                                 <BrandLogo activeMember={activeMember} isMobile={false} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
-                                    {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
-                                    <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
-                                        <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                    <WebsiteLanguageButton />
+                                    {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}><UiText>{"Admin"}</UiText></Button>}
+                                    <Tooltip title={t(mode === 'dark' ? "Use light mode" : "Use dark mode")}>
+                                        <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={t(`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`)}>
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
                                         </IconButton>
                                     </Tooltip>
@@ -261,7 +272,7 @@ export default function Navbar() {
                                         !isMobile && <IconButton
                                             onClick={(e) => setUserMenuAnchor(e.currentTarget)}
                                             size="small"
-                                            aria-label="Open user menu"
+                                            aria-label={t("Open user menu")}
                                         >
                                             <UserAvatar name={resolvedName} metadata={user?.user_metadata} />
                                         </IconButton>
@@ -280,13 +291,15 @@ export default function Navbar() {
                                                 textTransform: 'none',
                                                 borderRadius: 'var(--awm-radius-none)',
                                                 px: 1.8,
+                                                columnGap: 1,
+                                                '& .MuiButton-startIcon': { margin: 0 },
                                                 '&:hover': {
                                                     borderColor: 'var(--awm-gold-light)',
                                                     background: isOverlay ? 'rgba(255,255,255,.1)' : 'color-mix(in srgb, var(--awm-gold) 6%, transparent)',
                                                 },
                                             }}
                                         >
-                                            Sign In
+                                            {t("Sign In")}
                                         </Button>
                                     )}
                                 </Box>

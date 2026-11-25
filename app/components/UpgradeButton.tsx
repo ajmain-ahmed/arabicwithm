@@ -1,4 +1,6 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 import {Button,type ButtonProps} from '@mui/material'
 
 /** Shared presentation only: callers retain their existing upgrade action. */
@@ -11,5 +13,5 @@ export default function UpgradeButton({sx,...props}:Omit<ButtonProps,'children'>
   '@keyframes awmUpgradeSparkle':{'0%,70%,90%,100%':{opacity:0,transform:'scale(.6)'},'80%':{opacity:.65,transform:'scale(1)'}},
   '&.Mui-disabled::before, &.Mui-disabled::after':{animation:'none',opacity:0},
   '@media (prefers-reduced-motion: reduce)':{'&::before, &::after':{animation:'none',opacity:0}},
- },...(Array.isArray(sx)?sx:sx?[sx]:[])]}><span style={{position:'relative',zIndex:1}}>Upgrade to AWM+</span></Button>
+ },...(Array.isArray(sx)?sx:sx?[sx]:[])]}><span style={{position:'relative',zIndex:1}}><UiText>{"Upgrade to AWM+"}</UiText></span></Button>
 }

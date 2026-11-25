@@ -1,5 +1,7 @@
 "use client"
 
+
+
 import React, { useState } from "react"
 import { Box, Button, Paper, Typography } from "@mui/material"
 import { Save, Cancel, Delete } from "@mui/icons-material"
@@ -18,6 +20,7 @@ interface EpisodeEditorProps {
 }
 
 export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: EpisodeEditorProps) {
+
   const isNew = !episode || !episode.id
 
   const [slug, setSlug] = useState(episode?.slug ?? "")
@@ -110,19 +113,19 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
         <NativeField label="Slug" value={slug} onChange={setSlug} disabled={saving} />
-        <NativeField label="Title" value={title} onChange={setTitle} disabled={saving} />
+        <NativeField label={"Title"} value={title} onChange={setTitle} disabled={saving} />
       </Box>
 
-      <NativeField label="Level" value={level} onChange={setLevel} disabled={saving} />
+      <NativeField label={"Level"} value={level} onChange={setLevel} disabled={saving} />
 
       <NativeField label="YouTube ID" value={youtubeId} onChange={setYoutubeId} disabled={saving} />
       <NativeField label="Instagram Reel ID" value={instagramId} onChange={setInstagramId} disabled={saving} />
       <NativeField label="TikTok video ID" value={tiktokId} onChange={setTiktokId} disabled={saving} />
       <NativeField label="Facebook video ID" value={facebookId} onChange={setFacebookId} disabled={saving} />
       <NativeField label="Tags (comma separated)" value={tags} onChange={setTags} disabled={saving} />
-      <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
+      <NativeField label={"Description"} value={description} onChange={setDescription} textarea disabled={saving} />
       <ImageUploadField
-        label="Cover image"
+        label={"Cover image"}
         bucket="covers"
         path={slug ? `episodes/${slug}.webp` : ""}
         previewUrl={cover}
@@ -154,8 +157,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
               borderColor: "rgba(192,57,43,0.3)",
             }}
           >
-            Delete
-          </Button>
+            {"Delete"}</Button>
         )}
         <Box sx={{ flex: 1 }} />
         <Button
@@ -171,8 +173,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
             color: "#7a6e65",
           }}
         >
-          Cancel
-        </Button>
+          {"Cancel"}</Button>
         <Button
           variant="contained"
           size="small"
@@ -187,8 +188,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
             "&:hover": { bgcolor: "#1a0f08" },
           }}
         >
-          Save
-        </Button>
+          {"Save"}</Button>
       </Box>
     </Paper>
     </>

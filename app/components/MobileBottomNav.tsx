@@ -1,4 +1,7 @@
 'use client'
+import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Box, Button, Fab, Popover, useMediaQuery } from '@mui/material'
@@ -21,6 +24,8 @@ const COLLAPSE_MS = 800
 let seenWithoutStorage = false
 
 export default function MobileBottomNav() {
+ const {t:awmT}=useWebsiteLocale()
+
   const mobile = useMediaQuery('(max-width:899.95px)')
   const router = useRouter()
   const pathname = usePathname()
@@ -75,15 +80,15 @@ export default function MobileBottomNav() {
   return <Box sx={{ display: { xs: 'block', md: 'none' } }}>
     <Box data-mobile-nav-float data-intro-state={intro} sx={{position:'fixed',right:'max(16px, env(safe-area-inset-right))',bottom:'calc(20px + env(safe-area-inset-bottom))',height:52,width:expanded?'min(360px, calc(100vw - max(16px, env(safe-area-inset-right)) - max(12px, env(safe-area-inset-left))))':52,zIndex:1301,pointerEvents:'none',transition:`width ${expanded?EXPAND_MS:COLLAPSE_MS}ms cubic-bezier(.22,.61,.36,1)`,'@media (prefers-reduced-motion: reduce)':{transition:'none'}}}>
       {intro !== 'idle' && <Box sx={{position:'absolute',inset:0,borderRadius:'9999px',overflow:'hidden',background:floatingSurface,border:'1px solid var(--awm-gold)',backdropFilter:'blur(12px)',boxShadow:3,pointerEvents:expanded?'auto':'none'}}>
-        <Box component="nav" aria-label="Navigation introduction" aria-hidden={!expanded} onFocusCapture={cancelIntroTimers} onPointerDownCapture={cancelIntroTimers} sx={{height:'100%',pr:'52px',pl:.75,display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',alignItems:'center',gap:expanded ? .25 : 0,opacity:expanded?1:0,transform:expanded?'translateX(0)':'translateX(16px)',transition:`opacity ${expanded?300:220}ms ease, transform ${expanded?EXPAND_MS:COLLAPSE_MS}ms ease, gap ${COLLAPSE_MS}ms ease`,'@media (prefers-reduced-motion: reduce)':{transition:'none',transform:'none'}}}>
-          {introDestinations.map(({href,label}) => <Button key={href} href={href===WATCH_ROUTE?WATCH_ROUTE:undefined} tabIndex={expanded?0:-1} onClick={() => {dismissIntro();if(href!==WATCH_ROUTE)router.push(href)}} sx={{minWidth:0,minHeight:44,p:.5,fontSize:12,fontWeight:600,textTransform:'none',whiteSpace:'nowrap',borderRadius:'9999px',color:'var(--awm-bark)','&:focus-visible':{outline:'2px solid var(--awm-bark)',outlineOffset:-2}}}>{label}</Button>)}
+        <Box component="nav" aria-label={awmT("Navigation introduction")} aria-hidden={!expanded} onFocusCapture={cancelIntroTimers} onPointerDownCapture={cancelIntroTimers} sx={{height:'100%',pr:'52px',pl:.75,display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',alignItems:'center',gap:expanded ? .25 : 0,opacity:expanded?1:0,transform:expanded?'translateX(0)':'translateX(16px)',transition:`opacity ${expanded?300:220}ms ease, transform ${expanded?EXPAND_MS:COLLAPSE_MS}ms ease, gap ${COLLAPSE_MS}ms ease`,'@media (prefers-reduced-motion: reduce)':{transition:'none',transform:'none'}}}>
+          {introDestinations.map(({href,label}) => <Button key={href} href={href===WATCH_ROUTE?WATCH_ROUTE:undefined} tabIndex={expanded?0:-1} onClick={() => {dismissIntro();if(href!==WATCH_ROUTE)router.push(href)}} sx={{minWidth:0,minHeight:44,p:.5,fontSize:12,fontWeight:600,textTransform:'none',whiteSpace:'nowrap',borderRadius:'9999px',color:'var(--awm-bark)','&:focus-visible':{outline:'2px solid var(--awm-bark)',outlineOffset:-2}}}><UiText>{label}</UiText></Button>)}
         </Box>
       </Box>}
     </Box>
-    <Fab aria-label={anchor ? 'Close navigation' : 'Open navigation'} aria-expanded={Boolean(anchor)} aria-controls={anchor ? 'mobile-navigation' : undefined} onClick={event => {dismissIntro();setAnchor(anchor ? null : event.currentTarget)}} sx={{ position: 'fixed', right: 'max(16px, env(safe-area-inset-right))', bottom: 'calc(20px + env(safe-area-inset-bottom))', width: 52, height: 52, zIndex: 1301, color: 'var(--awm-bark)', background: floatingSurface, backdropFilter: 'blur(12px)', border: '1px solid var(--awm-gold)' }}>{anchor ? <Close /> : <Menu />}</Fab>
+    <Fab aria-label={anchor ? awmT("Close navigation") : awmT("Open navigation")} aria-expanded={Boolean(anchor)} aria-controls={anchor ? 'mobile-navigation' : undefined} onClick={event => {dismissIntro();setAnchor(anchor ? null : event.currentTarget)}} sx={{ position: 'fixed', right: 'max(16px, env(safe-area-inset-right))', bottom: 'calc(20px + env(safe-area-inset-bottom))', width: 52, height: 52, zIndex: 1301, color: 'var(--awm-bark)', background: floatingSurface, backdropFilter: 'blur(12px)', border: '1px solid var(--awm-gold)' }}>{anchor ? <Close /> : <Menu />}</Fab>
     <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} transformOrigin={{ vertical: 'bottom', horizontal: 'right' }} slotProps={{ paper: { sx: { mb: 1.5, borderRadius: '16px', p: 1, maxHeight: 'calc(100dvh - 110px)', width: 180 } } }}>
-      <Box component="nav" id="mobile-navigation" aria-label="Mobile navigation" sx={{ display: 'flex', flexDirection: 'column' }}>
-        {destinations.map(({href,label,Icon}) => <Button key={href} href={href===WATCH_ROUTE?WATCH_ROUTE:undefined} startIcon={<Icon />} aria-current={pathname === href ? 'page' : undefined} onClick={() => { setAnchor(null); if(href!==WATCH_ROUTE)router.push(href) }} sx={{ minHeight: 44, justifyContent: 'flex-start', color: 'var(--awm-bark)', bgcolor: pathname === href ? 'var(--awm-cream)' : undefined }}>{label}</Button>)}
+      <Box component="nav" id="mobile-navigation" aria-label={awmT("Mobile navigation")} sx={{ display: 'flex', flexDirection: 'column' }}>
+        {destinations.map(({href,label,Icon}) => <Button key={href} href={href===WATCH_ROUTE?WATCH_ROUTE:undefined} startIcon={<Icon />} aria-current={pathname === href ? 'page' : undefined} onClick={() => { setAnchor(null); if(href!==WATCH_ROUTE)router.push(href) }} sx={{ minHeight: 44, justifyContent: 'flex-start', color: 'var(--awm-bark)', bgcolor: pathname === href ? 'var(--awm-cream)' : undefined }}><UiText>{label}</UiText></Button>)}
       </Box>
     </Popover>
   </Box>

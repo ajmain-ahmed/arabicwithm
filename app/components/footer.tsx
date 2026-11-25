@@ -1,4 +1,5 @@
 'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 
 import React from 'react'
 import { Box, Container, Grid, IconButton, Typography } from '@mui/material'
@@ -185,8 +186,7 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
                 fontSize: '0.88rem', fontWeight: 300,
                 color: 'var(--awm-muted)', lineHeight: 1.8,
               }}>
-                Modern Standard Arabic made accessible — through immersive cartoons with interactive subtitles.
-              </Typography>
+                <UiText>{"Modern Standard Arabic made accessible — through immersive cartoons with interactive subtitles."}</UiText></Typography>
 
               {/* contact */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -231,18 +231,18 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
                 letterSpacing: '0.16em', textTransform: 'uppercase',
                 color: '#b8860b', mb: 2.5,
               }}>
-                {section.title}
+                <UiText>{section.title}</UiText>
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.4 }}>
                 {section.links.map(link => link.href === WATCH_ROUTE ? (
-                  <a key={link.label} className="awm-footer-link" href={WATCH_ROUTE} style={{ textDecoration: 'none' }}>{link.label}</a>
+                  <a key={link.label} className="awm-footer-link" href={WATCH_ROUTE} style={{ textDecoration: 'none' }}><UiText>{link.label}</UiText></a>
                 ) : (
                   <button
                     key={link.label}
                     className="awm-footer-link"
                     onClick={() => link.onClick ? link.onClick() : link.href && router.push(link.href)}
                   >
-                    {link.label}
+                    <UiText>{link.label}</UiText>
                   </button>
                 ))}
               </Box>
@@ -269,13 +269,13 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
               fontFamily: 'var(--font-sans), sans-serif',
               fontSize: '0.72rem', color: '#767676', letterSpacing: '0.04em',
             }}>
-              © {new Date().getFullYear()} ArabicWithM. All rights reserved.
+              © {new Date().getFullYear()} <bdi dir="ltr">ArabicWithM</bdi>. <UiText>{"All rights reserved."}</UiText>
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               {LEGAL_LINKS.map((link, i) => (
                 <React.Fragment key={link.label}>
                   <button className="awm-legal-link" onClick={() => router.push(link.href)}>
-                    {link.label}
+                    <UiText>{link.label}</UiText>
                   </button>
                   {i < LEGAL_LINKS.length - 1 && (
                     <Box sx={{

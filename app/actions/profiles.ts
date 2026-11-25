@@ -144,10 +144,12 @@ export async function fetchPublicProfile(identifier: string) {
         return {
           slug: book.slug,
           title: book.title,
+          titleAr:book.titleAr,
           author: book.author,
           cover: book.cover,
           coverCrop: book.coverCrop,
           chapter: chapters[index].title,
+          chapterAr:chapters[index].titleAr,
           position: index + 1,
           total: chapters.length,
           href: `/books/${book.slug}/${chapters[index].slug}`,

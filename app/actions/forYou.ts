@@ -1,4 +1,5 @@
 'use server'
+import {enrichEligibleMetadata} from '@/app/lib/localisation/metadata.server'
 
 import { getAuthenticatedUserId, guardAdmin } from '@/app/actions/auth'
 
@@ -117,11 +118,12 @@ export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> 
 }
 
 
-export async function fetchForYouGroups(): Promise<{id:string;name:string}[]> {
+export async function fetchForYouGroups(): Promise<{id:string;name:string;nameAr?:string}[]> {
  await requireForYouUser()
  const {data,error}=await serviceClient.from('transcript_groups').select('id,name').order('name')
  if(error)throw new Error('Unable to load content groups.')
- return data ?? []
+ const rows=await enrichEligibleMetadata('transcript_group',(data??[]).map(row=>({id:row.id,title:row.name})))
+ return rows.map(row=>({id:row.id,name:row.title,nameAr:row.titleAr}))
 }
 
 export interface ForYouDiagnostics {

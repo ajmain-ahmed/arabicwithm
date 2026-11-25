@@ -1,3 +1,5 @@
+
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
 import { Box, Paper, Typography } from '@mui/material'
 import type { DailyPhrase } from '@/app/lib/dailyPhrase'
 
@@ -24,8 +26,7 @@ export default function PhraseOfTheDay({ phrase }: { phrase: DailyPhrase | null 
         component="h2"
         sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600 }}
       >
-        Phrase of the Day
-      </Typography>
+        <UiText>{"Phrase of the Day"}</UiText></Typography>
       <Typography
         lang="ar"
         dir="rtl"

@@ -1,4 +1,6 @@
  'use client'
+import {UiText} from '@/app/components/WebsiteLocaleProvider'
+
 import { useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { Download } from '@mui/icons-material'
@@ -39,11 +41,11 @@ export default function PdfDownloadButton({ bookId, bookSlug, chapterSlug, small
   }
   return <>
     <Button className={className} onClick={() => void choose()} disabled={busy} startIcon={<Download />} size={small ? 'small' : 'medium'} variant="outlined" fullWidth={fullWidth} sx={{minHeight:44,px:2.25,borderRadius:'9px',textTransform:'none',fontWeight:700}}>{label}</Button>
-    {error && <Alert severity="error" sx={{gridColumn:'1 / -1',order:1}}>{error}</Alert>}
+    {error && <Alert severity="error" sx={{gridColumn:'1 / -1',order:1}}><UiText>{error}</UiText></Alert>}
     <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs" aria-labelledby="pdf-title">
-      <DialogTitle id="pdf-title">Download PDF</DialogTitle>
+      <DialogTitle id="pdf-title"><UiText>{"Download PDF"}</UiText></DialogTitle>
       <DialogContent>{files.length ? files.map(file => <Button key={file.language} fullWidth disabled={busy} onClick={() => void download(file)} startIcon={<Download />}>{file.language === 'ar' ? 'Arabic PDF' : 'English PDF'}</Button>) : 'No PDFs are available for this book yet.'}</DialogContent>
-      <DialogActions><Button onClick={() => setOpen(false)}>Close</Button></DialogActions>
+      <DialogActions><Button onClick={() => setOpen(false)}><UiText>{"Close"}</UiText></Button></DialogActions>
     </Dialog>
     <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="PDF downloads are available with AWM+." />
   </>
