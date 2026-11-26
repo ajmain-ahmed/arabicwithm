@@ -74,6 +74,11 @@ use the existing LTR Emotion cache as well as LTR component behaviour, without a
 new DOM wrapper or a locale-dependent key. All eight settings journeys pass the
 geometry, keyboard and player-identity checks after this correction.
 
+The critical Book-detail CI gate also caught horizontal overflow from a hidden
+audiobook label: MUI interpreted numeric `width: 1` as 100%, rather than 1px.
+Explicit pixel dimensions correct the label without changing visible layout.
+The existing 320/390/1440px action, PDF and no-overflow checks pass after the fix.
+
 Screenshots are generated under `artifacts/localisation/screenshots/`, including
 `chrome-1440-navbar-ar.png`, `chrome-1440-home-ar.png`,
 `chrome-1440-watch-filters-ar.png`, `chrome-1440-read-ar.png`,
