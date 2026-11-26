@@ -1186,7 +1186,7 @@ export default function EpisodePage({
                   sx={{ color: 'rgba(245,237,224,0.65)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold-light)', bgcolor: 'rgba(245,237,224,0.06)' } }}
                 >
                   <UiText>{"Settings"}</UiText></Button>
-                <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2.5, color: 'rgba(245,237,224,0.5)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, fontWeight: 600, pr: 0.5, whiteSpace: 'nowrap' }}>
+                <Box data-episode-keyboard-hints sx={{ ml: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 0, flexWrap: 'wrap', gap: 2.5, rowGap: 0.25, color: 'rgba(245,237,224,0.5)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, fontWeight: 600, pr: 0.5, whiteSpace: 'nowrap' }}>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
                     <SpaceBar sx={{ fontSize: 17 }} /> {' '}<UiText>{"play/pause"}</UiText></Box>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>

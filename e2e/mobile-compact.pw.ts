@@ -59,3 +59,16 @@ for(const width of widths)test(`compact mobile presentation at ${width}`,async({
  }
  expect(errors.filter(e=>/hydration|server rendered|client.*match/i.test(e))).toEqual([])
 })
+
+test('desktop Episode keyboard hints fit beside controls',async({page})=>{
+ await installYouTubeFixture(page)
+ for(const width of [1280,1366,1440]){
+  await page.setViewportSize({width,height:844})
+  await page.goto('/cartoons/test-show/clip-0')
+  const settings=page.getByRole('button',{name:'Settings',exact:true}).filter({visible:true}).first()
+  await expect(settings).toBeVisible();await page.evaluate(()=>document.fonts.ready)
+  const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,offscreen:Array.from(document.querySelectorAll('main *')).flatMap(el=>{const rect=el.getBoundingClientRect();return rect.width&&rect.right>innerWidth+.5?[{tag:el.tagName,text:el.textContent?.slice(0,80),right:rect.right}]:[]}).slice(-8)}))
+  console.log('Episode desktop fit',JSON.stringify({toolbar:await settings.locator('..').boundingBox(),...overflow}))
+  expect(overflow.scroll).toBeLessThanOrEqual(width)
+ }
+})

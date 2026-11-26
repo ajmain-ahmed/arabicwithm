@@ -40,6 +40,13 @@ fit in the first screen. At 1440px, navbar remains **65px**, Featured remains
 Featured artwork, positions, rotation, links, lazy-loading/recovery and player
 logic are retained. Existing Safari startup recovery code is unchanged.
 
+The new Linux Chromium desktop check exposed an existing Episode keyboard-hint
+row overflow (3px at 1440px; reproduced locally as 80px at 1280px). The Episode
+component matched deployed commit `75ae740` before this correction. Hints now
+wrap only when their row has insufficient space; control sizes, text sizes,
+panel widths and normal desktop proportions remain unchanged. The regression
+check covers 1280, 1366 and 1440px without allowing overflow.
+
 ## Verification artifacts
 
 `e2e/mobile-compact.pw.ts` captures first-screen screenshots and geometry for
@@ -60,7 +67,7 @@ unit coverage. Metadata review and Admin access tests remain active.
 Validation: TypeScript, lint (zero errors; ten pre-existing warnings), the
 Cloudflare build and all **1,700 unit tests** pass (266 files; six files/eight
 tests skipped). The mobile/feed matrix has 32 passing journeys, with eight
-settings/player journeys and four loaded-Home capture journeys across Chrome,
+settings/player journeys, four desktop keyboard-hint regressions and four loaded-Home capture journeys across Chrome,
 WebKit, Firefox and Edge. Profile assertions select the visible retained route;
 desktop comparisons use stable position/width/padding/type measurements rather
 than random content-dependent container heights. Featured height is compared
