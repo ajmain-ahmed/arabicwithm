@@ -540,7 +540,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
       {!!profile.warnings?.length && <Alert severity="info" sx={{ mx: 2, mt: 2 }}>{profile.warnings.join(' ')}{' '}<UiText>{"Your profile is still available. Refresh to retry."}</UiText></Alert>}
       {/* body */}
       <Box sx={{ background: 'var(--awm-cream-light)', minHeight: 'calc(100dvh - var(--awm-navbar-height))', transition: 'background-color 180ms ease', pb: { xs: 9, md: 0 } }}>
-        <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
+        <Container data-profile-page maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
           <Box sx={{ display: 'flex', gap: { md: 5 }, flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'stretch', md: 'flex-start' } }}>
             {/* sidebar (desktop) */}
             <Box component="nav" aria-label={awmT("Profile sections")} sx={{ display: { xs: 'none', md: 'flex' }, width: 220, flexShrink: 0, position: 'sticky', top: 96, flexDirection: 'column', gap: 0.5 }}>

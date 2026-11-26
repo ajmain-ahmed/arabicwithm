@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./mobileCompact.css";
 
 :root {
   --awm-mobile-bottom-clearance: calc(104px + env(safe-area-inset-bottom));

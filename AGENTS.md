@@ -321,6 +321,14 @@ the user identifies the target and explicitly asks for it to be added or updated
 
 ## Website localisation
 
+Website bilingual mode is temporarily dormant (`WEBSITE_LOCALISATION_ENABLED =
+false`). Public chrome always renders English/LTR, including saved Arabic
+preferences; keep the dictionaries, metadata storage and renderers intact.
+For You is temporarily Arabic-source only: enforce canonical English-group and
+explicit source-language exclusions on the server, not only in UI controls.
+Phone layout tokens live in `app/mobileCompact.css` below 600px. Keep wider
+layouts and educational text sizes unchanged; never use zoom or root scaling.
+
 Use `WebsiteLocaleProvider`, `UiText` and its `t` function for learner interface
 text. Preserve English defaults and canonical filter keys. The validated EN/AR
 preference is stored locally and in a preference cookie so server HTML matches

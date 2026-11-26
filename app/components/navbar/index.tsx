@@ -18,7 +18,6 @@ import { fetchMyDisplayName } from '@/app/actions/profiles'
 // mounted on first open for the same reason — it pulls supabase-js too.
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
-import WebsiteLanguageButton from './WebsiteLanguageButton'
 import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
 import UserMenu from './UserMenu'
@@ -192,7 +191,7 @@ export default function Navbar() {
                 }}
             >
                 <Container maxWidth="xl">
-                    <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
+                    <Toolbar data-site-toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {/* CSS selects the correct header before hydration. A server
                             desktop default put the Home logo over Watch on phones. */}
                             <Box data-navbar-mobile sx={{ display: { xs: 'grid', md: 'none' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', width: '100%' }}>
@@ -210,7 +209,7 @@ export default function Navbar() {
                                 >
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
-                                <WebsiteLanguageButton />
+
                                 </Box>
 
                                 <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center', pl: 0 }}>
@@ -260,7 +259,7 @@ export default function Navbar() {
                                 <BrandLogo activeMember={activeMember} isMobile={false} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
-                                    <WebsiteLanguageButton />
+
                                     {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}><UiText>{"Admin"}</UiText></Button>}
                                     <Tooltip title={t(mode === 'dark' ? "Use light mode" : "Use dark mode")}>
                                         <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={t(`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`)}>

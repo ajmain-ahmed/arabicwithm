@@ -47,6 +47,7 @@ export default function CatalogueLayout({
   return (
     <Box
       component="div"
+      data-catalogue-layout
       sx={{
         minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
         '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },

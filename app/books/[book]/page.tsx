@@ -120,7 +120,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   )
 
   return (
-    <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
+    <Box data-book-detail component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
       <StructuredData data={[
         breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Arabic Books', path: '/books' }, { name: book.title, path: `/books/${encodeURIComponent(book.slug)}` }]),
         {
@@ -144,8 +144,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           gridTemplateAreas: book.cover ? { xs: '"cover" "info" "chapters"', sm: '"cover info" ". chapters"', md: '"cover info" "cover chapters"' } : '"info" "chapters"',
           columnGap: 4, rowGap: 3, alignItems: 'start',
         }}>
-          {book.cover && <Box sx={{ gridArea: 'cover', width: '100%', maxWidth: { xs: 220, sm: 300, md: 520 }, justifySelf: { xs: 'center', sm: 'start' } }}>{coverImage}</Box>}
-          <Paper elevation={0} sx={{ gridArea: 'info', minWidth: 0, p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', minHeight: book.cover ? { md: 450 } : undefined }}>
+          {book.cover && <Box data-book-cover sx={{ gridArea: 'cover', width: '100%', maxWidth: { xs: 220, sm: 300, md: 520 }, justifySelf: { xs: 'center', sm: 'start' } }}>{coverImage}</Box>}
+          <Paper data-book-info elevation={0} sx={{ gridArea: 'info', minWidth: 0, p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', minHeight: book.cover ? { md: 450 } : undefined }}>
             {infoFields}
           </Paper>
           {completed && <Box sx={{ gridArea: 'chapters', minWidth: 0 }}>{chaptersList}</Box>}

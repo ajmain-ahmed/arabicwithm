@@ -49,7 +49,7 @@ export default function SettingsDialog({
   }[textFont]
 
   return (
-    <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 440, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
+    <Dialog data-reading-settings open={open} onClose={onClose} slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 440, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
       <DialogTitle sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 600, color: 'var(--awm-bark)', pb: 0.5, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <UiText>{"Settings"}</UiText><IconButton onClick={onClose} size="small" aria-label={awmT("Close settings")} sx={{ color: 'var(--awm-muted)', mr: -0.5 }}><Close sx={{ fontSize: '1.2rem' }} /></IconButton>
       </DialogTitle>

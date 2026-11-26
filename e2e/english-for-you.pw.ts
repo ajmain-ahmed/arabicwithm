@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test'
+test.skip(true,'Public English-source For You is temporarily paused; retained for reactivation.')
 import {installYouTubeFixture} from './helpers/youtube'
 import example from './english-for-you-data.json'
 const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`

@@ -1,5 +1,13 @@
 # Learner website localisation
 
+**26 November 2026: bilingual website mode is temporarily paused.**
+`WEBSITE_LOCALISATION_ENABLED` is false. Navbar language controls are removed,
+and server HTML and the provider return English/LTR even when old Arabic
+preferences exist. Dictionaries, metadata, the original active-mode tests and
+renderers are retained for reactivation. The validation below records the
+preceding bilingual release; current release evidence is in
+[mobile-compact-release.md](mobile-compact-release.md).
+
 Implemented and validated on 25–26 November 2026. Deployment status is reported
 separately after the GitHub production workflow finishes.
 

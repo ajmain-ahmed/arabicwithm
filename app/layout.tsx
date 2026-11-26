@@ -1,3 +1,4 @@
+import {WEBSITE_LOCALISATION_ENABLED} from '@/app/lib/localisation/features'
 import type { Metadata } from "next"
 import Script from 'next/script'
 import DirectionalStyles from '@/app/components/DirectionalStyles'
@@ -75,7 +76,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const initialLocale=websiteLocale((await cookies()).get(WEBSITE_LOCALE_KEY)?.value)
+  const initialLocale=WEBSITE_LOCALISATION_ENABLED?websiteLocale((await cookies()).get(WEBSITE_LOCALE_KEY)?.value):'en'
   return (
     <html lang={initialLocale} dir={localeDirection(initialLocale)} data-theme="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
       <head>

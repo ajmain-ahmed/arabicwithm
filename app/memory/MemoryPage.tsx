@@ -226,7 +226,7 @@ function MemorySession({ library, loadError, embedded = false, onContinue }: { l
 
   return (
     <Box component="div" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: embedded ? 0 : { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 }, ...(embedded ? { minHeight: 0, pb: 0, '& > .MuiContainer-root': { p: 0 }, '& h1': { fontSize: 24 } } : {}) }}>
-      <Container maxWidth="md" sx={{ pt: activePractice ? {xs:1.5,md:2} : { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
+      <Container data-memory-page maxWidth="md" sx={{ pt: activePractice ? {xs:1.5,md:2} : { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><PsychologyOutlined /></Box>
           <Box>
@@ -291,7 +291,7 @@ function MemorySession({ library, loadError, embedded = false, onContinue }: { l
             <Button component={Link} href="/memory" variant="contained" sx={{ mt: 2.5, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>{library.newOnly ? awmT("Practise reviewed cards") : awmT("Try Random practice")}</Button>
           </Paper>
         ) : !started ? (
-          <Paper elevation={0} sx={{ mt: 3, minHeight: { xs: 330, md: 390 }, p: { xs: 3, md: 5 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
+          <Paper data-memory-start elevation={0} sx={{ mt: 3, minHeight: { xs: 330, md: 390 }, p: { xs: 3, md: 5 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
             <Box><Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 800, letterSpacing: '.13em', textTransform: 'uppercase' }}><LocalisedContent original={awmT(library.scopeTitle)} arabic={library.scopeTitleAr}/></Typography><Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 31, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)' }}><UiText>{"Ready to remember?"}</UiText></Typography><Typography sx={{ mt: 1, maxWidth: 520, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.65 }}><UiText>{"Read the prompt, say the translation aloud or in your head, then reveal the answer."}</UiText></Typography><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} variant="contained" startIcon={<PlayCircleOutlineRounded />} sx={{ mt: 3, minHeight: 48, px: 4, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}><UiText>{"Start"}</UiText></Button></Box>
           </Paper>
         ) : complete ? (

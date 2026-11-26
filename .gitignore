@@ -57,3 +57,4 @@ backups/
 
 # Generated localisation source audit (rebuild with scripts/audit-localisation.mjs)
 /artifacts/localisation/
+/artifacts/mobile-compact/

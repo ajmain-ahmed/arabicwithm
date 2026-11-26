@@ -1,4 +1,6 @@
+import {WEBSITE_LOCALISATION_ENABLED} from '../app/lib/localisation/features'
 import {test,expect} from '@playwright/test'
+test.skip(!WEBSITE_LOCALISATION_ENABLED,'Bilingual website mode is temporarily paused; retained for reactivation.')
 import {mkdir,writeFile} from 'node:fs/promises'
 import {installYouTubeFixture} from './helpers/youtube'
 

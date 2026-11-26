@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {beforeEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({spotlight:vi.fn(),pool:vi.fn(),user:vi.fn(),from:vi.fn(),video:vi.fn(),segments:vi.fn(),filter:vi.fn(),rpc:vi.fn()}))
-vi.mock('@/app/lib/transcriptSourceLanguage.server',()=>({transcriptSourceLanguages:async()=>new Map()}))
+const mocks=vi.hoisted(()=>({languages:vi.fn(),spotlight:vi.fn(),pool:vi.fn(),user:vi.fn(),from:vi.fn(),video:vi.fn(),segments:vi.fn(),filter:vi.fn(),rpc:vi.fn()}))
+vi.mock('@/app/lib/transcriptSourceLanguage.server',()=>({transcriptSourceLanguages:mocks.languages}))
 vi.mock('@/app/lib/forYouGroups',()=>({forYouGroupPool:mocks.pool}))
 vi.mock('@/app/lib/homeSpotlight.server',()=>({loadHomeSpotlight:mocks.spotlight}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,rpc:mocks.rpc}}))
@@ -13,6 +13,7 @@ import {fetchHomeForYouSpotlight,fetchForYouTranscript,fetchForYouClips,fetchFor
 const id='99999999-9999-4999-8999-999999999990'
 beforeEach(()=>{
  vi.clearAllMocks()
+ mocks.languages.mockResolvedValue(new Map())
  mocks.pool.mockImplementation(async(language,groups)=>({groups:language==='en'?['5b98c563-5c35-4696-98e1-06aa000eb622']:groups,empty:false,accepts:()=>true}))
  mocks.user.mockResolvedValue('signed-in-user');mocks.spotlight.mockResolvedValue(null)
  mocks.video.mockResolvedValue({data:{id,raw_transcript:{content:[{tokens:[{arabic:'كِتَابٌ',english:'book',start_ms:495000,end_ms:496000}]}]}},error:null})
@@ -79,14 +80,16 @@ it('public Spotlight delegates once to its dedicated selector without feed/accou
  expect(await fetchHomeForYouSpotlight()).toBeNull()
  expect(mocks.spotlight).toHaveBeenCalledOnce();expect(mocks.pool).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.user).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
 })
-it('requests English explicitly and rejects invalid languages rather than mixing pools',async()=>{
+it('forces old English requests into the Arabic pool and rejects invalid languages',async()=>{
  mocks.rpc.mockResolvedValue({data:[],error:null});expect(await fetchForYouClips('en-seed',[],[],[],'en')).toEqual([])
- expect(mocks.rpc).toHaveBeenLastCalledWith('transcript_for_you_groups',expect.objectContaining({p_group_ids:['5b98c563-5c35-4696-98e1-06aa000eb622']}))
+ expect(mocks.pool).toHaveBeenLastCalledWith('ar',[])
+ expect(mocks.rpc).toHaveBeenLastCalledWith('transcript_for_you_groups',expect.objectContaining({p_group_ids:[]}))
  await expect(fetchForYouClips('seed',[],[],[],'fr' as 'en')).rejects.toThrow()
 })
 
-it('normal AR feed still discards English sources before raw token fallback and refill from the existing RPC',async()=>{
- mocks.pool.mockResolvedValue({groups:[],empty:false,accepts:(source:string)=>source!==id})
+it.each(['group','metadata'])('AR feed rejects English %s classification before raw fallback and refills',async(classification)=>{
+ mocks.pool.mockResolvedValue({groups:[],empty:false,accepts:(source:string)=>classification!=='group'||source!==id})
+ mocks.languages.mockResolvedValue(classification==='metadata'?new Map([[id,'en']]):new Map())
  const outside='99999999-9999-4999-8999-999999999991'
  const clip=(source:string,segment:number)=>({video:{id:source,youtube_id:'abcdefghij0'},clip_start_ms:0,clip_end_ms:45000,segments:[{id:segment,position:0,start_seconds:0,end_seconds:45,original_text:'A meaningful spoken sentence for learners.',source_tokens:[{arabic:'book',english:'book'}]}]})
  mocks.from.mockImplementation((table:string)=>{
@@ -117,4 +120,11 @@ it('rejects non-speech candidates and refills using the same existing filtered R
  const bad=make(id,900,'[Music]'),good=make('99999999-9999-4999-8999-999999999991',901,'This complete spoken sentence is useful for learning.')
  mocks.rpc.mockResolvedValueOnce({data:[bad],error:null}).mockResolvedValueOnce({data:[good],error:null})
  const result=await fetchForYouClips('speech');expect(result.map(clip=>clip.video.id)).toEqual([good.video.id]);expect(mocks.rpc.mock.calls[1][1].p_excluded).toContain(900)
+})
+
+it.each(['group','metadata'])('does not return an English full transcript classified by %s',async(classification)=>{
+ mocks.pool.mockResolvedValue({groups:[],empty:false,accepts:()=>classification!=='group'})
+ mocks.languages.mockResolvedValue(classification==='metadata'?new Map([[id,'en']]):new Map())
+ expect(await fetchForYouTranscript(id)).toEqual([])
+ expect(mocks.segments).not.toHaveBeenCalled()
 })

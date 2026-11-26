@@ -147,7 +147,7 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
   const router   = useRouter()
   const sections = FOOTER_SECTIONS()
   return (
-    <Box component="footer" className="awm-site-footer" sx={{ display: 'block', pb: { xs: `calc(${homeMobileSpacing?72:76}px + env(safe-area-inset-bottom, 0px))`, md: 0 }, bgcolor: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
+    <Box component="footer" data-home-footer={homeMobileSpacing||undefined} className="awm-site-footer" sx={{ display: 'block', pb: { xs: `calc(${homeMobileSpacing?72:76}px + env(safe-area-inset-bottom, 0px))`, md: 0 }, bgcolor: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
       <ClientStyles id="awm-footer-styles" css={FOOTER_CSS} />
 
       {/* ── main columns ── */}

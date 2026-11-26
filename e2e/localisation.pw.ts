@@ -1,4 +1,6 @@
+import {WEBSITE_LOCALISATION_ENABLED} from '../app/lib/localisation/features'
 import {test,expect} from '@playwright/test'
+test.skip(!WEBSITE_LOCALISATION_ENABLED,'Bilingual website mode is temporarily paused; retained for reactivation.')
 import {installYouTubeFixture} from './helpers/youtube'
 import {mkdir} from 'node:fs/promises'
 for(const width of [390,768,1440])test(`website locale persistence and player/workspace identity ${width}`,async({page,request},info)=>{

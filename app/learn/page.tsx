@@ -18,7 +18,7 @@ export default function LearnPage() {
     { name: 'Grammar activity', title: 'Grammar practice', content: <><GrammarActivity question={question} /><Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 2 }}><Button href="/grammar?branch=nahw"><UiText>{"Explore Naḥw"}</UiText></Button><Button href="/grammar?branch=sarf"><UiText>{"Explore Ṣarf"}</UiText></Button></Box></> },
     { name: 'Memory activity', title: 'Memory practice', content: <MemoryActivity /> },
   ]
-  return <Box sx={{ px: { xs: 1.5, sm: 3 }, py: 3, pb: 'var(--awm-mobile-bottom-clearance)' }}>
+  return <Box data-learn-page sx={{ px: { xs: 1.5, sm: 3 }, py: 3, pb: 'var(--awm-mobile-bottom-clearance)' }}>
     <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: 30, mb: 1 }}><UiText>{"A little Arabic, every day"}</UiText></Typography>
     <Typography sx={{ color: 'var(--awm-muted)', mb: 3 }}><UiText>{"Three activities ready for you. Take them at your own pace."}</UiText></Typography>
     <Box data-learn-workspace dir="ltr" sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', md: 'repeat(3,minmax(0,1fr))' }, gap: 2, alignItems: 'start' }}>

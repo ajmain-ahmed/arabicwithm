@@ -1,25 +1,24 @@
 import {test,expect} from '@playwright/test'
 import {installYouTubeFixture} from './helpers/youtube'
 
-for(const width of [390,1440])test(`Arabic watch settings preserve the player at ${width}px`,async({page,context},info)=>{
+for(const width of [390,1440])test(`English settings ignore saved Arabic and preserve the player at ${width}px`,async({page,context},info)=>{
  await context.addCookies([{name:'awm-website-locale',value:'ar',domain:'127.0.0.1',path:'/'}])
  await installYouTubeFixture(page)
  await page.setViewportSize({width,height:1000})
  await page.goto('/cartoons/test-show/clip-0')
- await expect(page.locator('html')).toHaveAttribute('lang','ar')
+ await expect(page.locator('html')).toHaveAttribute('lang','en')
  const translation=page.getByText('This is a book.',{exact:true}).filter({visible:true}).first()
  await expect(translation).toHaveAttribute('dir','auto')
  expect(await translation.evaluate(el=>getComputedStyle(el).direction)).toBe('ltr')
  const player=page.locator('iframe').first()
  await expect(player).toBeAttached()
  await player.evaluate(el=>el.setAttribute('data-settings-identity','retained'))
- await page.getByRole(width<900?'tab':'button',{name:'الإعدادات',exact:true}).filter({visible:true}).first().click()
+ await page.getByRole(width<900?'tab':'button',{name:'Settings',exact:true}).filter({visible:true}).first().click()
  const dialog=page.getByRole('dialog')
- await expect(dialog).toContainText('إظهار الحركات على الكلمات العربية')
- await expect(dialog).toContainText('ضبط حجم النص العربي والترجمة والمفردات والقواعد')
- await expect(dialog.getByRole('button',{name:'النسخ',exact:true})).toBeVisible()
- await expect(dialog.getByRole('button',{name:'الأميري',exact:true})).toBeVisible()
- expect(await dialog.innerText()).not.toMatch(/Display vowel|When enabled|Adjust Arabic|Text Size|Show Diacritics/)
+ await expect(dialog).toContainText('Display vowel marks on Arabic words')
+ await expect(dialog).toContainText('Adjust Arabic, translation, vocabulary, and grammar text')
+ await expect(dialog.getByRole('button',{name:'Naskh',exact:true})).toBeVisible()
+ await expect(dialog.getByRole('button',{name:'Amiri',exact:true})).toBeVisible()
  const range=dialog.locator('.MuiSlider-root').first()
  const rail=(await range.boundingBox())!,thumb=(await range.locator('.MuiSlider-thumb').boundingBox())!
  const fraction=await range.locator('input').evaluate(el=>{const input=el as HTMLInputElement;return (Number(input.value)-Number(input.min))/(Number(input.max)-Number(input.min))})
@@ -29,7 +28,7 @@ for(const width of [390,1440])test(`Arabic watch settings preserve the player at
  await input.press(previous<maximum?'ArrowRight':'ArrowLeft')
  const updated=Number(await input.inputValue())
  expect(previous<maximum?updated>previous:updated<previous).toBe(true)
- await dialog.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-watch-settings-ar.png`})
- await dialog.getByRole('button',{name:'إغلاق الإعدادات',exact:true}).click()
+ await dialog.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-watch-settings-en.png`})
+ await dialog.getByRole('button',{name:'Close settings',exact:true}).click()
  await expect(player).toHaveAttribute('data-settings-identity','retained')
 })

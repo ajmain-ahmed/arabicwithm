@@ -28,10 +28,10 @@ async function allowForYouRead(){
  if (!(await durableRateLimit(`guest-for-you:${ip}`,120,60000)).ok)throw new Error('Please try For You again shortly.')
 }
 
-async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = [], language:'ar'|'en'='ar', limit=5): Promise<ForYouClip[]> {
+async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = [], limit=5): Promise<ForYouClip[]> {
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).parse({seed,excluded,recent})
  const excludedIds=new Set(input.excluded),recentIds=input.recent.slice(0,100),clips:ForYouClip[]=[]
- const pool=await forYouGroupPool(language,groups)
+ const pool=await forYouGroupPool('ar',groups)
  if(pool.empty)return []
  const rawSources=new Map<string,unknown>()
  const deadline=Date.now()+8000
@@ -41,12 +41,13 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
   if(error){diagnostic('rpc_failure',{code:error.code});throw new Error('Unable to load For You clips. Please retry.')}
   if(!Array.isArray(data)){diagnostic('invalid_batch');throw new Error('Unable to load For You clips. Please retry.')}
   if(!data.length)break
+  const languages=await transcriptSourceLanguages(data.flatMap(value=>forYouRecord(value)&&forYouRecord(value.video)&&typeof value.video.id==='string'&&z.string().uuid().safeParse(value.video.id).success?[value.video.id]:[]))
   let rejected=false,progress=false
   for(const value of data){
    if(!forYouRecord(value))continue
    const video=forYouRecord(value.video)?value.video:null
    if(!video||typeof video.id!=='string')continue
-   if(!pool.accepts(video.id)){
+   if(!pool.accepts(video.id)||languages.get(video.id)==='en'){
     // Skip every candidate of a rejected source, not just its opening clip.
     // Existing RPC remains responsible for publication, quality and randomness.
     for(let offset=0;;offset+=500){
@@ -78,8 +79,7 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
   }
   if(!rejected||!progress)break
  }
- const selected=clips.slice(0,limit),languages=await transcriptSourceLanguages(selected.map(clip=>clip.video.id))
- return selected.map(clip=>({...clip,video:{...clip.video,source_language:languages.get(clip.video.id)??'ar'}}))
+ return clips.slice(0,limit).map(clip=>({...clip,video:{...clip.video,source_language:'ar' as const}}))
 }
 
 /** Every batch reads the transactionally maintained live candidate index. */
@@ -89,7 +89,8 @@ export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:s
  if(!input.success) throw new Error('Unable to load For You clips. Please retry.')
  z.array(z.string().uuid()).max(100).parse(groups)
  z.enum(['ar','en']).parse(language)
- return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent,groups,language)
+ // Old clients may still send "en". Public For You is temporarily Arabic-only.
+ return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent,groups)
 }
 
 /** Load a source once on opening a clip, never on time updates or seeks.
@@ -100,6 +101,8 @@ export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> 
  const {data:video,error}=await serviceClient.from('youtube_transcripts').select('id,raw_transcript').eq('id',id).eq('status','ready').eq('explore_published',true).filter('source_origin','eq','website_admin_transcript').maybeSingle()
  if(error)throw new Error('Unable to load the source transcript.')
  if(!video)return []
+ const pool=await forYouGroupPool('ar',[]),languages=await transcriptSourceLanguages([id])
+ if(!pool.accepts(id)||languages.get(id)==='en')return []
  const raw=forYouRecord(video.raw_transcript)&&Array.isArray(video.raw_transcript.content)?video.raw_transcript.content:[]
  const segments:ForYouSegment[]=[]
  for(let after=-1;;){

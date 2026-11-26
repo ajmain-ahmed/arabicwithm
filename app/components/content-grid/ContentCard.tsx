@@ -123,6 +123,8 @@ export default function ContentCard({
 
   return (
     <Paper
+      data-content-card
+      data-dense-mobile={denseMobileTile||undefined}
       component={Link}
       href={href}
       prefetch={false}

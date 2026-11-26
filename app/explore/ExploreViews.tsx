@@ -16,18 +16,13 @@ import {useForYouCache} from '@/store/forYouStore'
 
 type ExploreView = 'explore' | 'foryou'
 
-function LanguageSwitch({value,onChange}:{value:'ar'|'en';onChange:(value:'ar'|'en')=>void}){
- const {t:awmT}=useWebsiteLocale()
-return <Box role="group" aria-label={awmT("Source video language")} sx={{display:{xs:'none',md:'flex'},border:'1px solid #ffffff55',borderRadius:'999px',p:.25}}>{(['ar','en'] as const).map(language=><Button key={language} aria-pressed={value===language} onClick={()=>onChange(language)} sx={{minWidth:40,minHeight:36,borderRadius:'999px',color:'#fff',bgcolor:value===language?'#ffffff33':'transparent'}}>{language.toUpperCase()}</Button>)}</Box>}
-
-function MobileViewTools({view,onView,language,onLanguage}:{view:ExploreView;onView:(view:ExploreView)=>void;language:'ar'|'en';onLanguage:(language:'ar'|'en')=>void}){
+function MobileViewTools({view,onView}:{view:ExploreView;onView:(view:ExploreView)=>void}){
  const {t:awmT}=useWebsiteLocale()
 
  const narrow=useMediaQuery('(max-width:767.95px)')
  if(view==='explore'&&narrow)return <Box data-mobile-view-tools><ViewSwitch mobile view={view} onChange={onView} hint={false} onDismiss={()=>{}}/></Box>
  return <Box data-mobile-view-tools sx={{display:'flex',alignItems:'center',flexWrap:'nowrap',gap:'var(--mobile-toolbar-gap, 4px)',minWidth:0,flexShrink:0}}>
   <Button data-mobile-view-toggle aria-label={view==='foryou'?awmT("For You selected — switch to Explore"):awmT("Explore selected — switch to For You")} onClick={()=>onView(view==='foryou'?'explore':'foryou')} sx={{width:'var(--mobile-view-width, 58px)',minWidth:0,height:'var(--mobile-control-height, 36px)',p:0,fontSize:'var(--mobile-control-font, 11px)',fontWeight:600,textTransform:'none',whiteSpace:'nowrap',border:'1px solid #ffffff44',borderRadius:'9999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}}>{view==='foryou'?awmT("For You"):awmT("Explore")}</Button>
-  {view==='foryou'&&<Button data-mobile-language-toggle aria-label={language==='ar'?awmT("Arabic selected — switch For You to English"):awmT("English selected — switch For You to Arabic")} onClick={()=>onLanguage(language==='ar'?'en':'ar')} sx={{width:'var(--mobile-language-width, 32px)',minWidth:0,height:'var(--mobile-control-height, 36px)',flexShrink:0,px:0,py:0,fontSize:'var(--mobile-control-font, 11px)',fontWeight:600,border:'1px solid #ffffff44',borderRadius:'9999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}}>{language.toUpperCase()}</Button>}
  </Box>
 }
 
@@ -55,8 +50,6 @@ export default function ExploreViews({ initialSeed, initialBatch }: { initialVie
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const view: ExploreView = (searchParams.get('view') ?? searchParams.get('tab')) === 'foryou' ? 'foryou' : 'explore'
-  const [language,setLanguage]=useState<'ar'|'en'>(()=>useForYouCache.getState().language)
-  function selectLanguage(next:'ar'|'en'){if(next===language)return;clearForYouTranscripts();useForYouCache.setState({language:next,clips:[],index:0,excluded:[],seenSources:[],seed:''});setLanguage(next)}
   const requestView = (next: ExploreView) => {
     if(next===view)return
     // The router patches external History writes and preserves its own state.
@@ -66,9 +59,9 @@ export default function ExploreViews({ initialSeed, initialBatch }: { initialVie
   useEffect(()=>{
     // One route visit, including switches between Explore and For You. A fresh
     // server visit/refresh gets a new seed and cannot restore an old sequence.
-    if(useForYouCache.getState().sessionId!==initialSeed){
+    if(useForYouCache.getState().sessionId!==initialSeed||useForYouCache.getState().language!=='ar'){
       clearForYouTranscripts()
-      useForYouCache.setState({sessionId:initialSeed,seed:'',clips:[],index:0,excluded:[],seenSources:[],groups:[]})
+      useForYouCache.setState({language:'ar',sessionId:initialSeed,seed:'',clips:[],index:0,excluded:[],seenSources:[],groups:[]})
     }
   },[initialSeed])
   const [hintFor, setHintFor] = useState<ExploreView | null>(null)
@@ -84,9 +77,9 @@ export default function ExploreViews({ initialSeed, initialBatch }: { initialVie
   }, [view])
   const dismiss = () => { setHintFor(null); if (timer.current) clearTimeout(timer.current) }
   const rail = <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} />
-  const feed=<ForYouFeed key={`${user?.id??'guest'}:${language}`} guest={!user} mobileViewControl={<MobileViewTools view={view} onView={requestView} language={language} onLanguage={selectLanguage}/>} language={language} languageControl={<LanguageSwitch value={language} onChange={selectLanguage}/>} mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss}/>} desktopControls={settings=><ViewSwitch view={view} onChange={requestView} hint={hintFor===view} onDismiss={dismiss} trailing={settings}/>}/>
+  const feed=<ForYouFeed key={user?.id??'guest'} guest={!user} mobileViewControl={<MobileViewTools view={view} onView={requestView}/>} language="ar" mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss}/>} desktopControls={settings=><ViewSwitch view={view} onChange={requestView} hint={hintFor===view} onDismiss={dismiss} trailing={settings}/>}/>
   return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
-    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><MobileViewTools view={view} onView={requestView} language={language} onLanguage={selectLanguage}/></Box>
+    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><MobileViewTools view={view} onView={requestView}/></Box>
     {view==='explore'?<ExploreFeed railTop={<Box sx={{display:{xs:'none',md:'block'}}}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch}/>:loading?<Box role="status" sx={{p:4,textAlign:'center'}}><UiText>{"Loading For You..."}</UiText></Box>:user?<ForYouAllowance key={user.id} onExplore={()=>requestView('explore')}>{feed}</ForYouAllowance>:<GuestForYouAllowance>{feed}</GuestForYouAllowance>}
   </Box>
 }

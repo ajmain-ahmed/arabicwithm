@@ -55,10 +55,12 @@ jobs:
         env:
           AWM_TEST_LEARN_CONTINUITY: '1'
 
-      - name: Verify English-source subtitle layout and playback
-        run: npx playwright test --config=playwright.english-subtitles.config.ts --project=chromium-ci
+      - name: Verify Arabic-only feed, dormant locale and compact mobile layouts
+        run: npx playwright test --config=playwright.mobile-compact.config.ts --project=chromium-ci
+        env:
+          AWM_SIZING_WIDTHS: '390,1440'
 
-      - name: Verify bilingual layouts, activity continuity and metadata review
+      - name: Verify preserved metadata review and English settings
         run: |
           npx playwright test --config=playwright.localisation.config.ts --project=chromium-ci
           npx playwright test --config=playwright.localisation-settings.config.ts --project=chromium-ci
@@ -68,7 +70,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: localisation-screenshots
-          path: artifacts/localisation/screenshots
+          path: |
+            artifacts/localisation/screenshots
+            artifacts/mobile-compact/after
           if-no-files-found: ignore
           retention-days: 14
 

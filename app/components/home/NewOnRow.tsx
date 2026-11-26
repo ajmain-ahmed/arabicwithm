@@ -247,7 +247,7 @@ export default function NewOnRow({
   }
 
   return (
-    <Box sx={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0 }}>
+    <Box data-home-catalogue-row sx={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0 }}>
       {viewAllHref && (
         <Box
           component={Link}

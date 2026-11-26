@@ -194,7 +194,7 @@ export default function HomeDashboard({ books, homepageBooks = books, newShows, 
           <FeaturedCarousel key={featuredItems.map(item => item.show.id).join(':')} items={featuredItems} />
         </>}
 
-        <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 3, md: 5 } }}>
+        <Box className="awm-pattern-section" data-home-content sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 3, md: 5 } }}>
           {user && <CheckoutReturnNotice userId={user.id} />}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>

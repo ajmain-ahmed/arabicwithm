@@ -1,4 +1,5 @@
 ﻿import {test,expect,type Page} from '@playwright/test'
+test.skip(true,'Public English-source For You is temporarily paused; renderer coverage remains in unit tests and Transcript Library.')
 import {installYouTubeFixture} from './helpers/youtube'
 import {readFileSync} from 'node:fs'
 const fixture:typeof import('./english-upload-subtitle-data.json')=JSON.parse(readFileSync(new URL('./english-upload-subtitle-data.json',import.meta.url),'utf8'))
