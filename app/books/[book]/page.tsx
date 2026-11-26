@@ -109,7 +109,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                 </Box>
                 <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
-                {audioChapterIds.has(chapter.id) && <HeadphonesRounded aria-label="Audiobook available" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} />}
+                {audioChapterIds.has(chapter.id) && <><HeadphonesRounded aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} /><Typography component="span" sx={{position:'absolute',width:1,height:1,p:0,m:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap'}}><UiText>{'Audiobook available'}</UiText></Typography></>}
                 <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
               </Paper>
             </ChapterLink>

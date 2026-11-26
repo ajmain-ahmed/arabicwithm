@@ -9,7 +9,7 @@ test('audit Arabic learner routes for remaining English controls',async({page,co
  await installYouTubeFixture(page)
  await mkdir('artifacts/localisation',{recursive:true})
  const report:Record<string,unknown>[]=[]
- const routes=['/','/cartoons','/cartoons?view=shows','/cartoons/test-show','/cartoons/test-show/clip-0','/books','/books?mode=listen','/books/level/A1','/books/test-book','/books/test-book/chapter-1','/listen/test-book','/explore','/explore?view=foryou','/learn','/grammar','/grammar?branch=sarf','/memory','/word-search','/profile','/support','/feedback','/privacy','/terms','/reset-password','/missing-localisation-route']
+ const routes=['/','/cartoons','/cartoons?view=shows','/cartoons/test-show','/cartoons/test-show/clip-0','/books','/books?mode=listen','/books/level/a1','/books/test-book','/books/test-book/chapter-1','/listen/test-book','/explore','/explore?view=foryou','/learn','/grammar','/grammar?branch=sarf','/memory','/word-search','/profile','/support','/feedback','/privacy','/terms','/reset-password','/transcripts/66666666-6666-4666-8666-666666666661','/missing-localisation-route']
  for(const role of ['guest','free','admin']){
   if(role!=='guest'){
    const id=role==='admin'?'44444444-4444-4444-8444-444444444444':'11111111-1111-4111-8111-111111111111',exp=Math.floor(Date.now()/1000)+3600,encode=(v:unknown)=>Buffer.from(JSON.stringify(v)).toString('base64url')
@@ -20,6 +20,11 @@ test('audit Arabic learner routes for remaining English controls',async({page,co
   for(const route of routes){
    await page.goto(route)
    await expect(page.locator('html')).toHaveAttribute('lang','ar')
+   if(route==='/books/level/a1'){
+    await expect(page.getByRole('heading',{level:1})).toHaveText('كتب عربية للمستوى A1')
+    await expect(page.getByText('ابدأ أولى خطواتك في قراءة العربية بقصص متدرّجة ميسّرة وترجمات واضحة ودعم للمفردات.',{exact:true})).toBeVisible()
+   }
+   if(route.startsWith('/transcripts/'))await expect(page.getByRole('heading',{level:1})).toHaveText('نص محفوظ')
    let strings:unknown=[]
    await expect.poll(async()=>{try{
     strings=await page.locator('main button,main a,main input,main select,main [role="combobox"],main h1,main h2,main [role="alert"]').evaluateAll(elements=>elements.filter(el=>el.getClientRects().length).map(el=>({text:(el.textContent??'').trim(),label:el.getAttribute('aria-label'),placeholder:el.getAttribute('placeholder')})).filter(row=>/[A-Za-z]{3}/.test([row.text,row.label,row.placeholder].join(' '))))

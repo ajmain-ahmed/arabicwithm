@@ -1,5 +1,13 @@
 /** Interface guidance only; authored exercises, answers and source tokens stay intact. */
 export const activityMessages:Record<string,string>={
+ '{level} Arabic Books':'كتب عربية للمستوى {level}',
+ 'Start with accessible graded stories, clear translations and vocabulary support for your first steps in Arabic reading.':'ابدأ أولى خطواتك في قراءة العربية بقصص متدرّجة ميسّرة وترجمات واضحة ودعم للمفردات.',
+ 'Build reading confidence with longer elementary Arabic stories, helpful translations and familiar everyday vocabulary.':'عزّز ثقتك في القراءة بقصص عربية أطول للمستوى الابتدائي، مع ترجمات مفيدة ومفردات يومية مألوفة.',
+ 'Move into independent Arabic reading with intermediate stories that develop vocabulary, comprehension and grammatical range.':'انتقل إلى القراءة المستقلة بالعربية من خلال قصص متوسطة المستوى تطوّر مفرداتك وفهمك وتنوّع تراكيبك النحوية.',
+ 'Challenge your upper-intermediate Arabic with richer stories, more varied sentence structures and broader vocabulary.':'ارتق بمستواك في العربية فوق المتوسط بقصص أكثر ثراءً وتراكيب جمل متنوّعة ومفردات أوسع.',
+ 'Read advanced Arabic fiction with nuanced language, sustained narratives and opportunities to refine your comprehension.':'اقرأ الأدب القصصي العربي المتقدّم بلغة دقيقة وسرد ممتد، واستفد من فرص تطوير فهمك.',
+ 'Explore sophisticated Arabic writing with complex expression, advanced vocabulary and full-length reading practice.':'استكشف الكتابة العربية الرفيعة بتعبيرات مركّبة ومفردات متقدّمة وتدريبات على قراءة نصوص كاملة.',
+ 'English translation:':'الترجمة الإنجليزية:','Arabic translation:':'الترجمة العربية:',
  'Seek to {time}':'الانتقال إلى {time}',
  'Open navigation':'فتح التنقّل','Close navigation':'إغلاق التنقّل',
  'Garamond':'جاراموند','Amiri':'الأميري','Adjust Arabic text size':'ضبط حجم النص العربي','Adjust Arabic, translation, vocabulary, and grammar text':'ضبط حجم النص العربي والترجمة والمفردات والقواعد',

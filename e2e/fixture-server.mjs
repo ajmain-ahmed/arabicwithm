@@ -1015,7 +1015,14 @@ if (process.env.AWM_TEST_LEARN_PROFILE === '1' || process.env.AWM_TEST_LEARN_CON
 if(process.env.AWM_TEST_LOCALISATION==='1'){
  tables.books[0].title_ar='كِتَابُ الْأَمْثَالِ'
  tables.books[0].category='Non-Fiction'
+ tables.books[0].level='A1'
+ tables.books.push({...tables.books[0],id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaa00002',slug:'level-example',title:'Level comparison book',title_ar:'كتاب المستوى',is_completed:true})
  tables.shows[0].category='Action'
+ const id='66666666-6666-4666-8666-666666666661',title='Stored transcript'
+ tables.youtube_transcripts.push({id,title,youtube_id:'abcdefghij0',canonical_url:'https://www.youtube.com/watch?v=abcdefghij0',channel:'Fixture channel',thumbnail:'',duration_seconds:60,provider:'manual',status:'ready',translation_status:'ready',searchable:true,explore_published:false,created_at:'2026-01-01T00:00:00Z',updated_at:'2026-01-01T00:00:00Z',error_code:null})
+ tables.transcript_segments.push({id:999001,transcript_id:id,position:0,original_text:'هذا كتاب.',english_text:'This is a book.',start_seconds:0,end_seconds:4})
+ tables.content_localisations??=[]
+ tables.content_localisations.push({entity_type:'transcript',entity_id:id,locale:'ar',field:'title',value:'نص محفوظ',status:'approved',source_hash:createHash('sha256').update(title).digest('hex'),reviewed_at:'2026-01-01T00:00:00Z'})
 }
 
 if(process.env.AWM_TEST_LEARN_CONTINUITY==='1')for(const episode of tables.episodes){

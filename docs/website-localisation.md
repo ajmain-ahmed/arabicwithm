@@ -1,6 +1,6 @@
 # Learner website localisation
 
-Implemented and validated on 25 November 2026. Deployment status is reported
+Implemented and validated on 25–26 November 2026. Deployment status is reported
 separately after the GitHub production workflow finishes.
 
 ## Behaviour
@@ -12,7 +12,7 @@ Switching language preserves mounted players and current activity progress.
 Admin CMS chrome remains English and LTR.
 
 The reviewed dictionaries contain more than 1,100 interface and legal message
-keys. The runtime audit covers 25 route variants as a guest, free user and Admin.
+keys. The runtime audit covers 26 route variants as a guest, free user and Admin.
 
 | Area | Changes |
 | --- | --- |
@@ -50,9 +50,12 @@ state was changed, and no migration was needed for these presentation changes.
 - **16 browser journeys pass**: EN/AR at 390, 768 and 1440px plus Admin metadata
   export/preview/import/retry/approval, in Chrome, WebKit, Firefox and Edge.
 - **8 additional settings journeys pass**: mobile and desktop in all four
-  browsers, with Arabic descriptions and preserved player identity.
-- **75 route audit visits pass**: 25 variants for guest, free and Admin contexts.
+  browsers, with Arabic descriptions and preserved player identity. They also
+  verify numeric slider alignment within 2px and increasing keyboard direction.
+- **78 route audit visits pass**: 26 variants for guest, free and Admin contexts.
   Identified English interface defects are rejected by the audit assertion.
+  The canonical lowercase reading-level route and public Transcript viewer
+  have explicit page/title assertions, preventing a 404 from satisfying them.
 - Browser journeys verify persistence, filter keys, curated Arabic title display,
   square tile dimensions/position, player/activity identity, no hydration
   warnings and no translation-provider requests.
@@ -64,6 +67,12 @@ The initial GitHub run passed all 1,695 assertions but exposed a pre-existing
 late playback-store import during `AuthContext.test.tsx` teardown. That test now
 uses an isolated playback-store mock and verifies its sign-out reset. Production
 authentication and sign-out behaviour were not changed for this test fix.
+
+An additional geometry check reproduced an 18px slider-thumb displacement when
+RTL styling transformed a deliberately LTR numeric control. Numeric sliders now
+use the existing LTR Emotion cache as well as LTR component behaviour, without a
+new DOM wrapper or a locale-dependent key. All eight settings journeys pass the
+geometry, keyboard and player-identity checks after this correction.
 
 Screenshots are generated under `artifacts/localisation/screenshots/`, including
 `chrome-1440-navbar-ar.png`, `chrome-1440-home-ar.png`,

@@ -8,6 +8,10 @@ import {AppRouterCacheProvider} from '@mui/material-nextjs/v16-appRouter'
 import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 
 const EnglishCache=createContext<EmotionCache|null>(null)
+export function LtrStyles({children}:{children:ReactNode}){
+ const cache=useContext(EnglishCache)
+ return cache?<CacheProvider value={cache}>{children}</CacheProvider>:<>{children}</>
+}
 function EnglishRegistry({value,children}:{value:EmotionCache;children?:ReactNode}){
  return <EnglishCache.Provider value={value}>{children}</EnglishCache.Provider>
 }
