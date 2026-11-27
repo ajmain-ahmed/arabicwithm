@@ -49,6 +49,14 @@ it('does not display or consume the introduction on desktop',async()=>{
  state.mobile=false;await render();await advance(7000)
  expect(host.innerHTML).toBe('');expect(sessionStorage.getItem('awm-mobile-nav-intro-seen')).toBeNull()
 })
+it('keeps navigation available without the introduction when reduced motion is requested',async()=>{
+ vi.stubGlobal('matchMedia',vi.fn(()=>({matches:true})))
+ try{
+  await render();await advance(7000)
+  expect(phase()).toBe('idle');expect(host.querySelector('nav')).toBeNull()
+  expect(host.querySelector('[aria-label="Open navigation"]')).not.toBeNull()
+ }finally{vi.unstubAllGlobals()}
+})
 it('honours watch-definition hiding without replaying when navigation reappears',async()=>{
  await render();await advance(40)
  await act(async()=>window.dispatchEvent(new CustomEvent('awm-watch-definition',{detail:true})));expect(host.querySelector('button')).toBeNull()

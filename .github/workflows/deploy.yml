@@ -58,12 +58,15 @@ jobs:
         env:
           AWM_TEST_LEARN_CONTINUITY: '1'
 
-      - name: Verify Arabic-only feed, dormant locale and compact mobile layouts
+      - name: Verify Arabic-only feed, restored locale and compact mobile layouts
         run: npx playwright test --config=playwright.mobile-compact.config.ts --project=chromium-ci
         env:
           AWM_SIZING_WIDTHS: '390,1440'
 
-      - name: Verify preserved metadata review and English settings
+      - name: Verify restored website language and Grammar presentation
+        run: npx playwright test --config=playwright.presentation.config.ts --project=chromium-ci
+
+      - name: Verify preserved metadata review and bilingual settings
         run: |
           npx playwright test --config=playwright.localisation.config.ts --project=chromium-ci
           npx playwright test --config=playwright.localisation-settings.config.ts --project=chromium-ci
@@ -77,6 +80,7 @@ jobs:
             artifacts/localisation/screenshots
             artifacts/mobile-compact/after
             artifacts/learn-demand
+            artifacts/presentation
           if-no-files-found: ignore
           retention-days: 14
 
@@ -94,6 +98,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+
+      - name: Verify production presentation assets
+        run: node scripts/verify-production-presentation.mjs
 
       - name: Verify continuous practice on production
         run: npx playwright test --config=playwright.learn.config.ts --project=chromium-ci --grep '390px'

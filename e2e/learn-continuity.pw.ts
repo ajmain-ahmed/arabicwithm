@@ -41,7 +41,10 @@ for(const width of [390,1440])test(`continuous independent Learn at ${width}px`,
   page.on('response',response=>{if(response.status()>=400)console.log('Public Learn HTTP error:',response.status(),new URL(response.url()).pathname)})
  }
  page.on('response',response=>{if((new URL(response.url()).pathname==='/learn'||new URL(response.url()).pathname.startsWith('/api/learn/'))&&response.status()>=500)failures.push(response.status())})
- await page.setViewportSize({width,height:1000});await page.goto('/learn');for(const id of ['puzzle','grammar','memory'])await page.locator(`[data-practice-launcher=${id}]`).getByRole('button',{name:'Start',exact:true}).click()
+ await page.setViewportSize({width,height:1000})
+ const response=await page.goto('/learn')
+ expect(response?.status(),'Learn must load successfully; an HTTP challenge blocks production verification.').toBe(200)
+ for(const id of ['puzzle','grammar','memory'])await page.locator(`[data-practice-launcher=${id}]`).getByRole('button',{name:'Start',exact:true}).click()
  const puzzle=page.getByRole('region',{name:'Word Search activity'}),grammar=page.getByRole('region',{name:'Grammar activity'}),memory=page.getByRole('region',{name:'Memory activity'})
  await expect(puzzle.getByRole('grid')).toBeVisible();await expect(grammar.locator('[data-grammar-question]')).toBeVisible()
  const nav=page.getByRole('navigation',{name:'Learning areas'});for(const name of ['Grammar','Word Search','Memory'])await expect(nav.getByRole('link',{name,exact:true})).toBeVisible()

@@ -1,2 +1,2 @@
-/** Temporary product pause. Keep dictionaries, metadata and renderers for reactivation. */
-export const WEBSITE_LOCALISATION_ENABLED = false
+/** Website chrome language is independent of educational source language. */
+export const WEBSITE_LOCALISATION_ENABLED = true

@@ -1,24 +1,27 @@
 import {test,expect} from '@playwright/test'
+import {translateMessage} from '../app/lib/localisation/messages'
 import {installYouTubeFixture} from './helpers/youtube'
 
-for(const width of [390,1440])test(`English settings ignore saved Arabic and preserve the player at ${width}px`,async({page,context},info)=>{
- await context.addCookies([{name:'awm-website-locale',value:'ar',domain:'127.0.0.1',path:'/'}])
+for(const locale of ['en','ar'] as const)for(const width of [390,1440])test(`Localised settings preserve the player at ${width}px ${locale}`,async({page,context},info)=>{
+ await context.addCookies([{name:'awm-website-locale',value:locale,domain:'127.0.0.1',path:'/'}])
+ const t=(value:string)=>translateMessage(locale,value)
+ await page.addInitScript(locale=>localStorage.setItem('awm-website-locale',locale),locale)
  await installYouTubeFixture(page)
  await page.setViewportSize({width,height:1000})
  await page.goto('/cartoons/test-show/clip-0')
- await expect(page.locator('html')).toHaveAttribute('lang','en')
+ await expect(page.locator('html')).toHaveAttribute('lang',locale)
  const translation=page.getByText('This is a book.',{exact:true}).filter({visible:true}).first()
  await expect(translation).toHaveAttribute('dir','auto')
  expect(await translation.evaluate(el=>getComputedStyle(el).direction)).toBe('ltr')
  const player=page.locator('iframe').first()
  await expect(player).toBeAttached()
  await player.evaluate(el=>el.setAttribute('data-settings-identity','retained'))
- await page.getByRole(width<900?'tab':'button',{name:'Settings',exact:true}).filter({visible:true}).first().click()
+ await page.getByRole(width<900?'tab':'button',{name:t('Settings'),exact:true}).filter({visible:true}).first().click()
  const dialog=page.getByRole('dialog')
- await expect(dialog).toContainText('Display vowel marks on Arabic words')
- await expect(dialog).toContainText('Adjust Arabic, translation, vocabulary, and grammar text')
- await expect(dialog.getByRole('button',{name:'Naskh',exact:true})).toBeVisible()
- await expect(dialog.getByRole('button',{name:'Amiri',exact:true})).toBeVisible()
+ await expect(dialog).toContainText(t('Display vowel marks on Arabic words'))
+ await expect(dialog).toContainText(t('Adjust Arabic, translation, vocabulary, and grammar text'))
+ await expect(dialog.getByRole('button',{name:t('Naskh'),exact:true})).toBeVisible()
+ await expect(dialog.getByRole('button',{name:t('Amiri'),exact:true})).toBeVisible()
  const range=dialog.locator('.MuiSlider-root').first()
  const rail=(await range.boundingBox())!,thumb=(await range.locator('.MuiSlider-thumb').boundingBox())!
  const fraction=await range.locator('input').evaluate(el=>{const input=el as HTMLInputElement;return (Number(input.value)-Number(input.min))/(Number(input.max)-Number(input.min))})
@@ -28,7 +31,7 @@ for(const width of [390,1440])test(`English settings ignore saved Arabic and pre
  await input.press(previous<maximum?'ArrowRight':'ArrowLeft')
  const updated=Number(await input.inputValue())
  expect(previous<maximum?updated>previous:updated<previous).toBe(true)
- await dialog.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-watch-settings-en.png`})
- await dialog.getByRole('button',{name:'Close settings',exact:true}).click()
+ await dialog.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-watch-settings-${locale}.png`})
+ await dialog.getByRole('button',{name:t('Close settings'),exact:true}).click()
  await expect(player).toHaveAttribute('data-settings-identity','retained')
 })

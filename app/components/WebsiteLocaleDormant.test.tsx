@@ -1,3 +1,4 @@
+vi.mock('@/app/lib/localisation/features',()=>({WEBSITE_LOCALISATION_ENABLED:false}))
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {renderToString} from 'react-dom/server'

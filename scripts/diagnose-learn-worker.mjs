@@ -6,6 +6,7 @@ const settings=await api(`/accounts/${account}/workers/scripts/arabicwithm/setti
 console.log(JSON.stringify({limits:settings?.result?.limits,observability:settings?.result?.observability}));
 const deploymentResult=await api(`/accounts/${account}/workers/scripts/arabicwithm/deployments`);
 const deploymentRows=deploymentResult?.result?.deployments??[];
+console.log(JSON.stringify({activeDeployments:deploymentRows.slice(0,1).map(({created_on,versions})=>({created_on,versions}))}));
 const deployedAt=deploymentRows.map(d=>Date.parse(d.created_on)).filter(Number.isFinite).sort((a,b)=>b-a)[0];
 const start=process.env.LEARN_METRICS_START ?? new Date(Math.max(Date.now()-3600000,deployedAt??0)).toISOString(),end=new Date().toISOString();
 const metrics=await api('/graphql',{query:`query($accountTag:string!,$start:Time!,$end:Time!){viewer{accounts(filter:{accountTag:$accountTag}){workersInvocationsAdaptive(limit:100,filter:{scriptName:"arabicwithm",datetime_geq:$start,datetime_leq:$end}){dimensions{status}quantiles{cpuTimeP50 cpuTimeP99 memoryUsageBytesP50 memoryUsageBytesP99}sum{requests errors subrequests}}}}}`,variables:{accountTag:account,start,end}});

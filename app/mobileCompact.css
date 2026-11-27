@@ -3,68 +3,70 @@
    deliberately outside these component selectors. */
 @media (max-width: 599.95px) {
   :root:root {
-    --awm-navbar-height: calc(51px + env(safe-area-inset-top, 0px));
-    --awm-mobile-bottom-clearance: calc(92px + env(safe-area-inset-bottom));
-    --awm-phone-gutter: 14px;
-    --awm-phone-section: 21px;
-    --awm-phone-panel: 14px;
-    --awm-phone-heading: 26px;
-    --awm-phone-featured: clamp(374px, 48.7dvh, 487px);
+    --awm-phone-layout-version: v20261127-2;
+    --awm-navbar-height: calc(45px + env(safe-area-inset-top, 0px));
+    --awm-mobile-bottom-clearance: calc(78px + env(safe-area-inset-bottom));
+    --awm-phone-gutter: 12px;
+    --awm-phone-section: 18px;
+    --awm-phone-panel: 12px;
+    --awm-phone-heading: 24px;
+    --awm-phone-featured: clamp(318px, 41.4dvh, 414px);
     --awm-phone-touch: 44px;
   }
-  [data-site-toolbar] { min-height: 50px; padding-block: 0; }
+  [data-site-toolbar] { min-height: 44px; padding-block: 0; }
   main.awm-site-pages .MuiContainer-root { padding-inline: var(--awm-phone-gutter); }
-  [data-featured-hero] { padding-top: 28px; padding-inline: var(--awm-phone-gutter); padding-bottom: 10px; }
+  [data-featured-hero] { padding-top: 24px; padding-inline: var(--awm-phone-gutter); padding-bottom: 10px; }
   [data-featured-hero] > div { height: var(--awm-phone-featured); }
-  [data-featured-hero] h2 { font-size: 38px; }
-  [data-featured-actions] { margin-top: 14px; gap: 8px; }
-  [data-featured-actions] .MuiButton-root { min-height: var(--awm-phone-touch); padding-inline: 12px; }
+  [data-featured-hero] h2 { font-size: 34px; }
+  [data-featured-actions] { margin-top: 12px; gap: 7px; }
+  [data-featured-actions] .MuiButton-root { min-height: var(--awm-phone-touch); padding-inline: 10px; }
   [data-featured-pagination] .MuiIconButton-root { width: 28px; height: var(--awm-phone-touch); }
   [data-home-content] { padding-block: var(--awm-phone-section); }
   [data-home-content] h2 { font-size: 18px; }
-  [data-mobile-home-actions] { gap: 10px; margin-top: 12px; }
-  [data-mobile-home-actions] > a { min-height: 66px; padding: var(--awm-phone-panel); gap: 9px; }
-  [data-home-shortcuts] > a { min-height: 126px; padding: 11px; }
-  [data-home-shortcuts] > a > div:first-child { width: 36px; height: 36px; }
+  [data-mobile-home-actions] { gap: 8px; margin-top: 10px; }
+  [data-mobile-home-actions] > a { min-height: 56px; padding: var(--awm-phone-panel); gap: 8px; }
+  [data-home-shortcuts] > a { min-height: 107px; padding: 10px; }
+  [data-home-shortcuts] > a > div:first-child { width: 32px; height: 32px; }
   [data-home-shortcuts] > a .MuiTypography-root:first-child { font-size: 20px; }
   [data-home-catalogue-row] > div:last-child > a,
-  [data-home-catalogue-row] > div:last-child > div { max-width: 132px; }
+  [data-home-catalogue-row] > div:last-child > div { max-width: 120px; }
   [data-catalogue-layout] > .MuiContainer-root { padding-top: var(--awm-phone-section); }
   [data-catalogue-layout] h1 { font-size: var(--awm-phone-heading); }
   [data-catalogue-layout] .MuiInputBase-root { min-height: var(--awm-phone-touch); }
   [data-catalogue-layout] .MuiInputBase-input { font-size: 16px; }
-  [data-catalogue-layout] .MuiButton-root { padding-inline: 12px; min-height: var(--awm-phone-touch); }
-  [data-content-card][data-dense-mobile] { aspect-ratio: 4 / 4.35; }
+  [data-catalogue-layout] .MuiButton-root { padding-inline: 10px; min-height: var(--awm-phone-touch); }
+  [data-content-card][data-dense-mobile] { aspect-ratio: 4 / 4; }
   [data-library-book-card] > div:first-child { aspect-ratio: 2 / 2.6; }
   [data-show-page] > .MuiContainer-root > div:first-child { padding-top: var(--awm-phone-section); gap: 11px; }
   [data-show-page] h1 { font-size: 24px; }
   [data-book-detail] { padding-top: var(--awm-phone-section); }
-  [data-book-detail] > .MuiContainer-root > div { row-gap: 21px; }
+  [data-book-detail] > .MuiContainer-root > div { row-gap: 18px; }
   [data-book-detail] .MuiPaper-root { padding: 11px; }
-  [data-book-cover] { max-width: 191px; }
-  [data-book-detail] [data-book-info] { padding: 21px; }
+  [data-book-cover] { max-width: 162px; }
+  [data-book-detail] [data-book-info] { padding: 18px; }
   [data-watch-tabs] .MuiTab-root { min-height: 44px; padding-block: 10px; }
   [data-watch-tab-content] { padding-block: 14px; }
   [data-watch-tab-content] > h1 { font-size: 21px; margin-bottom: 14px; }
   [data-learn-page] { padding: var(--awm-phone-section) 11px var(--awm-mobile-bottom-clearance); }
   [data-learn-page] > h1 { font-size: var(--awm-phone-heading); }
   [data-learn-page] > p { margin-bottom: var(--awm-phone-section); }
-  [data-learn-workspace] { gap: 14px; }
+  [data-learn-workspace] { gap: 12px; }
+  [data-practice-launcher] { padding: 12px; gap: 9px; }
   [data-practice-panel] { padding: 11px; }
   [data-practice-panel] > h2 { font-size: 20px; margin-bottom: 14px; }
   [data-memory-page] { padding-top: 17px; }
   [data-memory-page] > .MuiPaper-root { margin-top: var(--awm-phone-section); padding: var(--awm-phone-panel); }
-  [data-memory-start] { min-height: 286px; }
+  [data-memory-start] { min-height: 243px; }
   [data-memory-page] .MuiButton-root { min-height: var(--awm-phone-touch); }
   [data-profile-page] { padding-block: var(--awm-phone-section); }
-  [data-profile-header] { --profile-avatar-size: 76px; margin-bottom: 28px; }
+  [data-profile-header] { --profile-avatar-size: 76px; margin-bottom: 24px; }
   [data-profile-banner-frame] { min-height: 104px; aspect-ratio: 3.45 / 1; }
   [data-profile-identity] { padding-top: calc(var(--profile-avatar-size) / 2 + 21px); padding-bottom: 21px; }
   [data-profile-identity] > p:first-child { font-size: 21px; }
   [data-profile-page] .pv-support-card { padding: 17px; }
-  .awm-site-footer > .MuiContainer-root { padding: 48px var(--awm-phone-gutter); }
+  .awm-site-footer > .MuiContainer-root { padding: 41px var(--awm-phone-gutter); }
   .awm-site-footer[data-home-footer] > .MuiContainer-root { padding-top: 14px; }
-  .awm-site-footer .MuiGrid-container { row-gap: 32px; }
+  .awm-site-footer .MuiGrid-container { row-gap: 27px; }
   [data-reading-settings] .MuiDialog-paper { margin: var(--awm-phone-gutter); }
   [data-reading-settings] .MuiDialogTitle-root { padding: 17px 17px 4px; font-size: 21px; }
   [data-reading-settings] .MuiDialogContent-root { padding: 12px 17px 14px; }

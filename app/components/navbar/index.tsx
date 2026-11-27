@@ -23,6 +23,7 @@ import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
 import UserMenu from './UserMenu'
 import UserAvatar from './UserAvatar'
 import MemberActions from './MemberActions'
+import WebsiteLanguageButton from './WebsiteLanguageButton'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
 import { NAV_CSS } from './styles'
 
@@ -194,7 +195,7 @@ export default function Navbar() {
                     <Toolbar data-site-toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {/* CSS selects the correct header before hydration. A server
                             desktop default put the Home logo over Watch on phones. */}
-                            <Box data-navbar-mobile sx={{ display: { xs: 'grid', md: 'none' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', width: '100%' }}>
+                            <Box data-navbar-mobile dir="ltr" sx={{ display: { xs: 'grid', md: 'none' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', width: '100%' }}>
                                 {/* Equal 1fr flanks pin the brand to the true viewport
                                     center: the hamburger and the icon pair have different
                                     widths, so auto columns hugging their content shoved
@@ -206,6 +207,8 @@ export default function Navbar() {
                                     onClick={() => { setDrawerMounted(true); setDrawerOpen(true) }}
                                     sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }}
                                     aria-label={t("Open menu")}
+                                    data-mobile-menu-trigger
+                                    aria-expanded={drawerOpen}
                                 >
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
@@ -259,6 +262,7 @@ export default function Navbar() {
                                 <BrandLogo activeMember={activeMember} isMobile={false} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
+                                    <WebsiteLanguageButton />
 
                                     {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}><UiText>{"Admin"}</UiText></Button>}
                                     <Tooltip title={t(mode === 'dark' ? "Use light mode" : "Use dark mode")}>

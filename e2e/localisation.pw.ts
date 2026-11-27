@@ -12,7 +12,7 @@ for(const width of [390,768,1440])test(`website locale persistence and player/wo
  await expect(page.locator('html')).toHaveAttribute('lang','en')
  await mkdir('artifacts/localisation/screenshots',{recursive:true})
  const screenshot=async(name:string)=>page.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-${name}.png`,fullPage:true})
- const set=async(locale:'en'|'ar')=>{await page.getByRole('button',{name:locale==='ar'?'Website language':'لغة الموقع',exact:true}).click();await page.getByRole('menuitem',{name:locale==='ar'?'العربية — AR':'English — EN',exact:true}).click();await expect(page.getByRole('menu')).not.toBeVisible();await expect(page.locator('html')).toHaveAttribute('lang',locale);await expect(page.locator('html')).toHaveAttribute('dir',locale==='ar'?'rtl':'ltr')}
+ const set=async(locale:'en'|'ar')=>{if(width<900)await page.locator('[data-mobile-menu-trigger]').first().click();await page.getByRole('button',{name:locale==='ar'?'Website language':'لغة الموقع',exact:true}).click();await page.getByRole('menuitem',{name:locale==='ar'?'العربية — AR':'English — EN',exact:true}).click();await expect(page.getByRole('menu')).not.toBeVisible();if(width<900)await page.keyboard.press('Escape');await expect(page.locator('html')).toHaveAttribute('lang',locale);await expect(page.locator('html')).toHaveAttribute('dir',locale==='ar'?'rtl':'ltr')}
  await screenshot('home-en');await set('ar')
  if(width>=900){
   const navbar=page.getByRole('banner')
@@ -45,15 +45,13 @@ for(const width of [390,768,1440])test(`website locale persistence and player/wo
    await expect(page.getByRole('button',{name:'استمع',exact:true})).toBeVisible()
   }
   if(name==='learn'){
-   await expect(page.getByRole('button',{name:/المستوى سهل/}).filter({visible:true})).toBeVisible()
-   await expect(page.getByRole('button',{name:'لعبة جديدة',exact:true}).filter({visible:true})).toBeVisible()
+   await expect(page.locator('[data-practice-launcher]')).toHaveCount(3);await expect(page.getByRole('grid')).toHaveCount(0)
+   for(const id of ['puzzle','grammar'])await page.locator(`[data-practice-launcher=${id}]`).getByRole('button').first().click()
+   await expect(page.getByRole('grid')).toBeVisible();await expect(page.locator('[data-grammar-question]')).toBeVisible({timeout:30000})
    const nav=page.locator('[data-learn-navigation]:visible');await expect(nav.getByRole('link')).toHaveCount(3)
    await expect(nav.getByRole('link',{name:'البحث عن الكلمات',exact:true})).toHaveAttribute('href','/word-search')
    const tiles=await nav.getByRole('link').all();const rectangles=await Promise.all(tiles.map(tile=>tile.boundingBox()))
    for(const rect of rectangles){expect(Math.abs(rect!.width-rect!.height)).toBeLessThan(2);expect(Math.abs(rect!.width-rectangles[0]!.width)).toBeLessThan(1);expect(Math.abs(rect!.y-rectangles[0]!.y)).toBeLessThan(1)}
-   const navBox=(await nav.boundingBox())!
-   if(width>=900){const grammar=(await page.locator('[data-learn-column="Grammar activity"]').boundingBox())!;expect(navBox.x).toBeGreaterThanOrEqual(grammar.x);expect(navBox.x+navBox.width).toBeLessThanOrEqual(grammar.x+grammar.width+1)}
-   else{const memory=(await page.locator('[data-learn-column="Memory activity"]').boundingBox())!;expect(navBox.y).toBeGreaterThanOrEqual(memory.y+memory.height)}
    await nav.screenshot({path:`artifacts/localisation/screenshots/${info.project.name}-${width}-learn-tiles-ar.png`})
   }
   await screenshot(name+'-ar');await set('en');await screenshot(name+'-en');await set('ar')

@@ -22,6 +22,7 @@ import { Fragment } from 'react'
 import { User } from '@supabase/supabase-js'
 import GoldLine from './GoldLine'
 import MemberActions from './MemberActions'
+import WebsiteLanguageButton from './WebsiteLanguageButton'
 import { LEARN_ITEMS, NAV_ROUTES, profileRoute, type NavigateFn } from './constants'
 
 const primaryIcons = { Home: HomeOutlined, Explore: ExploreOutlined, Watch: Movie, Read: BookOutlined, Learn: SchoolOutlined }
@@ -50,7 +51,7 @@ export default function MobileDrawer({
     onLogout,
     navigate,
 }: MobileDrawerProps) {
- const {t:awmT}=useWebsiteLocale()
+ const {t:awmT,direction}=useWebsiteLocale()
 
 
 
@@ -73,13 +74,16 @@ export default function MobileDrawer({
 
     return (
         <Drawer
+            anchor={direction==='rtl'?'right':'left'}
             open={open}
             onClose={onClose}
             slotProps={{
                 paper: {
                     'aria-label': awmT("Site navigation"),
                     sx: {
-                        width: 280,
+                        width: 260,
+                        maxWidth: 'calc(100vw - 32px)',
+                        '& .mobile-list-btn': { minHeight: 44, py: .75, px: 2.5 },
                         background: 'var(--awm-cream-light)',
                         borderRight: '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
                     },
@@ -89,8 +93,8 @@ export default function MobileDrawer({
             {isLoggedIn ? (
                 <Box
                     sx={{
-                        px: 3,
-                        py: 3,
+                        px: 2,
+                        py: 2,
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 1.5,
@@ -100,15 +104,16 @@ export default function MobileDrawer({
                 >
                     {/* Streak + AWM+ live here on mobile (the navbar is reserved
                         for navigation); the pair sizes itself to the drawer. */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignSelf: 'center', width: '100%' }}>
+                    <Box data-mobile-menu-controls sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: .75, width: '100%', '& > .MuiBox-root':{gap:.75}, '& .MuiButton-root':{minHeight:44,px:.75}, '& .MuiBox-root > span':{height:44,px:.75} }}>
                         <MemberActions onProfileNavigate={onClose} />
+                        <WebsiteLanguageButton />
                     </Box>
                 </Box>
             ) : (
                 <Box
                     sx={{
-                        px: 3,
-                        py: 3,
+                        px: 2,
+                        py: 2,
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 1.5,
@@ -116,6 +121,7 @@ export default function MobileDrawer({
                         borderBottom: '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
                     }}
                 >
+                    <Box data-mobile-menu-controls sx={{display:'flex',justifyContent:'center'}}><WebsiteLanguageButton /></Box>
                     <Button
                         onClick={() => {
                             onAuthOpen()
@@ -125,6 +131,7 @@ export default function MobileDrawer({
                         fullWidth
                         startIcon={<Person sx={{ fontSize: 18 }} />}
                         sx={{
+                            minHeight: 44,
                             borderColor: 'color-mix(in srgb, var(--awm-gold) 40%, transparent)',
                             color: 'var(--awm-forest)',
                             fontFamily: 'var(--font-sans)',
