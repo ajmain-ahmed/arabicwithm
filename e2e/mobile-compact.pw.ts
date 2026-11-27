@@ -21,7 +21,7 @@ for(const width of widths)test(`compact mobile presentation at ${width}`,async({
   await page.goto(url)
   await expect(page.locator('main')).toBeVisible()
   if(name==='home'){await expect(page.locator('[data-featured-hero]').first()).toBeVisible();await expect(page.getByRole('heading',{name:'Latest Episodes',exact:true})).toBeVisible()}
-  if(name==='learn')await expect(page.getByRole('grid').first()).toBeVisible()
+  if(name==='learn'){await expect(page.locator('[data-practice-launcher]')).toHaveCount(3);await expect(page.getByRole('grid')).toHaveCount(0)}
   if(name==='foryou')await expect(page.locator('[data-for-you-source] iframe').first()).toBeVisible()
   if(name==='profile')await expect(page.locator('[data-profile-header]').filter({visible:true})).toBeVisible()
   if(name==='memory')await expect(page.getByRole('button',{name:'Start',exact:true})).toBeVisible()

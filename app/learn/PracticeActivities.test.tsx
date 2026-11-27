@@ -11,7 +11,8 @@ vi.mock('next/dynamic',()=>({default:(loader:()=>unknown)=>{
  if(String(loader).includes('MemoryPage'))return function Memory({library,onContinue}:{library:{selectedEpisodeId:string};onContinue:()=>void}){return <button onClick={onContinue}>Memory {library.selectedEpisodeId}</button>}
  return function Activity({suppliedQuestions,onRestart}:{suppliedQuestions:{id:string}[];onRestart:()=>void}){return <button data-question={suppliedQuestions[0].id} onClick={onRestart}>Next Activity</button>}
 }}))
-import {PuzzleActivity,GrammarActivity,MemoryActivity} from './PracticeActivities'
+import {PuzzleActivity,MemoryActivity} from './PracticeActivities'
+import {GrammarActivity} from './GrammarPractice'
 import {websiteQuestions} from '@/app/grammar/websiteQuestions'
 let host:HTMLDivElement,root:Root,sequence=0
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.clearAllMocks();sequence=0;host=document.createElement('div');document.body.append(host);root=createRoot(host)

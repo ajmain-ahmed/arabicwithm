@@ -50,6 +50,9 @@ jobs:
           AWM_TEST_CHAPTER_PUBLICATION: '1'
           AWM_TEST_PUBLIC_VISIBILITY: '1'
 
+      - name: Verify on-demand Learn initial workload and launch cards
+        run: npx playwright test --config=playwright.learn-demand.config.ts --project=chromium-ci
+
       - name: Verify independent continuous Learn activities
         run: npx playwright test e2e/learn-continuity.pw.ts e2e/learn-matching.pw.ts --grep '390px|matching'
         env:
@@ -73,6 +76,7 @@ jobs:
           path: |
             artifacts/localisation/screenshots
             artifacts/mobile-compact/after
+            artifacts/learn-demand
           if-no-files-found: ignore
           retention-days: 14
 

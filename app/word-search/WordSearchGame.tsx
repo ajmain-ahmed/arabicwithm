@@ -31,7 +31,7 @@ interface DragSelection {
 
 interface CompletionSummary extends WordSearchCompletionStats, WordSearchCompletionResult {}
 
-export default function WordSearchGame({ initialSource, initialPuzzle, embedded = false }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null; embedded?: boolean }) {
+export default function WordSearchGame({ initialSource, initialPuzzle, embedded = false, onClosePractice }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null; embedded?: boolean; onClosePractice?:()=>void }) {
  const {t:awmT,locale}=useWebsiteLocale()
 
   const router = useRouter()
@@ -358,6 +358,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle, embedded 
             </Box>
             <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>{locale==='ar'?awmT('{mistakes} mistakes · {reveals} reveals',{mistakes:completion.mistakes,reveals:completion.revealsUsed}):<>{completion.mistakes}{' '}<UiText>{"mistake"}</UiText>{completion.mistakes===1?'':'s'} · {completion.revealsUsed}{' '}<UiText>{"reveal"}</UiText>{completion.revealsUsed===1?'':'s'}</>}</Typography>
             <Button fullWidth variant="contained" disabled={busy} onClick={() => embedded ? void newGame() : router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}><UiText>{"Continue"}</UiText></Button>
+            {embedded && onClosePractice && <Button fullWidth onClick={onClosePractice}>Close</Button>}
             <Button fullWidth color="secondary" onClick={() => embedded ? router.push('/') : void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>{embedded ? awmT("Back to Home") : awmT("Play Again")}</Button>
           </DialogContent>
         )}

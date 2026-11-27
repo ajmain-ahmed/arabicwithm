@@ -5,7 +5,7 @@ test('authenticated reviewed matching stays inside its Learn panel',async({page,
  const user={id,aud:'authenticated',role:'authenticated',email:'plus@fixture.example',app_metadata:{provider:'email'},user_metadata:{}}
  const token=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp,role:'authenticated'})}.fixture-signature`
  await context.addCookies([{name:'sb-localhost-auth-token',value:`base64-${encode({user,access_token:token,expires_at:exp,expires_in:3600,refresh_token:'fixture-refresh',token_type:'bearer'})}`,domain:'127.0.0.1',path:'/',sameSite:'Lax'}])
- await page.setViewportSize({width:390,height:1000});await page.goto('/learn')
+ await page.setViewportSize({width:390,height:1000});await page.goto('/learn');for(const id of ['puzzle','grammar','memory'])await page.locator(`[data-practice-launcher=${id}]`).getByRole('button',{name:'Start',exact:true}).click()
  const grammar=page.getByRole('region',{name:'Grammar activity'}),puzzle=page.getByRole('region',{name:'Word Search activity'})
  await expect(puzzle.getByRole('grid')).toBeVisible()
  await expect(page.getByRole('region',{name:'Memory activity'}).getByRole('button',{name:'Reveal',exact:true})).toBeVisible()

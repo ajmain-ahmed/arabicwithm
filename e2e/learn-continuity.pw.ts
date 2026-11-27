@@ -41,11 +41,11 @@ for(const width of [390,1440])test(`continuous independent Learn at ${width}px`,
   page.on('response',response=>{if(response.status()>=400)console.log('Public Learn HTTP error:',response.status(),new URL(response.url()).pathname)})
  }
  page.on('response',response=>{if((new URL(response.url()).pathname==='/learn'||new URL(response.url()).pathname.startsWith('/api/learn/'))&&response.status()>=500)failures.push(response.status())})
- await page.setViewportSize({width,height:1000});await page.goto('/learn')
+ await page.setViewportSize({width,height:1000});await page.goto('/learn');for(const id of ['puzzle','grammar','memory'])await page.locator(`[data-practice-launcher=${id}]`).getByRole('button',{name:'Start',exact:true}).click()
  const puzzle=page.getByRole('region',{name:'Word Search activity'}),grammar=page.getByRole('region',{name:'Grammar activity'}),memory=page.getByRole('region',{name:'Memory activity'})
  await expect(puzzle.getByRole('grid')).toBeVisible();await expect(grammar.locator('[data-grammar-question]')).toBeVisible()
  const nav=page.getByRole('navigation',{name:'Learning areas'});for(const name of ['Grammar','Word Search','Memory'])await expect(nav.getByRole('link',{name,exact:true})).toBeVisible()
- if(process.env.AWM_LEARN_BASE_URL){for(let warm=0;warm<2;warm++){await page.reload();await expect(puzzle.getByRole('grid')).toBeVisible();await expect(grammar.locator('[data-grammar-question]')).toBeVisible()}}
+ if(process.env.AWM_LEARN_BASE_URL){for(let warm=0;warm<2;warm++){await page.reload();for(const id of ['puzzle','grammar','memory'])await page.locator(`[data-practice-launcher=${id}]`).getByRole('button',{name:'Start',exact:true}).click();await expect(puzzle.getByRole('grid')).toBeVisible();await expect(grammar.locator('[data-grammar-question]')).toBeVisible()}}
  const grid=await puzzle.getByRole('grid').textContent()
  for(let i=0;i<20;i++){
   const current=await grammar.locator('[data-grammar-question]').getAttribute('data-grammar-question')
@@ -74,7 +74,7 @@ for(const width of [390,1440])test(`continuous independent Learn at ${width}px`,
   const id='22222222-2222-4222-8222-222222222222',encode=(v:unknown)=>Buffer.from(JSON.stringify(v)).toString('base64url'),exp=Math.floor(Date.now()/1000)+3600
   const user={id,aud:'authenticated',role:'authenticated',email:'plus@fixture.example',app_metadata:{provider:'email'},user_metadata:{}}
   const token=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp,role:'authenticated'})}.fixture-signature`
-  await context.addCookies([{name:'sb-localhost-auth-token',value:`base64-${encode({user,access_token:token,expires_at:exp,expires_in:3600,refresh_token:'fixture-refresh',token_type:'bearer'})}`,domain:'127.0.0.1',path:'/',sameSite:'Lax'}]);await page.reload()
+  await context.addCookies([{name:'sb-localhost-auth-token',value:`base64-${encode({user,access_token:token,expires_at:exp,expires_in:3600,refresh_token:'fixture-refresh',token_type:'bearer'})}`,domain:'127.0.0.1',path:'/',sameSite:'Lax'}]);await page.reload();await page.locator('[data-practice-launcher=memory]').getByRole('button',{name:'Start',exact:true}).click()
   for(let set=0;set<3;set++){
    for(let card=0;card<20;card++){
     const complete=memory.getByText('Deck complete',{exact:true})
