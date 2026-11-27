@@ -16,7 +16,7 @@ it.each([320,1440])('opens the user-facing filter without Imports at %spx and ke
  vi.stubGlobal('matchMedia',()=>({matches:width<900,addEventListener:vi.fn(),removeEventListener:vi.fn()}))
  await act(async()=>root.render(<ForYouGroupFilter value={[]} onApply={vi.fn()}/>))
  await click('Filter content')
- expect([...document.querySelectorAll('label')].map(el=>el.textContent)).toEqual(['All groups','English','Stories'])
+ expect([...document.querySelectorAll('label')].map(el=>el.textContent)).toEqual(['All groups','Stories'])
  expect(document.body.textContent).not.toContain('Imports')
 })
 it('keeps All groups unrestricted, including when a previous saved selection was Imports',async()=>{
@@ -27,3 +27,5 @@ it('keeps All groups unrestricted, including when a previous saved selection was
  await act(async()=>all.click());await click('Apply')
  expect(apply).toHaveBeenCalledExactlyOnceWith([])
 })
+
+it('clears an obsolete English selection while opening the filter',async()=>{const apply=vi.fn();await act(async()=>root.render(<ForYouGroupFilter value={['english']} onApply={apply}/>));await click('Filter content');expect(apply).toHaveBeenCalledWith([]);expect([...document.querySelectorAll('label')].map(el=>el.textContent)).toEqual(['All groups','Stories'])})

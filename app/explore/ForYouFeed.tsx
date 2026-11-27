@@ -1,4 +1,5 @@
 'use client'
+import {cleanExploreGroups} from '@/app/lib/exploreGroupFilters'
 import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 
 import {UiText} from '@/app/components/WebsiteLocaleProvider'
@@ -411,7 +412,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
 }
 
 export default function ForYouFeed({guest=false,...props}: React.ComponentProps<typeof Feed>&{guest?:boolean}) {
- const [groups,setGroups]=useState<string[]>(()=>useForYouCache.getState().groups)
+ const [groups,setGroups]=useState<string[]>(()=>cleanExploreGroups(useForYouCache.getState().groups))
+ useEffect(()=>{const saved=useForYouCache.getState().groups,cleaned=cleanExploreGroups(saved);if(cleaned.length!==saved.length)useForYouCache.setState({groups:cleaned})},[])
  const [version,setVersion]=useState(0)
  return <Feed {...props} key={`${props.language??'ar'}:${version}`} groups={groups} filterControl={guest?undefined:<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[],seenSources:[],seed:'',groups:value});setGroups(value);setVersion(v=>v+1)}}/>}/>
 }

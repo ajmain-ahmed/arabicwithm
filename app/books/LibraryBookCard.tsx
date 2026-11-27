@@ -24,7 +24,7 @@ function AudioBadge({ languages, alignRight = false }: { languages: AudioLanguag
   const {t:awmT,locale}=useWebsiteLocale()
   if (!languages.length) return null
   const names = languages.map(language => awmT(language === 'ar' ? 'Arabic' : 'English')).join(locale==='ar'?' و ':' and ')
-  return <Box role="img" aria-label={awmT('Audiobook available in {languages}',{languages:names})} sx={{ position: 'absolute', left: alignRight ? undefined : 8, right: alignRight ? 8 : undefined, top: 8, zIndex: 1, display: 'flex', alignItems: 'center', width: 28, height: 28, p: 0, justifyContent: 'center', borderRadius: '999px', bgcolor: 'rgba(14,46,31,0.9)', color: '#fff', border: '1px solid rgba(212,168,67,0.65)', boxShadow: '0 2px 8px rgba(0,0,0,0.18)', backdropFilter: 'blur(6px)', fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', lineHeight: 1 }}>
+  return <Box data-book-status-overlay role="img" aria-label={awmT('Audiobook available in {languages}',{languages:names})} sx={{ position: 'absolute', left: alignRight ? undefined : 8, right: alignRight ? 8 : undefined, top: 8, zIndex: 1, display: 'flex', alignItems: 'center', width: 28, height: 28, p: 0, justifyContent: 'center', borderRadius: '999px', opacity: .28, bgcolor: 'transparent', color: '#fff', border: 0, boxShadow: 'none', fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', lineHeight: 1 }}>
     <HeadphonesOutlined sx={{ fontSize: 16 }} />
   </Box>
 }
@@ -32,7 +32,7 @@ function AudioBadge({ languages, alignRight = false }: { languages: AudioLanguag
 function ProductionBadge() {
  const {t:awmT}=useWebsiteLocale()
 
-  return <Box role="img" aria-label={awmT("In production — coming soon")} title={awmT("In production — coming soon")} sx={{ position: 'absolute', left: 8, top: 8, zIndex: 1, display: 'grid', placeItems: 'center', width: 28, height: 28, borderRadius: '999px', bgcolor: 'rgba(44,26,14,0.9)', color: 'var(--awm-gold-light)', border: '1px solid rgba(212,168,67,0.65)', boxShadow: '0 2px 8px rgba(0,0,0,0.18)', backdropFilter: 'blur(6px)' }}>
+  return <Box data-book-status-overlay role="img" aria-label={awmT("In production — coming soon")} title={awmT("In production — coming soon")} sx={{ position: 'absolute', left: 8, top: 8, zIndex: 1, display: 'grid', placeItems: 'center', width: 28, height: 28, borderRadius: '999px', opacity: .28, bgcolor: 'transparent', color: 'var(--awm-gold-light)', border: 0, boxShadow: 'none' }}>
     <ConstructionRounded sx={{ fontSize: 16 }} />
   </Box>
 }

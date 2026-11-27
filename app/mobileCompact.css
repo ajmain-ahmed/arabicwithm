@@ -72,7 +72,7 @@
   [data-reading-settings] .MuiDialogContent-root { padding: 12px 17px 14px; }
   [data-reading-settings] .MuiButton-root,
   [data-reading-settings] .MuiIconButton-root { min-height: var(--awm-phone-touch); }
-  [data-mobile-for-you-toolbar] { --mobile-control-height: 44px; --mobile-control-width: 32px; --mobile-mode-width: 72px; padding-block: 2px; min-height: 48px; }
+  [data-mobile-for-you-toolbar] { --mobile-control-height: 44px; --mobile-control-width: 44px; --mobile-view-width: 100%; --mobile-toolbar-gap: 8px; padding: 12px; }
   [data-mobile-for-you-toolbar] [data-mobile-view-toggle] { min-height: var(--awm-phone-touch); }
   [data-mobile-clip-transcript] > [data-clip-line] { padding: 11px; margin-bottom: 9px; }
 }

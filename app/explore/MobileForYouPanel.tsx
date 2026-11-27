@@ -2,9 +2,9 @@
 import {useWebsiteLocale} from '@/app/components/WebsiteLocaleProvider'
 
 
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
-import { Box, Button, IconButton, Typography } from '@mui/material'
-import { KeyboardDoubleArrowUp, KeyboardDoubleArrowDown } from '@mui/icons-material'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Box, Button, IconButton, Popover, Typography } from '@mui/material'
+import { KeyboardDoubleArrowUp, KeyboardDoubleArrowDown, MoreHoriz } from '@mui/icons-material'
 import EnglishForYouSegment from './EnglishForYouSegment'
 import { displayArabic } from '@/app/lib/displayArabic'
 import { segmentAtTime, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
@@ -45,6 +45,7 @@ function timestamp(seconds: number) {
 /** Mobile presentation only. All controls use the existing, single live player. */
 export default function MobileForYouPanel({ language='ar',activeOnly = false, activeSegment, modeControl, clip, segments, time, settings, settingsButton, navigation, switcher, filterControl, onTranscriptInteraction, ready, rates, rate, onRate }: Props) {
  const {t:awmT}=useWebsiteLocale()
+ const [moreAnchor,setMoreAnchor]=useState<HTMLElement|null>(null)
 
   const start = clip.clip_start_ms / 1000, end = clip.clip_end_ms / 1000
   const lines = useMemo(() => segments.filter(line => line.start_seconds < end && line.end_seconds > start).sort((a,b) => a.start_seconds - b.start_seconds), [segments, start, end])
@@ -72,17 +73,22 @@ export default function MobileForYouPanel({ language='ar',activeOnly = false, ac
     if(event.nativeEvent.isTrusted)onTranscriptInteraction?.()
   }
   const nextRate = rates[(Math.max(0, rates.indexOf(rate)) + 1) % rates.length] ?? 1
-  const pillSx={width:'var(--mobile-control-width)',height:'var(--mobile-control-height, 36px)',minWidth:0,p:0,borderRadius:'9999px',border:'1px solid #ffffff44',color:'inherit',bgcolor:'rgba(255,255,255,.14)',fontSize:'var(--mobile-control-font, 11px)',fontWeight:600,'&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}
+  const pillSx={width:44,height:44,minWidth:44,p:0,borderRadius:'9999px',border:'1px solid #ffffff44',color:'inherit',bgcolor:'rgba(255,255,255,.14)',fontSize:'var(--mobile-control-font, 11px)',fontWeight:600,'&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}
 
   return <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', flex: 1, minHeight: 0, bgcolor: '#111d18', color: '#f5ede0' }}>
-    <Box data-mobile-for-you-toolbar role="toolbar" aria-label={awmT("For You playback")} sx={{'--mobile-control-width':'32px','--mobile-toolbar-gap':'3px','--mobile-view-width':'58px','--mobile-language-width':'32px','--mobile-mode-width':'84px','@media (max-width:359.95px)':{'--mobile-control-width':'26px','--mobile-toolbar-gap':'2px','--mobile-view-width':'50px','--mobile-language-width':'28px','--mobile-mode-width':'72px',px:.5},'@media (min-width:390px) and (max-width:767.95px)':{'--mobile-control-width':'36px','--mobile-mode-width':'80px','--mobile-control-font':'12px',justifyContent:'center'},'@media (max-width:389.95px)':{'--mobile-control-width':'28px','--mobile-control-height':'32px','--mobile-toolbar-gap':'2px','--mobile-view-width':'52px','--mobile-language-width':'28px','--mobile-mode-width':'72px',px:.5,justifyContent:'center','& .MuiSvgIcon-root':{fontSize:16}},display:'flex',flexWrap:'nowrap',alignItems:'center',justifyContent:'space-between',gap:'var(--mobile-toolbar-gap)',px:.75,py:1,minHeight:52,boxSizing:'border-box',flexShrink:0,minWidth:0,borderBottom:'1px solid rgba(245,237,224,.08)','& .MuiSvgIcon-root':{fontSize:18},'& > *':{flexShrink:0}}}>
-      {switcher}
+    <Box data-mobile-for-you-toolbar role="toolbar" aria-label={awmT("For You playback")} sx={{'&&':{'--mobile-control-height':'44px','--mobile-view-width':'100%','--mobile-control-font':'12px','--mobile-toolbar-gap':'8px',display:'flex',flexDirection:'row',alignItems:'center',flexWrap:'nowrap',gap:1,p:1.5,minWidth:0,flexShrink:0,boxSizing:'border-box',borderBottom:'1px solid rgba(245,237,224,.08)','& .MuiSvgIcon-root':{fontSize:20},'& .MuiButtonBase-root':{minWidth:44,minHeight:44,flexShrink:0}}}}>
+      <Box sx={{flex:1,minWidth:0,'& [data-mobile-view-tools]':{width:'100%'},'& button':{minHeight:44}}}>{switcher}</Box>
       {filterControl&&<Box sx={{display:'flex','&& .MuiIconButton-root':pillSx}}>{filterControl}</Box>}
-      <Button aria-label={awmT("Playback speed")} title={`Change speed to ${nextRate}\u00d7`} disabled={!ready||rates.length<2} onClick={()=>onRate(nextRate)} sx={{...pillSx,width:30,'@media (max-width:767.95px)':{width:32},textTransform:'none'}}>{rate}{'\u00d7'}</Button>
-      {settingsButton&&<Box sx={{display:'flex','&& .MuiIconButton-root':pillSx}}>{settingsButton}</Box>}
-      {modeControl&&<Box sx={{display:'flex',width:'var(--mobile-mode-width)',height:'var(--mobile-control-height, 36px)','& [data-mobile-mode]':{width:'100%',height:'100%'},'& button':{height:'calc(var(--mobile-control-height, 36px) - 2px)',minWidth:0,flex:1,p:0,fontSize:'var(--mobile-control-font, 11px)',lineHeight:1,textTransform:'none',color:'inherit',borderRadius:'9999px'}}}>{modeControl}</Box>}
-      {navigation&&<Box sx={{display:'flex',gap:'var(--mobile-toolbar-gap)'}}><IconButton data-feed-nav aria-label={awmT("Previous video")} disabled={navigation.previousDisabled} onClick={navigation.previous} sx={pillSx}><KeyboardDoubleArrowUp/></IconButton><IconButton data-feed-nav aria-label={awmT("Next video")} disabled={navigation.nextDisabled} onClick={navigation.next} sx={pillSx}><KeyboardDoubleArrowDown/></IconButton></Box>}
+      <IconButton aria-label={awmT("More")} aria-haspopup="dialog" aria-expanded={!!moreAnchor} onClick={event=>setMoreAnchor(event.currentTarget)} sx={pillSx}><MoreHoriz/></IconButton>
+      {navigation&&<Box sx={{display:'flex',gap:1}}><IconButton data-feed-nav aria-label={awmT("Previous video")} disabled={navigation.previousDisabled} onClick={navigation.previous} sx={pillSx}><KeyboardDoubleArrowUp/></IconButton><IconButton data-feed-nav aria-label={awmT("Next video")} disabled={navigation.nextDisabled} onClick={navigation.next} sx={pillSx}><KeyboardDoubleArrowDown/></IconButton></Box>}
     </Box>
+    <Popover open={!!moreAnchor} anchorEl={moreAnchor} onClose={()=>setMoreAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'center'}} transformOrigin={{vertical:'top',horizontal:'center'}} slotProps={{paper:{role:'dialog','aria-label':awmT('More'),sx:{p:1.5,width:240,maxWidth:'calc(100vw - 32px)',borderRadius:'12px',bgcolor:'#111d18',color:'#f5ede0','--mobile-control-height':'44px','--mobile-control-font':'12px','& .MuiSvgIcon-root':{fontSize:20}}}}}>
+      <Box data-mobile-playback-options sx={{display:'flex',flexDirection:'column',gap:1.5}}>
+        <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1}}><Typography sx={{fontSize:13,color:'inherit'}}>{awmT("Playback speed")}</Typography><Button aria-label={awmT("Playback speed")} title={`Change speed to ${nextRate}\u00d7`} disabled={!ready||rates.length<2} onClick={()=>onRate(nextRate)} sx={{...pillSx,textTransform:'none'}}>{rate}{'\u00d7'}</Button></Box>
+        {modeControl&&<Box sx={{display:'flex',height:44,'& [data-mobile-mode]':{width:'100%',height:'100%'},'& button':{height:44,minWidth:44,flex:1,p:0,fontSize:12,textTransform:'none',color:'inherit',borderRadius:'9999px'}}}>{modeControl}</Box>}
+        {settingsButton&&<Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1,'&& .MuiIconButton-root':pillSx}}><Typography sx={{fontSize:13,color:'inherit'}}>{awmT("Settings")}</Typography>{settingsButton}</Box>}
+      </Box>
+    </Popover>
     <Box ref={scroller} data-mobile-clip-transcript data-feed-transcript onWheel={manualScroll} onTouchStart={manualScroll} onTouchEnd={manualScroll} onPointerDown={manualScroll} onPointerUp={manualScroll} sx={{ flex: 1, minHeight: 0, overflowY: activeOnly?'visible':'auto', overscrollBehavior: 'contain', scrollPaddingBlock: 1, px: 'max(12px, env(safe-area-inset-left))', pt: 1.25, pb: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
       {(activeOnly ? active ? [active] : [] : lines).map(line => <Box key={line.id} ref={(node: HTMLDivElement | null) => { if (node) cards.current.set(line.id,node); else cards.current.delete(line.id) }} data-clip-line={line.id} data-active-segment={active?.id === line.id ? 'true' : 'false'} aria-current={active?.id === line.id ? 'true' : undefined} sx={{ p: { xs: 1.5, sm: 2 }, mb: 1.25, borderRadius: '16px', bgcolor: '#1c2c24', border: '1px solid rgba(245,237,224,.12)', '&[data-active-segment="true"]': { borderColor: 'var(--awm-gold-light)', bgcolor: '#223b2d', boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--awm-gold-light) 25%, transparent)' } }}>
         {language==='en'?<EnglishForYouSegment explore line={line} settings={settings} time={time} active={active?.id===line.id} mobile/>:<>
